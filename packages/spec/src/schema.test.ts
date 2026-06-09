@@ -1,0 +1,199 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  SpecSchema,
+  FindingSchema,
+  EvidenceSchema,
+  createSpecV0,
+  parseSpec,
+  safeParseSpec,
+  type Spec,
+  type Finding,
+} from "./index.js";
+
+// ---------- fixtures ----------
+
+const qualitativeFinding: Finding = {
+  id: "F-001",
+  statement: "Los usuarios abandonan en el paso de verificación OTP",
+  type: "qualitative",
+  evidence: [
+    {
+      source: "entrevista_07.pdf",
+      locator: "p.3, párrafo 2",
+      quote: "me cansé de esperar el código y cerré la app",
+    },
+  ],
+  confidence: "high",
+  status: "proposed",
+  feeds: "outcomes",
+  reviewed_by: null,
+  review_note: null,
+};
+
+const quantitativeFinding: Finding = {
+  id: "F-002",
+  statement: "El drop-off en OTP es alto",
+  type: "quantitative",
+  evidence: [
+    {
+      source: "abandono.csv",
+      locator: "hoja 'funnel', filas 40-128",
+      computation: "drop-off OTP = 38% (n=312)",
+    },
+  ],
+  confidence: "medium",
+  status: "proposed",
+  feeds: "outcomes",
+  reviewed_by: null,
+  review_note: null,
+};
+
+function fullValidSpec(): Spec {
+  return {
+    id: "spec-demo",
+    title: "Reducir abandono en verificación OTP",
+    version: 1,
+    status: "in_review",
+    current_stage: "descubrimiento",
+    outcomes: [
+      {
+        metric: "tasa de completitud OTP",
+        baseline: "62%",
+        target: "80%",
+        method: "Goals-Signals-Metrics",
+      },
+    ],
+    scope: {
+      in_scope: ["flujo OTP"],
+      non_goals: ["rediseño del login completo"],
+    },
+    constraints: {
+      regulatory: ["CMF"],
+      accessibility: "WCAG 2.2 AA",
+      design_system: {
+        name: "DS Banco",
+        version: "3.1",
+        link: "https://ds.example",
+      },
+      technical: ["SMS gateway legacy"],
+    },
+    decisions: [
+      {
+        id: "D-001",
+        date: "2026-06-09",
+        decision: "Enfocar el slice en el paso OTP",
+        rationale: "Es donde se concentra el abandono",
+        author: "human",
+        supersedes: null,
+      },
+    ],
+    tasks: [
+      {
+        id: "T-001",
+        description: "Sintetizar research de abandono",
+        stage: "descubrimiento",
+        owner: "agent",
+        status: "in_progress",
+      },
+    ],
+    verification: [
+      {
+        criterion: "Todo hallazgo tiene evidencia anclada",
+        type: "automated",
+        blocking: true,
+        status: "pending",
+        evidence: null,
+      },
+    ],
+    findings: [qualitativeFinding, quantitativeFinding],
+    history: [
+      {
+        version: 1,
+        stage: "descubrimiento",
+        proposed_by: "agent1",
+        change_summary: "Promovidos 2 hallazgos validados",
+        approved_by: "human",
+        timestamp: "2026-06-09T12:00:00.000Z",
+      },
+    ],
+  };
+}
+
+// ---------- specs válidas ----------
+
+test("createSpecV0 produce una spec v0 válida", () => {
+  const spec = createSpecV0({ id: "spec-001", title: "Mi spec inicial" });
+  assert.doesNotThrow(() => parseSpec(spec));
+  assert.equal(spec.version, 0);
+  assert.equal(spec.status, "draft");
+  assert.equal(spec.current_stage, "descubrimiento");
+});
+
+test("una spec completa y bien formada valida", () => {
+  const res = safeParseSpec(fullValidSpec());
+  assert.equal(res.success, true);
+});
+
+// ---------- specs inválidas ----------
+
+test("rechaza status fuera del enum", () => {
+  const bad = { ...fullValidSpec(), status: "publicada" };
+  assert.equal(safeParseSpec(bad).success, false);
+});
+
+test("rechaza version negativa o no entera", () => {
+  assert.equal(
+    safeParseSpec({ ...fullValidSpec(), version: -1 }).success,
+    false,
+  );
+  assert.equal(
+    safeParseSpec({ ...fullValidSpec(), version: 1.5 }).success,
+    false,
+  );
+});
+
+test("rechaza current_stage desconocida", () => {
+  const bad = { ...fullValidSpec(), current_stage: "entregable" };
+  assert.equal(safeParseSpec(bad).success, false);
+});
+
+// ---------- reglas del objeto finding (invariantes 3 y 5) ----------
+
+test("rechaza un hallazgo sin evidencia (invariante 5)", () => {
+  const res = FindingSchema.safeParse({ ...qualitativeFinding, evidence: [] });
+  assert.equal(res.success, false);
+});
+
+test("rechaza un hallazgo quantitative sin computation", () => {
+  const res = FindingSchema.safeParse({
+    ...quantitativeFinding,
+    evidence: [
+      {
+        source: "x.csv",
+        locator: "filas 1-10",
+        quote: "una cita pero no un cálculo",
+      },
+    ],
+  });
+  assert.equal(res.success, false);
+});
+
+test("rechaza un hallazgo qualitative sin quote textual", () => {
+  const res = FindingSchema.safeParse({
+    ...qualitativeFinding,
+    evidence: [{ source: "x.csv", locator: "filas 1-10", computation: "38%" }],
+  });
+  assert.equal(res.success, false);
+});
+
+test("rechaza evidence sin quote ni computation", () => {
+  const res = EvidenceSchema.safeParse({ source: "x.pdf", locator: "p.1" });
+  assert.equal(res.success, false);
+});
+
+test("acepta finding qualitative con quote y quantitative con computation", () => {
+  assert.equal(FindingSchema.safeParse(qualitativeFinding).success, true);
+  assert.equal(FindingSchema.safeParse(quantitativeFinding).success, true);
+});
