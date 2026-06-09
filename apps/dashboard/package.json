@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@pda/orchestrator": "workspace:*",
     "@pda/spec": "workspace:*",
     "express": "^4.21.2",
     "react": "^18.3.1",

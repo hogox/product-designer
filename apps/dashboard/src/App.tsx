@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
-import type { Spec, AuditEntry } from "@pda/spec";
+import { useCallback, useEffect, useState } from "react";
+import type {
+  Spec,
+  Finding,
+  AuditEntry,
+  VerificationCriterion,
+} from "@pda/spec";
 
 interface PipelineStage {
   n: number;
@@ -18,12 +23,32 @@ async function getJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+async function postJson(url: string, body: unknown): Promise<Response> {
+  return fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export function App() {
   const [specId, setSpecId] = useState<string | null>(null);
   const [spec, setSpec] = useState<Spec | null>(null);
+  const [proposed, setProposed] = useState<Spec | null>(null);
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(async (id: string) => {
+    const [s, p, a] = await Promise.all([
+      getJson<Spec>(`/api/spec/${id}`),
+      getJson<Spec | null>(`/api/proposed/${id}`),
+      getJson<AuditEntry[]>(`/api/audit/${id}`).catch(() => []),
+    ]);
+    setSpec(s);
+    setProposed(p);
+    setAudit(a);
+  }, []);
 
   useEffect(() => {
     getJson<string[]>("/api/specs")
@@ -31,20 +56,16 @@ export function App() {
       .catch((e) => setError(String(e)));
     getJson<PipelineStage[]>("/api/pipeline")
       .then(setPipeline)
-      .catch((e) => setError(String(e)));
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!specId) return;
-    getJson<Spec>(`/api/spec/${specId}`)
-      .then(setSpec)
-      .catch((e) => setError(String(e)));
-    getJson<AuditEntry[]>(`/api/audit/${specId}`)
-      .then(setAudit)
-      .catch(() => setAudit([]));
-  }, [specId]);
+    if (specId) refetch(specId).catch((e) => setError(String(e)));
+  }, [specId, refetch]);
 
   const enmarcar = pipeline.find((s) => s.gate === "enmarcar");
+  const hasProposal = proposed !== null;
+  const shown = proposed ?? spec;
 
   return (
     <>
@@ -52,8 +73,8 @@ export function App() {
         <div>
           <h1>Product Designer Agéntico</h1>
           <div className="sub">
-            Dashboard centrado en la spec · Fase 0 (shell) — el agente propone,
-            el humano aprueba
+            Dashboard centrado en la spec · Fase 1 — el agente propone, el
+            humano aprueba
           </div>
         </div>
         <div className="legend">
@@ -74,11 +95,40 @@ export function App() {
 
       <div className="layout">
         <div>
-          <SpecViewer spec={spec} />
+          {hasProposal && (
+            <div className="panel" style={{ borderColor: "var(--accent)" }}>
+              <h2>
+                Propuesta del Agente 1{" "}
+                <span className="badge real">pendiente</span>
+              </h2>
+              <div className="meta">
+                El Agente 1 (Descubrimiento) propone la <strong>v+1</strong> de
+                la spec. La versión sube solo si el humano aprueba la compuerta{" "}
+                <em>enmarcar</em>.
+              </div>
+              <VerificationPanel criteria={shown!.verification} />
+            </div>
+          )}
+
+          <SpecViewer spec={shown} current={spec} isProposal={hasProposal} />
+
+          {hasProposal && specId && (
+            <FindingsTriage
+              specId={specId}
+              findings={shown!.findings}
+              onChange={() => refetch(specId)}
+            />
+          )}
         </div>
+
         <div>
           <PipelinePanel stages={pipeline} />
-          <GatePanel gate={enmarcar} />
+          <GatePanel
+            specId={specId}
+            gate={enmarcar}
+            proposed={proposed}
+            onChange={() => specId && refetch(specId)}
+          />
           <AuditPanel entries={audit} />
         </div>
       </div>
@@ -86,7 +136,35 @@ export function App() {
   );
 }
 
-function SpecViewer({ spec }: { spec: Spec | null }) {
+function VerificationPanel({
+  criteria,
+}: {
+  criteria: VerificationCriterion[];
+}) {
+  if (criteria.length === 0) return null;
+  return (
+    <div style={{ marginTop: 10 }}>
+      {criteria.map((c, i) => (
+        <div key={i} className="meta" style={{ marginBottom: 2 }}>
+          <span className={`badge ${c.status === "pass" ? "real" : "mock"}`}>
+            {c.status === "pass" ? "✓" : "✗"}
+          </span>{" "}
+          {c.criterion} — {c.evidence}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpecViewer({
+  spec,
+  current,
+  isProposal,
+}: {
+  spec: Spec | null;
+  current: Spec | null;
+  isProposal: boolean;
+}) {
   if (!spec) {
     return (
       <div className="panel">
@@ -95,10 +173,18 @@ function SpecViewer({ spec }: { spec: Spec | null }) {
       </div>
     );
   }
+  const isNew = (cond: boolean) =>
+    isProposal && cond ? <span className="badge real">nuevo</span> : null;
+
   return (
     <div className="panel">
       <h2>
-        Spec <span className="badge real">real</span>
+        Spec{" "}
+        {isProposal ? (
+          <span className="badge real">propuesta v{spec.version}+1</span>
+        ) : (
+          <span className="badge real">real</span>
+        )}
       </h2>
       <div className="spec-meta">
         <span className="pill">id: {spec.id}</span>
@@ -110,11 +196,15 @@ function SpecViewer({ spec }: { spec: Spec | null }) {
 
       {spec.problem_statement && (
         <Section title="Problem statement (Definición ligera)">
+          {isNew(!current?.problem_statement)}
           <div>{spec.problem_statement}</div>
         </Section>
       )}
 
       <Section title="1 · Outcomes">
+        {isNew(
+          (current?.outcomes.length ?? 0) === 0 && spec.outcomes.length > 0,
+        )}
         {spec.outcomes.length === 0 ? (
           <Empty />
         ) : (
@@ -130,53 +220,21 @@ function SpecViewer({ spec }: { spec: Spec | null }) {
       </Section>
 
       <Section title="2 · Alcance">
+        {isNew(
+          (current?.scope.in_scope.length ?? 0) === 0 &&
+            spec.scope.in_scope.length > 0,
+        )}
         <div>
           <em>In-scope:</em>{" "}
-          {spec.scope.in_scope.length ? spec.scope.in_scope.join(", ") : "—"}
+          {spec.scope.in_scope.length ? spec.scope.in_scope.join("; ") : "—"}
         </div>
         <div>
           <em>Non-goals:</em>{" "}
-          {spec.scope.non_goals.length ? spec.scope.non_goals.join(", ") : "—"}
+          {spec.scope.non_goals.length ? spec.scope.non_goals.join("; ") : "—"}
         </div>
       </Section>
 
-      <Section title="3 · Restricciones">
-        <div>
-          <em>Regulatorias:</em>{" "}
-          {spec.constraints.regulatory.length
-            ? spec.constraints.regulatory.join(", ")
-            : "—"}
-        </div>
-        <div>
-          <em>Accesibilidad:</em> {spec.constraints.accessibility || "—"}
-        </div>
-        <div>
-          <em>Design system:</em> {spec.constraints.design_system.name || "—"}
-        </div>
-        <div>
-          <em>Técnicas:</em>{" "}
-          {spec.constraints.technical.length
-            ? spec.constraints.technical.join(", ")
-            : "—"}
-        </div>
-      </Section>
-
-      <Section title="4 · Decisiones previas">
-        {spec.decisions.length === 0 ? (
-          <Empty />
-        ) : (
-          <ul className="tight">
-            {spec.decisions.map((d) => (
-              <li key={d.id}>
-                <strong>{d.decision}</strong> — {d.rationale}{" "}
-                <span className="meta">({d.author})</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="5 · Tareas">
+      <Section title="5 · Tareas (hipótesis de Definición)">
         {spec.tasks.length === 0 ? (
           <Empty />
         ) : (
@@ -185,44 +243,6 @@ function SpecViewer({ spec }: { spec: Spec | null }) {
               <li key={t.id}>
                 [{t.status}] {t.description}{" "}
                 <span className="meta">({t.owner})</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="6 · Criterios de verificación">
-        {spec.verification.length === 0 ? (
-          <Empty />
-        ) : (
-          <ul className="tight">
-            {spec.verification.map((v, i) => (
-              <li key={i}>
-                [{v.status}] {v.criterion}{" "}
-                <span className="meta">
-                  ({v.type}
-                  {v.blocking ? ", bloqueante" : ""})
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="Hallazgos (findings)">
-        {spec.findings.length === 0 ? (
-          <p className="empty">
-            Se poblará en Descubrimiento (Agente 1, Fase 1): cada hallazgo
-            anclado a su cita o cálculo.
-          </p>
-        ) : (
-          <ul className="tight">
-            {spec.findings.map((f) => (
-              <li key={f.id}>
-                <strong>{f.statement}</strong>{" "}
-                <span className="meta">
-                  ({f.type}, {f.confidence}, {f.status})
-                </span>
               </li>
             ))}
           </ul>
@@ -249,6 +269,166 @@ function SpecViewer({ spec }: { spec: Spec | null }) {
   );
 }
 
+function FindingsTriage({
+  specId,
+  findings,
+  onChange,
+}: {
+  specId: string;
+  findings: Finding[];
+  onChange: () => void;
+}) {
+  const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const sorted = [...findings].sort(
+    (a, b) => (order[a.confidence] ?? 9) - (order[b.confidence] ?? 9),
+  );
+  const high = findings.filter((f) => f.confidence === "high").length;
+
+  async function reject(f: Finding) {
+    const reason = window.prompt(
+      `Motivo del rechazo de ${f.id} (queda en el log de auditoría):`,
+    );
+    if (!reason) return;
+    const res = await postJson(`/api/findings/${specId}/${f.id}/reject`, {
+      reason,
+      actor: "Lead de diseño",
+    });
+    if (res.ok) onChange();
+  }
+
+  return (
+    <div className="panel">
+      <h2>
+        Triage de hallazgos{" "}
+        <span className="badge real">{findings.length}</span>
+      </h2>
+      <div className="meta" style={{ marginBottom: 10 }}>
+        Validación micro (no es la compuerta): {high} en{" "}
+        <strong>high confidence</strong> (lote) · concentra la atención en{" "}
+        <strong>low</strong> y los de alto impacto. Rechazar pide motivo
+        (invariante 7).
+      </div>
+      {sorted.map((f) => (
+        <div
+          key={f.id}
+          className="stage"
+          style={{ alignItems: "flex-start", flexDirection: "column" }}
+        >
+          <div style={{ display: "flex", gap: 8, width: "100%" }}>
+            <span
+              className={`badge ${f.confidence === "high" ? "real" : "mock"}`}
+            >
+              {f.confidence}
+            </span>
+            <strong style={{ fontSize: 14, flex: 1 }}>{f.statement}</strong>
+            <button
+              className="gate iterate"
+              style={{ cursor: "pointer", padding: "2px 10px" }}
+              onClick={() => reject(f)}
+            >
+              Rechazar
+            </button>
+          </div>
+          <div className="meta" style={{ marginTop: 4 }}>
+            {f.id} · {f.type} · →{f.feeds}
+          </div>
+          {f.evidence.map((e, i) => (
+            <div key={i} className="meta" style={{ paddingLeft: 8 }}>
+              └ {e.source} · {e.locator}:{" "}
+              {e.quote ? `"${e.quote}"` : e.computation}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GatePanel({
+  specId,
+  gate,
+  proposed,
+  onChange,
+}: {
+  specId: string | null;
+  gate: PipelineStage | undefined;
+  proposed: Spec | null;
+  onChange: () => void;
+}) {
+  const pending = proposed !== null;
+  const blockingFail =
+    proposed?.verification.some((c) => c.blocking && c.status !== "pass") ??
+    false;
+
+  async function approve() {
+    if (!specId) return;
+    const approver = window.prompt(
+      "Aprobar la compuerta enmarcar como (rol: lead de diseño / PM):",
+    );
+    if (!approver) return;
+    const res = await postJson(`/api/gate/${specId}/approve`, { approver });
+    if (res.ok) onChange();
+    else alert((await res.json()).error);
+  }
+
+  async function iterate() {
+    if (!specId) return;
+    const feedback = window.prompt(
+      "Feedback para iterar (entra como input del agente):",
+    );
+    if (!feedback) return;
+    const res = await postJson(`/api/gate/${specId}/iterate`, {
+      feedback,
+      actor: "Lead de diseño",
+    });
+    if (res.ok) onChange();
+  }
+
+  return (
+    <div className="panel">
+      <h2>
+        Compuerta humana{" "}
+        <span className={`badge ${pending ? "real" : "mock"}`}>
+          {pending ? "activa" : "inactiva"}
+        </span>
+      </h2>
+      <div className="gate-box">
+        <div className="gate-title">Compuerta: {gate?.gate ?? "enmarcar"}</div>
+        <div className="meta">
+          {pending
+            ? "Aprobar el problema enmarcado sube la spec de versión (commit + historial). Iterar re-corre el agente con tu feedback."
+            : "No hay propuesta pendiente. Corré el Agente 1 (orchestrator run) para generar una v+1."}
+        </div>
+        {pending && blockingFail && (
+          <div className="meta error" style={{ marginTop: 6 }}>
+            Hay criterios bloqueantes sin pasar: la aprobación está bloqueada.
+          </div>
+        )}
+        <div className="gate-actions">
+          <button
+            className="gate approve"
+            disabled={!pending || blockingFail}
+            style={{
+              cursor: pending && !blockingFail ? "pointer" : "not-allowed",
+            }}
+            onClick={approve}
+          >
+            Aprobar
+          </button>
+          <button
+            className="gate iterate"
+            disabled={!pending}
+            style={{ cursor: pending ? "pointer" : "not-allowed" }}
+            onClick={iterate}
+          >
+            Iterar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Section({
   title,
   children,
@@ -265,7 +445,7 @@ function Section({
 }
 
 function Empty() {
-  return <p className="empty">Vacío en v0.</p>;
+  return <p className="empty">Vacío.</p>;
 }
 
 function PipelinePanel({ stages }: { stages: PipelineStage[] }) {
@@ -293,48 +473,17 @@ function PipelinePanel({ stages }: { stages: PipelineStage[] }) {
   );
 }
 
-function GatePanel({ gate }: { gate: PipelineStage | undefined }) {
-  return (
-    <div className="panel">
-      <h2>
-        Compuerta humana <span className="badge mock">mock</span>
-      </h2>
-      <div className="gate-box">
-        <div className="gate-title">
-          {gate ? `Compuerta: ${gate.gate}` : "Compuerta: enmarcar"}
-        </div>
-        <div className="meta">
-          El agente <strong>propone</strong> una nueva versión de la spec; un
-          humano la <strong>aprueba</strong> o pide iterar. Las compuertas nunca
-          se automatizan (invariante 2).
-        </div>
-        <div className="gate-actions">
-          <button className="gate approve" disabled title="Se cablea en 1.8">
-            Aprobar
-          </button>
-          <button className="gate iterate" disabled title="Se cablea en 1.8">
-            Iterar
-          </button>
-        </div>
-        <div className="meta" style={{ marginTop: 8 }}>
-          Mockeado en Fase 0 — la lógica de aprobación (version++ + commit +
-          historial) llega en el paso 1.8.
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function AuditPanel({ entries }: { entries: AuditEntry[] }) {
+  const recent = [...entries].reverse();
   return (
     <div className="panel">
       <h2>
-        Log de auditoría <span className="badge real">real</span>
+        Log de auditoría <span className="badge real">{entries.length}</span>
       </h2>
       {entries.length === 0 ? (
         <p className="empty">Sin entradas todavía.</p>
       ) : (
-        entries.map((e, i) => (
+        recent.map((e, i) => (
           <div className="audit-entry" key={i}>
             <span className="who">{e.actor}</span>{" "}
             <span className="what">{e.action}</span>
