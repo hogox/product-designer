@@ -4,3 +4,5 @@
 {"timestamp":"2026-06-09T19:14:30.638Z","actor":"Hugo (Lead PM)","action":"gate.approve","spec_id":"otp-onboarding","target":null,"reason":"compuerta 'enmarcar' → v1"}
 {"timestamp":"2026-06-09T19:18:09.616Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa definicion"}
 {"timestamp":"2026-06-09T19:18:50.894Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"9 hallazgos; verificación OK"}
+{"timestamp":"2026-06-09T19:48:28.149Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-09T19:48:52.112Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"9 hallazgos (descubrimiento); verificación OK"}
