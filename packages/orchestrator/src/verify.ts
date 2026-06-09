@@ -2,7 +2,7 @@
 // propuesta. Materializan los invariantes anti-alucinación; el gate exige que los
 // bloqueantes pasen antes de aprobar.
 
-import type { Finding, VerificationCriterion } from "@pda/spec";
+import type { Finding, Spec, VerificationCriterion } from "@pda/spec";
 
 function crit(
   criterion: string,
@@ -48,6 +48,50 @@ export function automatedVerification(
       qualOk === qual.length,
       `${qualOk}/${qual.length} hallazgos cualitativos con cita`,
     ),
+  ];
+}
+
+/**
+ * Verificación específica de DEFINICIÓN (cierre del diamante Problema): el enmarcado está
+ * completo y con procedencia — hay problem statement, todo JTBD se ancla a hallazgos reales,
+ * y toda métrica declara su categoría HEART.
+ */
+export function definitionVerification(
+  proposed: Spec,
+): VerificationCriterion[] {
+  const findingIds = new Set(proposed.findings.map((f) => f.id));
+  const hasProblem = (proposed.problem_statement ?? "").trim().length > 0;
+  const jobsAnchored = proposed.jtbd.every(
+    (j) =>
+      j.supported_by.length > 0 &&
+      j.supported_by.every((id) => findingIds.has(id)),
+  );
+  const metricsHeart = proposed.outcomes.every((o) => o.heart != null);
+
+  return [
+    crit(
+      "Hay un problem statement de Definición",
+      hasProblem,
+      hasProblem ? "presente" : "ausente",
+    ),
+    crit(
+      "Todo JTBD está anclado a hallazgos reales (procedencia)",
+      jobsAnchored,
+      `${proposed.jtbd.length} jobs`,
+    ),
+    crit(
+      "Toda métrica declara categoría HEART",
+      metricsHeart,
+      `${proposed.outcomes.length} métricas`,
+    ),
+  ];
+}
+
+/** Verificación completa de una propuesta de Definición: hallazgos + enmarcado. */
+export function verifyProposal(proposed: Spec): VerificationCriterion[] {
+  return [
+    ...automatedVerification(proposed.findings),
+    ...definitionVerification(proposed),
   ];
 }
 

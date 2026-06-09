@@ -21,7 +21,11 @@ import {
   type VerificationCriterion,
 } from "@pda/spec";
 
-import { automatedVerification, blockingPasses } from "./verify.js";
+import {
+  automatedVerification,
+  verifyProposal,
+  blockingPasses,
+} from "./verify.js";
 
 /** Agente 1 (Descubrimiento): produce hallazgos anclados. Inyectable (real o stub). */
 export interface DiscoveryRunner {
@@ -147,7 +151,7 @@ export async function runDefinition(
   });
 
   const { proposed: raw } = await opts.runner.run(current, findings);
-  const verification = automatedVerification(raw.findings);
+  const verification = verifyProposal(raw);
   const proposed: Spec = { ...raw, verification };
 
   await writeProposedSpec(rootDir, proposed);
@@ -222,7 +226,7 @@ export async function approveGate(
 ): Promise<Spec> {
   const gate = opts.gate ?? "enmarcar";
   const proposed = await readProposedSpec(rootDir, specId);
-  const verification = automatedVerification(proposed.findings);
+  const verification = verifyProposal(proposed);
 
   if (!blockingPasses(verification)) {
     await appendAudit(rootDir, {
