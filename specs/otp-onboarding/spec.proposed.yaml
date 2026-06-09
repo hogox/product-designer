@@ -4,76 +4,76 @@ version: 2
 status: in_review
 current_stage: definicion
 problem_statement: El 43.2% de los usuarios que llegan a la verificación OTP del
-  onboarding abandonan sin completarla (F-001), un problema transversal a todos
-  los segmentos (F-002). El abandono se origina en la demora del SMS (espera
-  promedio de 71.9 s en abandonos), la falta de retroalimentación en pantalla,
-  el reenvío tardío y la ausencia de métodos alternativos, lo que puede volverse
-  permanente. Necesitamos reducir el abandono haciendo la espera transparente,
-  accionable y ofreciendo alternativas de verificación.
+  onboarding la abandonan sin completarla, sin diferencias por segmento. Las
+  causas principales son la demora en la llegada del SMS, la falta de
+  retroalimentación en pantalla y un botón de reenvío que tarda en activarse, lo
+  que genera frustración, desconfianza y, en algunos casos, abandono permanente.
+  Necesitamos reducir el abandono mejorando la experiencia de espera y
+  ofreciendo claridad y alternativas de verificación.
 outcomes:
   - metric: Tasa de finalización de la verificación OTP
-    baseline: 56.8% (179/315 completan; complemento del 43.2% de abandono en F-001)
-    target: ≥ 75% (tentativo, a fijar en la compuerta)
-    method: "Funnel analytics: usuarios que completan OTP / usuarios que llegan al
-      paso de OTP"
+    baseline: 56.8% (179/315 completan; drop-off 43.2%)
+    target: ≥75% de finalización (tentativo)
+    method: "Analítica de embudo: usuarios que completan OTP / usuarios que llegan
+      al paso de OTP"
     heart: task_success
     signals:
-      - Aumento de OTP verificados con éxito
-      - Reducción de salidas/cierres de app en la pantalla de OTP
-      - Reducción de eventos de abandono post-ingreso del número
-  - metric: Tasa de abandono en el paso OTP
-    baseline: "43.2% (136/315, n=315; segmentos casi idénticos: nuevos 42.9% y
-      recurrentes 43.4% según F-002)"
-    target: ≤ 25% (tentativo, a fijar en la compuerta)
-    method: "Funnel analytics: usuarios que abandonan sin completar OTP / usuarios
-      que llegan al paso de OTP, segmentado por nuevo vs. recurrente"
+      - Códigos OTP ingresados correctamente
+      - Avance al siguiente paso del onboarding tras OTP
+      - Reducción de cierres de app en pantalla de OTP
+  - metric: Tasa de abandono en el paso de OTP
+    baseline: 43.2% (136/315)
+    target: ≤25% de abandono (tentativo)
+    method: "Analítica de embudo: usuarios que abandonan en OTP / usuarios que
+      llegan al paso de OTP, segmentado por nuevo vs recurrente"
     heart: task_success
     signals:
-      - Menos salidas durante la espera del código
-      - Abandono consistente entre segmentos
-      - Caída en cierres de app antes de recibir el SMS
-  - metric: Tiempo de espera percibido y real hasta el ingreso del código
-    baseline: 71.9 s promedio de espera en casos de abandono (n=136, F-003)
-    target: Reducir el tiempo de espera asociado a abandono y mostrar feedback de
-      espera estimada (tentativo)
-    method: Telemetría de tiempo entre envío de OTP y verificación/abandono;
-      medición del tiempo hasta primera interacción con contador en pantalla
-    heart: happiness
-    signals:
-      - Menor tiempo de espera antes del abandono
-      - Mayor visibilidad del contador y estado de envío en pantalla
-      - Reducción de quejas por incertidumbre y desconfianza
-  - metric: Uso del botón de reenviar y tiempo hasta su activación
-    baseline: null
-    target: Activar el reenvío en una ventana corta y aceptable (tentativo)
-    method: "Eventos de UI: tiempo entre carga de pantalla y activación del botón de
-      reenvío; tasa de uso y éxito tras reenvío"
+      - Salidas o cierres de app en pantalla OTP
+      - Abandonos antes de recibir el código
+      - Paridad de abandono entre segmentos nuevo y recurrente
+  - metric: Tiempo de espera del código hasta su ingreso o abandono
+    baseline: 71.9 s promedio de espera en casos de abandono (n=136)
+    target: Reducir el tiempo de espera percibido y entregar feedback visible desde
+      el segundo 0 (tentativo)
+    method: Telemetría de tiempo entre solicitud de código e ingreso/abandono;
+      instrumentar contador en pantalla
     heart: engagement
     signals:
-      - Menor tiempo de espera para que el botón de reenviar se active
-      - Mayor proporción de verificaciones exitosas tras reenviar
-      - Reducción de frustración reportada durante la espera
+      - Tiempo desde solicitud hasta recepción del SMS
+      - Tiempo hasta primer intento de ingreso
+      - Visualización del contador de espera en pantalla
+  - metric: Uso del reenvío de código
+    baseline: null
+    target: Activación del botón de reenvío en un tiempo razonable y reducción de
+      frustración asociada (tentativo)
+    method: Eventos de tap en 'reenviar' y tiempo hasta que el botón se habilita;
+      correlación con finalización posterior
+    heart: engagement
+    signals:
+      - Clics en botón de reenviar
+      - Tiempo hasta habilitación del botón
+      - Finalización tras reenvío
   - metric: Adopción de métodos de verificación alternativos (p. ej. huella digital)
     baseline: null
-    target: Una porción relevante de usuarios usa el método alternativo cuando el
-      SMS falla (tentativo)
-    method: Analytics de selección de método de verificación; tasa de finalización
-      por método
+    target: Disponibilizar y lograr adopción de un método alternativo ante fallas de
+      SMS (tentativo)
+    method: "Analítica de eventos: usuarios que eligen método alternativo / usuarios
+      que enfrentan falla o demora en SMS"
     heart: adoption
     signals:
-      - Usuarios eligen verificación alternativa ante falla del SMS
-      - Mayor finalización en casos donde el SMS no llega
-      - Menor abandono atribuido a entrega fallida del código
-  - metric: Retorno y reanudación del onboarding tras abandono
+      - Selección de método alternativo
+      - Finalización vía método alternativo tras falla de SMS
+  - metric: Reintento y recuperación tras abandono del onboarding
     baseline: null
-    target: Aumentar la reanudación exitosa y evitar abandonos permanentes (tentativo)
-    method: "Cohortes: usuarios que abandonan OTP y regresan a completar la
-      verificación dentro de una ventana de tiempo"
+    target: Aumentar el retorno y finalización de usuarios que abandonaron OTP
+      (tentativo)
+    method: Cohortes de usuarios que abandonan OTP y posteriormente retoman y
+      completan el proceso
     heart: retention
     signals:
-      - Mayor reanudación del proceso de verificación tras abandono
-      - Menos cuentas que quedan sin verificar de forma permanente
-      - Reducción de retomas motivadas solo por necesidad
+      - Retorno al flujo de onboarding tras abandono
+      - Finalización en sesión posterior
+      - Reducción de abandonos permanentes
 scope:
   in_scope:
     - Mejorar la entrega y latencia del código OTP por SMS
@@ -151,6 +151,21 @@ verification:
     blocking: true
     status: pass
     evidence: 5/5 hallazgos cualitativos con cita
+  - criterion: Hay un problem statement de Definición
+    type: automated
+    blocking: true
+    status: pass
+    evidence: presente
+  - criterion: Todo JTBD está anclado a hallazgos reales (procedencia)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 5 jobs
+  - criterion: Toda métrica declara categoría HEART
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 6 métricas
 findings:
   - id: F-001
     statement: El 43.2% de los usuarios que llegan al paso de verificación OTP
@@ -291,31 +306,34 @@ findings:
     review_note: null
 jtbd:
   - id: J-001
-    statement: Cuando ingreso mi número y espero el código OTP, quiero saber que el
-      código fue enviado, a qué número llega y cuánto debo esperar, para tener
-      certeza y confiar en la app en lugar de abandonar.
-    supported_by:
-      - F-005
-      - F-001
-  - id: J-002
-    statement: Cuando el SMS con el código demora demasiado en llegar, quiero
-      recibirlo a tiempo o poder reenviarlo de inmediato, para completar la
-      verificación antes de cansarme y salir de la app.
+    statement: Cuando estoy esperando el código OTP por SMS, quiero recibirlo rápido
+      o saber cuánto debo esperar, para no cansarme y abandonar el proceso antes
+      de recibirlo.
     supported_by:
       - F-003
       - F-004
-      - F-006
+  - id: J-002
+    statement: Cuando ingreso a la pantalla de verificación OTP, quiero ver
+      confirmación de que el código fue enviado, a qué número llega y cuánto
+      debo esperar, para tener certeza y confiar en la app.
+    supported_by:
+      - F-005
   - id: J-003
-    statement: Cuando el código no llega o falla la entrega del SMS, quiero elegir
-      un método de verificación alternativo (como la huella digital), para
-      completar el onboarding sin depender únicamente del SMS.
+    statement: Cuando el código no llega y necesito reenviarlo, quiero poder
+      solicitar el reenvío sin una espera prolongada, para no frustrarme durante
+      la verificación.
+    supported_by:
+      - F-006
+  - id: J-004
+    statement: Cuando falla la entrega del código SMS, quiero poder elegir un método
+      de verificación alternativo como la huella digital, para completar el
+      onboarding sin depender exclusivamente del SMS.
     supported_by:
       - F-007
-      - F-004
-  - id: J-004
-    statement: Cuando abandono la verificación a medias, quiero retomar el proceso
-      fácilmente, para no perder el progreso ni quedar fuera de la cuenta de
-      forma permanente.
+  - id: J-005
+    statement: Cuando abandono la verificación a medias, quiero poder retomar
+      fácilmente el proceso, para no perder el avance ni desistir
+      definitivamente de crear mi cuenta.
     supported_by:
       - F-008
 history:
