@@ -5,6 +5,10 @@ import { SectionTabs } from "../components/SectionTabs";
 import { FindingsTriage } from "../components/FindingsTriage";
 import { EvidenceList } from "../components/EvidenceList";
 import { VerificationPanel } from "../components/VerificationPanel";
+import { GatePanel } from "../components/GatePanel";
+import { Framing } from "../components/Framing";
+import { Jtbd } from "../components/Jtbd";
+import { Metrics } from "../components/Metrics";
 import { useShell } from "../App";
 import { discoveryVerification, type SpecData } from "../api";
 
@@ -75,7 +79,40 @@ function StageContent({
       );
   }
 
-  // Definición (D.4) y etapas mockeadas (D.5): pendiente.
+  if (stage.id === "definicion") {
+    const isProposal = shell.proposed !== null;
+    const shown = shell.proposed ?? shell.spec;
+    if (!shown)
+      return (
+        <div className="panel">
+          <p className="empty">Cargando spec…</p>
+        </div>
+      );
+    if (section === "enmarcado")
+      return (
+        <Framing shown={shown} current={shell.spec} isProposal={isProposal} />
+      );
+    if (section === "jtbd")
+      return <Jtbd shown={shown} isProposal={isProposal} />;
+    if (section === "metricas") return <Metrics shown={shown} />;
+    if (section === "compuerta")
+      return (
+        <div className="layout">
+          <GatePanel
+            specId={shell.specId}
+            proposed={shell.proposed}
+            gateName="enmarcar"
+            onChange={shell.refetch}
+          />
+          <VerificationPanel
+            criteria={shown.verification}
+            title="Verificación de la propuesta"
+          />
+        </div>
+      );
+  }
+
+  // Etapas mockeadas (D.5): pendiente.
   return (
     <div className="panel">
       <p className="meta">
