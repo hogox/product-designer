@@ -1,15 +1,23 @@
 #!/usr/bin/env node
 // CLI del orquestador. Corre desde la raíz del repo (lee/escribe ./specs).
-//   node --env-file=.env packages/orchestrator/dist/cli.js run <specId>
-//   node packages/orchestrator/dist/cli.js status <specId>
+//   node --env-file=.env packages/orchestrator/dist/cli.js discover <specId>
+//   node --env-file=.env packages/orchestrator/dist/cli.js define <specId>
+//   node packages/orchestrator/dist/cli.js status  <specId>
 //   node packages/orchestrator/dist/cli.js approve <specId> --by "Nombre"
 //   node packages/orchestrator/dist/cli.js iterate <specId> --feedback "texto"
 
 import { join } from "node:path";
 
 import { blockingPasses } from "./verify.js";
-import { getState, runStage, approveGate, iterateGate } from "./stage.js";
-import { createAgent1Runner } from "./runner.js";
+import {
+  getState,
+  runDiscovery,
+  runDefinition,
+  approveGate,
+  iterateGate,
+  rejectFinding,
+} from "./stage.js";
+import { createDiscoveryRunner, createDefinitionRunner } from "./runner.js";
 
 const ROOT = process.cwd();
 const TOPIC = "abandono en la verificación OTP del onboarding";
@@ -23,11 +31,20 @@ function flag(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
+function printVerification(criteria: Parameters<typeof blockingPasses>[0]) {
+  console.log(`\n  Verificación automatizada:`);
+  for (const c of criteria) {
+    console.log(
+      `   [${c.status === "pass" ? "✓" : "✗"}] ${c.criterion} — ${c.evidence}`,
+    );
+  }
+}
+
 async function main() {
   const [, , cmd, specId] = process.argv;
   if (!cmd || !specId) {
     console.log(
-      "Uso: orchestrator <run|status|approve|iterate> <specId> [flags]",
+      "Uso: orchestrator <discover|define|status|approve|iterate> <specId> [flags]",
     );
     process.exit(cmd ? 1 : 0);
   }
@@ -37,30 +54,54 @@ async function main() {
     return;
   }
 
-  if (cmd === "run") {
-    const runner = createAgent1Runner({
+  if (cmd === "discover") {
+    const runner = createDiscoveryRunner({
       entrevistasDir: join(ROOT, "samples", "entrevistas"),
       funnelCsv: join(ROOT, "samples", "analitica", "funnel-otp.csv"),
       topic: TOPIC,
     });
-    const gate = await runStage(ROOT, specId, { runner, author: AUTHOR });
+    const r = await runDiscovery(ROOT, specId, { runner, author: AUTHOR });
+    console.log(`\n▸ Descubrimiento: ${r.findings.length} hallazgos anclados.`);
+    printVerification(r.verification);
+    console.log(`\n  Triá los hallazgos (dashboard / reject) y luego:`);
+    console.log(`  orchestrator define ${specId}`);
+    return;
+  }
+
+  if (cmd === "define") {
+    const runner = createDefinitionRunner({ topic: TOPIC });
+    const gate = await runDefinition(ROOT, specId, { runner, author: AUTHOR });
     console.log(
-      `\n▸ Etapa corrida. BLOQUEADO en compuerta '${gate.gate}' (sin subir versión).`,
+      `\n▸ Definición. BLOQUEADO en compuerta '${gate.gate}' (sin subir versión).`,
     );
     console.log(
-      `  hallazgos: ${gate.proposed.findings.length} · propuesta: v${gate.proposed.version} ${gate.proposed.status}`,
+      `  ${gate.proposed.jtbd.length} JTBD · ${gate.proposed.outcomes.length} métricas · propuesta v${gate.proposed.version} ${gate.proposed.status}`,
     );
-    console.log(`\n  Verificación automatizada:`);
-    for (const c of gate.verification) {
-      console.log(
-        `   [${c.status === "pass" ? "✓" : "✗"}] ${c.criterion} — ${c.evidence}`,
-      );
-    }
+    printVerification(gate.verification);
     console.log(
       `\n  ${blockingPasses(gate.verification) ? "Listo para aprobar" : "Bloqueado: corrige antes de aprobar"}.`,
     );
     console.log(
       `  Aprueba con: orchestrator approve ${specId} --by "Tu Nombre"`,
+    );
+    return;
+  }
+
+  if (cmd === "reject") {
+    const fid = process.argv[4];
+    const reason = flag("reason");
+    if (!fid || !reason) {
+      console.error(
+        'Uso: reject <specId> <findingId> --reason "motivo" [--by "Nombre"]',
+      );
+      process.exit(1);
+    }
+    const remaining = await rejectFinding(ROOT, specId, fid, {
+      reason,
+      actor: flag("by") ?? "Lead de diseño",
+    });
+    console.log(
+      `✗ Hallazgo ${fid} rechazado. Quedan ${remaining.length} hallazgos.`,
     );
     return;
   }

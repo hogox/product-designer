@@ -97,6 +97,9 @@ importers:
       '@pda/agent1':
         specifier: workspace:*
         version: link:../agent1
+      '@pda/agent2':
+        specifier: workspace:*
+        version: link:../agent2
       '@pda/spec':
         specifier: workspace:*
         version: link:../spec
