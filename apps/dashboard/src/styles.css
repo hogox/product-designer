@@ -262,6 +262,18 @@ button.gate.iterate {
   .shell {
     grid-template-columns: 1fr;
   }
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+/* el pipeline del overview usa .stage como link */
+a.stage {
+  text-decoration: none;
+  color: var(--text);
 }
 
 .sidebar {

@@ -95,8 +95,7 @@ function StageContent({
       return (
         <Framing shown={shown} current={shell.spec} isProposal={isProposal} />
       );
-    if (section === "jtbd")
-      return <Jtbd shown={shown} isProposal={isProposal} />;
+    if (section === "jtbd") return <Jtbd shown={shown} />;
     if (section === "metricas") return <Metrics shown={shown} />;
     if (section === "compuerta")
       return (
