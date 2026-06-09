@@ -4,6 +4,9 @@ PRD-product-designer-agentico.md
 # Almacén de spec (YAML) y auditoría: formato controlado por @pda/spec, no por prettier.
 specs/
 
+# Set de muestra (datos sintéticos): no se reformatea.
+samples/
+
 # Build y deps
 dist/
 node_modules/

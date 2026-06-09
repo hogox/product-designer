@@ -1,0 +1,13 @@
+ticket_id,fecha,categoria,prioridad,canal,descripcion
+T-001,2026-05-02,verificacion,alta,android,no me llega el código de verificación
+T-002,2026-05-03,acceso,alta,web,el SMS con el código demora demasiado
+T-003,2026-05-04,onboarding,media,ios,pedí reenviar el código y el botón estaba bloqueado
+T-004,2026-05-05,verificacion,alta,android,"el código llegó vencido, no me sirvió"
+T-005,2026-05-06,acceso,media,web,no sé a qué número llega el SMS de verificación
+T-006,2026-05-07,onboarding,baja,ios,quiero verificar con huella en vez de código
+T-007,2026-05-08,verificacion,media,android,la app se cerró esperando el código OTP
+T-008,2026-05-09,acceso,alta,web,ingresé el código y me dijo que era incorrecto
+T-009,2026-05-10,onboarding,media,ios,el contador para reenviar nunca termina
+T-010,2026-05-11,verificacion,alta,android,no puedo completar el registro por el código
+T-011,2026-05-12,acceso,baja,web,recibí el código dos veces y me confundí
+T-012,2026-05-13,onboarding,media,ios,el SMS llegó 4 minutos tarde

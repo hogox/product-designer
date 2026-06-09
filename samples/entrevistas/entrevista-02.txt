@@ -1,0 +1,11 @@
+Entrevista 02 — Usuaria recurrente (Android)
+Fecha: 2026-05-14 · Moderador: equipo de research
+
+P: ¿Tuviste algún problema al reingresar?
+R: El SMS con el código siempre demora un montón en mi teléfono, a veces no llega.
+
+P: ¿Y qué hacés cuando no llega?
+R: Pido reenviar, pero el botón de reenviar recién se activa después de un rato largo. Eso me desespera.
+
+P: ¿Llegaste a completar la verificación?
+R: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir otro método, usaría la huella.

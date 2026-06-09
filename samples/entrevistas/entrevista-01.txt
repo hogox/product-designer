@@ -1,0 +1,14 @@
+Entrevista 01 — Usuario nuevo (iOS)
+Fecha: 2026-05-12 · Moderador: equipo de research
+
+P: Contame cómo fue tu primera vez abriendo la cuenta.
+R: Bajé la app, puse mis datos y todo bien hasta que llegó el paso del código.
+
+P: ¿Qué pasó en ese paso?
+R: Me cansé de esperar el código y cerré la app. Llegó como tres minutos después, cuando ya había abandonado.
+
+P: ¿Lo intentaste de nuevo?
+R: Sí, pero a la segunda me pidió el código otra vez y tampoco llegaba rápido. Sentí que perdía el tiempo.
+
+P: ¿Algo más que recuerdes de ese momento?
+R: No sabía si el código había sido enviado o no. La pantalla no decía nada, solo un campo vacío esperando.
