@@ -17,3 +17,5 @@
 {"timestamp":"2026-06-09T20:13:31.989Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa definicion"}
 {"timestamp":"2026-06-09T20:13:54.314Z","actor":"agent2","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"definición: 5 JTBD, 6 métricas; verificación OK"}
 {"timestamp":"2026-06-09T20:14:07.787Z","actor":"Hugo (Lead PM)","action":"gate.approve","spec_id":"otp-onboarding","target":null,"reason":"compuerta 'enmarcar' → v3"}
+{"timestamp":"2026-06-09T20:15:00.794Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-09T20:15:26.705Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"10 hallazgos (descubrimiento); verificación OK"}
