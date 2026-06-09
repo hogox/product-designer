@@ -108,6 +108,12 @@ function SpecViewer({ spec }: { spec: Spec | null }) {
       </div>
       <div className="spec-title">{spec.title}</div>
 
+      {spec.problem_statement && (
+        <Section title="Problem statement (Definición ligera)">
+          <div>{spec.problem_statement}</div>
+        </Section>
+      )}
+
       <Section title="1 · Outcomes">
         {spec.outcomes.length === 0 ? (
           <Empty />

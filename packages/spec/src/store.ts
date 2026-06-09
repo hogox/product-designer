@@ -8,7 +8,7 @@ import { promisify } from "node:util";
 
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
-import { parseSpec, type Spec } from "./schema.js";
+import { FindingSchema, parseSpec, type Finding, type Spec } from "./schema.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -51,6 +51,57 @@ export async function readSpec(rootDir: string, id: string): Promise<Spec> {
   const { spec } = specPaths(rootDir, id);
   const raw = await readFile(spec, "utf8");
   return parseSpec(parseYaml(raw));
+}
+
+/** Escribe la propuesta v+1 del agente en `spec.proposed.yaml` (validada). */
+export async function writeProposedSpec(
+  rootDir: string,
+  spec: Spec,
+): Promise<string> {
+  const valid = parseSpec(spec);
+  const { dir, proposed } = specPaths(rootDir, valid.id);
+  await mkdir(dir, { recursive: true });
+  await writeFile(proposed, stringifyYaml(valid), "utf8");
+  return proposed;
+}
+
+/** Lee y valida la propuesta de `spec.proposed.yaml`. */
+export async function readProposedSpec(
+  rootDir: string,
+  id: string,
+): Promise<Spec> {
+  const { proposed } = specPaths(rootDir, id);
+  return parseSpec(parseYaml(await readFile(proposed, "utf8")));
+}
+
+/** Escribe los hallazgos anclados en `findings.yaml` (cada uno validado). */
+export async function writeFindings(
+  rootDir: string,
+  id: string,
+  findings: Finding[],
+): Promise<string> {
+  const valid = findings.map((f) => FindingSchema.parse(f));
+  const { dir, findings: file } = specPaths(rootDir, id);
+  await mkdir(dir, { recursive: true });
+  await writeFile(file, stringifyYaml(valid), "utf8");
+  return file;
+}
+
+/** Lee y valida los hallazgos de `findings.yaml` (vacío si no existe). */
+export async function readFindings(
+  rootDir: string,
+  id: string,
+): Promise<Finding[]> {
+  const { findings: file } = specPaths(rootDir, id);
+  let raw: string;
+  try {
+    raw = await readFile(file, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw err;
+  }
+  const data = parseYaml(raw);
+  return Array.isArray(data) ? data.map((f) => FindingSchema.parse(f)) : [];
 }
 
 export interface GitAuthor {

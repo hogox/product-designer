@@ -57,6 +57,7 @@ function fullValidSpec(): Spec {
     version: 1,
     status: "in_review",
     current_stage: "descubrimiento",
+    problem_statement: "Los usuarios abandonan en el paso de verificación OTP.",
     outcomes: [
       {
         metric: "tasa de completitud OTP",

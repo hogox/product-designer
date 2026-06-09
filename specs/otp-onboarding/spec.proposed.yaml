@@ -1,0 +1,252 @@
+id: otp-onboarding
+title: Reducir el abandono en la verificación OTP del onboarding
+version: 0
+status: in_review
+current_stage: descubrimiento
+problem_statement: El 43.2% de los usuarios que llegan al paso de verificación
+  OTP del onboarding lo abandonan sin completarlo, una fuga que afecta por igual
+  a usuarios nuevos y recurrentes. La demora en la entrega del SMS y la falta de
+  retroalimentación en pantalla (qué número, cuánto esperar, cuándo reenviar)
+  generan frustración e incertidumbre que llevan al abandono, con riesgo de
+  pérdida definitiva de usuarios.
+outcomes:
+  - metric: "Tasa de abandono en el paso OTP (Goals-Signals-Metrics: meta de
+      retención en verificación)"
+    baseline: 43.2% (136/315)
+    target: Reducir el abandono de OTP de forma significativa (objetivo numérico a
+      fijar por el humano en la compuerta)
+    method: "Funnel de onboarding: usuarios que abandonan el paso OTP / usuarios que
+      llegan al paso OTP"
+  - metric: "Tiempo de espera del código percibido/real (HEART: Task success /
+      Eficiencia)"
+    baseline: 71.9 s promedio en abandonos (n=136)
+    target: Disminuir el tiempo de espera asociado al abandono (objetivo a fijar por
+      el humano)
+    method: Tiempo entre solicitud del OTP y su recepción/ingreso, segmentado por
+      usuarios que completan vs. abandonan
+  - metric: "Tasa de completitud de la verificación OTP (HEART: Task success)"
+    baseline: 56.8% (179/315, complemento de F-001)
+    target: Aumentar la completitud de la verificación (objetivo a fijar por el humano)
+    method: Usuarios que completan el OTP / usuarios que llegan al paso OTP
+  - metric: "Uso del botón de reenvío y tiempo hasta su activación (HEART:
+      Engagement / Eficiencia)"
+    baseline: null
+    target: Reducir el tiempo de activación del reenvío y medir su uso efectivo
+      (objetivo a fijar por el humano)
+    method: "Instrumentación del evento de reenvío: tiempo hasta activación y tasa
+      de clics/éxito tras reenvío"
+scope:
+  in_scope:
+    - Paso de verificación OTP por SMS dentro del flujo de onboarding (usuarios
+      nuevos y recurrentes, dado que el abandono es similar en ambos)
+    - "Retroalimentación en pantalla durante el envío del código: confirmación
+      de envío, número de destino enmascarado (terminado en XX) y
+      contador/temporizador"
+    - Comportamiento y tiempo de activación del botón de reenvío del código
+    - Reducción/mitigación de la demora percibida en la entrega del SMS
+  non_goals:
+    - Rediseñar pasos del onboarding distintos a la verificación OTP
+    - Implementar de forma definitiva métodos de verificación alternativos (p.
+      ej. huella digital), más allá de explorarlos como hipótesis
+    - Cambios en la infraestructura del proveedor de SMS sin validación previa
+      de su impacto
+    - Fijar los valores objetivo de las métricas (los define el humano en la
+      compuerta)
+constraints:
+  regulatory: []
+  accessibility: ""
+  design_system:
+    name: ""
+    version: ""
+    link: ""
+  technical: []
+decisions: []
+tasks:
+  - id: H-001
+    description: Mostrar retroalimentación clara en pantalla (confirmación de envío,
+      número destino terminado en XX y un contador de tiempo) reducirá la
+      incertidumbre y el abandono en el paso OTP (F-005, F-006).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-002
+    description: Reducir el tiempo de activación del botón de reenvío disminuirá la
+      desesperación y el abandono durante la espera (F-007).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-003
+    description: Acortar el tiempo de entrega/percepción del SMS (o permitir
+      reintento más rápido) reducirá el abandono asociado a la demora promedio
+      de 71.9 s (F-003, F-004).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-004
+    description: Ofrecer un método de verificación alternativo (p. ej. huella
+      digital o verificación por otro canal) recuperará a usuarios que abandonan
+      por la demora del SMS (F-008).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-005
+    description: Dado que el abandono es similar entre segmentos, una solución única
+      en el paso OTP beneficiará tanto a usuarios nuevos como recurrentes sin
+      necesidad de segmentar (F-002).
+    stage: definicion
+    owner: human
+    status: todo
+verification: []
+findings:
+  - id: F-001
+    statement: El 43.2% de los usuarios que llegan al paso de verificación OTP lo
+      abandonan sin completarlo (136 de 315), lo que evidencia una fuga
+      significativa en este punto del onboarding.
+    type: quantitative
+    evidence:
+      - source: funnel-otp.csv
+        locator: hoja 'csv', columnas llego_a_otp+completo_otp — abandonan
+          (completo_otp=0) entre los que llegan al paso OTP (llego_a_otp=1)
+          (n=315)
+        computation: drop-off OTP = 43.2% (136/315, n=315)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    reviewed_by: null
+    review_note: null
+  - id: F-002
+    statement: El abandono en el paso OTP es similar entre usuarios nuevos (42.9%) y
+      recurrentes (43.4%), por lo que el problema no se concentra en un segmento
+      específico.
+    type: quantitative
+    evidence:
+      - source: funnel-otp.csv
+        locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+          entre los que llegan al OTP con segmento=nuevo (n=140)
+        computation: drop-off OTP · segmento=nuevo = 42.9% (60/140, n=140)
+      - source: funnel-otp.csv
+        locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+          entre los que llegan al OTP con segmento=recurrente (n=175)
+        computation: drop-off OTP · segmento=recurrente = 43.4% (76/175, n=175)
+    confidence: high
+    status: validated
+    feeds: scope
+    reviewed_by: null
+    review_note: null
+  - id: F-003
+    statement: Entre los usuarios que abandonan, el tiempo de espera promedio del
+      código es de 71.9 segundos, lo que sugiere que la demora en la entrega del
+      OTP está asociada al abandono.
+    type: quantitative
+    evidence:
+      - source: funnel-otp.csv
+        locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
+        computation: tiempo de espera promedio en abandonos = 71.9 s (n=136)
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    reviewed_by: null
+    review_note: null
+  - id: F-004
+    statement: "La demora en la llegada del SMS con el código provoca frustración y
+      abandono: usuarios reportan cerrar la app antes de que llegue el código o
+      desistir porque a veces no llega."
+    type: qualitative
+    evidence:
+      - source: entrevista-01.txt
+        locator: párrafo 3
+        quote: Me cansé de esperar el código y cerré la app. Llegó como tres minutos
+          después, cuando ya había abandonado.
+      - source: entrevista-02.txt
+        locator: párrafo 2
+        quote: El SMS con el código siempre demora un montón en mi teléfono, a veces no
+          llega.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    reviewed_by: null
+    review_note: null
+  - id: F-005
+    statement: "La falta de retroalimentación en pantalla genera incertidumbre: los
+      usuarios no saben si el código fue enviado, a qué número llegará ni cuánto
+      deben esperar, lo que les hace dudar de la app."
+    type: qualitative
+    evidence:
+      - source: entrevista-01.txt
+        locator: párrafo 5
+        quote: No sabía si el código había sido enviado o no. La pantalla no decía nada,
+          solo un campo vacío esperando.
+      - source: entrevista-03.pdf
+        locator: p.1, línea 5
+        quote: Confuso. No me quedaba claro a qué número iba a llegar el SMS ni cuánto
+          debía esperar.
+      - source: entrevista-03.pdf
+        locator: p.1, línea 8
+        quote: incertidumbre me hizo dudar de la app.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    reviewed_by: null
+    review_note: null
+  - id: F-006
+    statement: Los usuarios desean indicaciones claras como mostrar el número de
+      destino (terminado en XX) y un contador de tiempo durante el envío del
+      código.
+    type: qualitative
+    evidence:
+      - source: entrevista-03.pdf
+        locator: p.1, línea 7
+        quote: Que me dijeran "te enviamos el código al número terminado en 45" y un
+          contador. Esa
+    confidence: medium
+    status: validated
+    feeds: scope
+    reviewed_by: null
+    review_note: null
+  - id: F-007
+    statement: El botón de reenvío del código se activa tras una espera prolongada,
+      lo que aumenta la desesperación del usuario durante la verificación.
+    type: qualitative
+    evidence:
+      - source: entrevista-02.txt
+        locator: párrafo 3
+        quote: Pido reenviar, pero el botón de reenviar recién se activa después de un
+          rato largo. Eso me desespera.
+    confidence: medium
+    status: validated
+    feeds: constraints
+    reviewed_by: null
+    review_note: null
+  - id: F-008
+    statement: Algunos usuarios preferirían métodos de verificación alternativos,
+      como la huella digital, en lugar del código por SMS.
+    type: qualitative
+    evidence:
+      - source: entrevista-02.txt
+        locator: párrafo 4
+        quote: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir
+          otro método, usaría la huella.
+    confidence: medium
+    status: validated
+    feeds: scope
+    reviewed_by: null
+    review_note: null
+  - id: F-009
+    statement: "El abandono en la verificación puede traducirse en pérdida
+      definitiva de usuarios: hay quienes vuelven solo porque necesitaban la
+      cuenta y, de no ser así, no regresarían."
+    type: qualitative
+    evidence:
+      - source: entrevista-03.pdf
+        locator: p.1, línea 10
+        quote: Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la
+          cuenta, pero si no la hubiera
+      - source: entrevista-03.pdf
+        locator: p.1, línea 11
+        quote: necesitado, no vuelvo.
+    confidence: medium
+    status: validated
+    feeds: outcomes
+    reviewed_by: null
+    review_note: null
+history: []

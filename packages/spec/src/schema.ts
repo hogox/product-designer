@@ -196,6 +196,8 @@ export const SpecSchema = z.object({
   version: z.number().int().nonnegative(), // incrementa solo al aprobar una compuerta
   status: SpecStatusSchema,
   current_stage: StageSchema,
+  // Borrador de problem statement (pasada ligera de Definición). Opcional en v0.
+  problem_statement: z.string().nullable().default(null),
   outcomes: z.array(OutcomeSchema),
   scope: ScopeSchema,
   constraints: ConstraintsSchema,
@@ -232,6 +234,7 @@ export function createSpecV0(input: { id: string; title: string }): Spec {
     version: 0,
     status: "draft",
     current_stage: "descubrimiento",
+    problem_statement: null,
     outcomes: [],
     scope: { in_scope: [], non_goals: [] },
     constraints: {

@@ -3,6 +3,7 @@ title: Reducir el abandono en la verificación OTP del onboarding
 version: 0
 status: draft
 current_stage: descubrimiento
+problem_statement: null
 outcomes: []
 scope:
   in_scope: []

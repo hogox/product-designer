@@ -14,6 +14,11 @@ import {
   appendAudit,
   readAudit,
   specPaths,
+  writeProposedSpec,
+  readProposedSpec,
+  writeFindings,
+  readFindings,
+  type Finding,
 } from "./index.js";
 
 const execFileAsync = promisify(execFile);
@@ -100,6 +105,60 @@ test("readAudit devuelve [] si no hay log", async () => {
   const root = await tempRepo();
   try {
     assert.deepEqual(await readAudit(root, "inexistente"), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+const sampleFinding: Finding = {
+  id: "F-001",
+  statement: "El drop-off en OTP es alto",
+  type: "quantitative",
+  evidence: [
+    {
+      source: "funnel-otp.csv",
+      locator: "hoja 'csv' (n=315)",
+      computation: "drop-off OTP = 43.2% (136/315, n=315)",
+    },
+  ],
+  confidence: "high",
+  status: "validated",
+  feeds: "outcomes",
+  reviewed_by: "human",
+  review_note: null,
+};
+
+test("round-trip de spec.proposed.yaml", async () => {
+  const root = await tempRepo();
+  try {
+    const proposed = {
+      ...createSpecV0({ id: "otp", title: "Reducir abandono OTP" }),
+      status: "in_review" as const,
+      problem_statement: "Los usuarios abandonan en el paso OTP.",
+    };
+    await writeProposedSpec(root, proposed);
+    assert.deepEqual(await readProposedSpec(root, "otp"), proposed);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("round-trip de findings.yaml (validados)", async () => {
+  const root = await tempRepo();
+  try {
+    await writeFindings(root, "otp", [sampleFinding]);
+    const back = await readFindings(root, "otp");
+    assert.equal(back.length, 1);
+    assert.deepEqual(back[0], sampleFinding);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("readFindings devuelve [] si no hay archivo", async () => {
+  const root = await tempRepo();
+  try {
+    assert.deepEqual(await readFindings(root, "inexistente"), []);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
