@@ -1,0 +1,7 @@
+{
+  "name": "@pda/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dashboard centrado en la spec (Vite+React + server delgado). Se implementa en el paso 0.4."
+}

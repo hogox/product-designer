@@ -1,0 +1,10 @@
+# El PRD es fuente de verdad: no se reformatea automáticamente.
+PRD-product-designer-agentico.md
+
+# Almacén de spec (YAML) y auditoría: formato controlado por @pda/spec, no por prettier.
+specs/
+
+# Build y deps
+dist/
+node_modules/
+pnpm-lock.yaml

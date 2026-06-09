@@ -1,0 +1,22 @@
+{
+  "name": "product-designer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Product Designer Agéntico — orquestador Spec-Driven (Fase 0 + Fase 1)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --check .",
+    "format:write": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}
