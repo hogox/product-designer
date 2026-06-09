@@ -10,7 +10,7 @@
         (n=315)
       computation: drop-off OTP = 43.2% (136/315, n=315)
   confidence: high
-  status: proposed
+  status: validated
   feeds: outcomes
   reviewed_by: null
   review_note: null
@@ -29,7 +29,7 @@
         entre los que llegan al OTP con segmento=recurrente (n=175)
       computation: drop-off OTP · segmento=recurrente = 43.4% (76/175, n=175)
   confidence: high
-  status: proposed
+  status: validated
   feeds: scope
   reviewed_by: null
   review_note: null
@@ -43,7 +43,7 @@
       locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
       computation: tiempo de espera promedio en abandonos = 71.9 s (n=136)
   confidence: medium
-  status: proposed
+  status: validated
   feeds: hypothesis
   reviewed_by: null
   review_note: null
@@ -61,7 +61,7 @@
       quote: El SMS con el código siempre demora un montón en mi teléfono, a veces no
         llega.
   confidence: high
-  status: proposed
+  status: validated
   feeds: hypothesis
   reviewed_by: null
   review_note: null
@@ -83,7 +83,7 @@
       locator: p.1, línea 8
       quote: incertidumbre me hizo dudar de la app.
   confidence: high
-  status: proposed
+  status: validated
   feeds: outcomes
   reviewed_by: null
   review_note: null
@@ -97,7 +97,7 @@
       quote: Que me dijeran "te enviamos el código al número terminado en 45" y un
         contador. Esa
   confidence: medium
-  status: proposed
+  status: validated
   feeds: scope
   reviewed_by: null
   review_note: null
@@ -111,7 +111,7 @@
       quote: Pido reenviar, pero el botón de reenviar recién se activa después de un
         rato largo. Eso me desespera.
   confidence: medium
-  status: proposed
+  status: validated
   feeds: constraints
   reviewed_by: null
   review_note: null
@@ -125,25 +125,7 @@
       quote: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir
         otro método, usaría la huella.
   confidence: medium
-  status: proposed
+  status: validated
   feeds: scope
-  reviewed_by: null
-  review_note: null
-- id: F-009
-  statement: "El abandono en OTP puede traducirse en pérdida definitiva de
-    usuarios: algunos solo regresaron por necesidad de la cuenta y de lo
-    contrario no volverían."
-  type: qualitative
-  evidence:
-    - source: entrevista-03.pdf
-      locator: p.1, línea 10
-      quote: Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la
-        cuenta, pero si no la hubiera
-    - source: entrevista-03.pdf
-      locator: p.1, línea 11
-      quote: necesitado, no vuelvo.
-  confidence: medium
-  status: proposed
-  feeds: outcomes
   reviewed_by: null
   review_note: null
