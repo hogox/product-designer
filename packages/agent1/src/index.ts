@@ -5,3 +5,4 @@
 export const PACKAGE_NAME = "@pda/agent1";
 
 export * from "./ingest.js";
+export * from "./compute.js";
