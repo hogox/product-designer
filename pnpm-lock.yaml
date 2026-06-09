@@ -83,6 +83,15 @@ importers:
         specifier: ^5.3.15
         version: 5.5.2
 
+  packages/agent2:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.102.0
+        version: 0.102.0(zod@3.25.76)
+      '@pda/spec':
+        specifier: workspace:*
+        version: link:../spec
+
   packages/orchestrator:
     dependencies:
       '@pda/agent1':
