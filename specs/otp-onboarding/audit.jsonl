@@ -9,3 +9,4 @@
 {"timestamp":"2026-06-09T19:49:35.116Z","actor":"Lead de diseño","action":"finding.reject","spec_id":"otp-onboarding","target":"F-009","reason":"muestra pequeña; insuficiente para afirmar pérdida definitiva"}
 {"timestamp":"2026-06-09T19:49:35.394Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa definicion"}
 {"timestamp":"2026-06-09T19:49:52.745Z","actor":"agent2","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"definición: 4 JTBD, 5 métricas; verificación OK"}
+{"timestamp":"2026-06-09T19:50:06.331Z","actor":"Hugo (Lead PM)","action":"gate.approve","spec_id":"otp-onboarding","target":null,"reason":"compuerta 'enmarcar' → v2"}
