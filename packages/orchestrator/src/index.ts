@@ -1,6 +1,9 @@
 // @pda/orchestrator — orquestador mínimo (v0).
-// Responsabilidad: enrutar, no diseñar. Mantiene estado de la spec, dispara verificación,
-// lleva al gate (bloquea el avance hasta aprobación humana) y registra todo en auditoría.
-// Esqueleto del paso 0.1. La máquina de estado de una etapa se implementa en el paso 1.7.
+// Enruta, no diseña: estado + routing de UNA etapa, verificación, gate (bloquea hasta
+// aprobación humana) y auditoría. NUNCA sube versión sin aprobación.
 
 export const PACKAGE_NAME = "@pda/orchestrator";
+
+export * from "./verify.js";
+export * from "./stage.js";
+export * from "./runner.js";

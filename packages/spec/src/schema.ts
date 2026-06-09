@@ -208,6 +208,11 @@ export const SpecSchema = z.object({
   history: z.array(HistoryEntrySchema),
 });
 export type Spec = z.infer<typeof SpecSchema>;
+export type Outcome = z.infer<typeof OutcomeSchema>;
+export type Task = z.infer<typeof TaskSchema>;
+export type Decision = z.infer<typeof DecisionSchema>;
+export type VerificationCriterion = z.infer<typeof VerificationCriterionSchema>;
+export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
 
 // ---------- helpers ----------
 
