@@ -109,6 +109,14 @@ function fullValidSpec(): Spec {
       },
     ],
     findings: [qualitativeFinding, quantitativeFinding],
+    jtbd: [
+      {
+        id: "J-001",
+        statement:
+          "Cuando verifico mi identidad en el onboarding, quiero recibir y confirmar el código rápido, para no abandonar el registro",
+        supported_by: ["F-001", "F-002"],
+      },
+    ],
     history: [
       {
         version: 1,
@@ -197,4 +205,36 @@ test("rechaza evidence sin quote ni computation", () => {
 test("acepta finding qualitative con quote y quantitative con computation", () => {
   assert.equal(FindingSchema.safeParse(qualitativeFinding).success, true);
   assert.equal(FindingSchema.safeParse(quantitativeFinding).success, true);
+});
+
+// ---------- Definición (Fase 2): JTBD + métricas estructuradas ----------
+
+test("createSpecV0 incluye jtbd vacío", () => {
+  const spec = createSpecV0({ id: "x", title: "x" });
+  assert.deepEqual(spec.jtbd, []);
+});
+
+test("rechaza un job JTBD sin supported_by (procedencia)", () => {
+  const bad = {
+    ...fullValidSpec(),
+    jtbd: [{ id: "J-001", statement: "un job", supported_by: [] }],
+  };
+  assert.equal(safeParseSpec(bad).success, false);
+});
+
+test("acepta outcome enriquecido con categoría HEART y señales", () => {
+  const spec = fullValidSpec();
+  spec.outcomes[0]!.heart = "task_success";
+  spec.outcomes[0]!.signals = [
+    "tasa de completitud OTP",
+    "reintentos por sesión",
+  ];
+  assert.equal(safeParseSpec(spec).success, true);
+});
+
+test("rechaza categoría HEART inválida", () => {
+  const spec = fullValidSpec();
+  // @ts-expect-error categoría fuera del enum
+  spec.outcomes[0]!.heart = "felicidad";
+  assert.equal(safeParseSpec(spec).success, false);
 });

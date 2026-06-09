@@ -13,11 +13,15 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: SOLO Fase 0 + Fase 1
+## Alcance actual: Fase 0 + Fase 1 (hechas) · Fase 2 (en curso)
 
-- SÍ: esquema/almacén de spec en git, shell del dashboard, orquestador mínimo, Agente 1
-  (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
-- NO: los otros 6 agentes, config real de MCP/conectores, RBAC, pulido de UI, multi-agente paralelo.
+- HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
+  mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
+- EN CURSO (F2): Agente 2 (Definición completo) — problem statement, JTBD y métricas HEART/GSM
+  anclados a los hallazgos; routing de dos etapas (Descubrimiento → Definición → gate enmarcar);
+  cierre del diamante Problema.
+- NO: los 5 agentes restantes (Exploración→Aprendizaje), config real de MCP/conectores, RBAC,
+  pulido de UI, multi-agente paralelo.
 
 ## Metodología de trabajo
 

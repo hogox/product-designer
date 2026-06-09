@@ -44,6 +44,16 @@ export type Confidence = z.infer<typeof ConfidenceSchema>;
 export type FindingStatus = z.infer<typeof FindingStatusSchema>;
 export type FindingFeeds = z.infer<typeof FindingFeedsSchema>;
 
+// Categorías HEART (métricas de Definición).
+export const HeartCategorySchema = z.enum([
+  "happiness",
+  "engagement",
+  "adoption",
+  "retention",
+  "task_success",
+]);
+export type HeartCategory = z.infer<typeof HeartCategorySchema>;
+
 export const TaskOwnerSchema = z.enum(["agent", "human"]);
 export const TaskStatusSchema = z.enum([
   "todo",
@@ -123,12 +133,16 @@ export type Finding = z.infer<typeof FindingSchema>;
 
 // ---------- los 6 elementos de la spec (§7) ----------
 
-// 1. Outcomes — qué éxito y cómo se mide
+// 1. Outcomes — qué éxito y cómo se mide.
+// heart/signals los enriquece el Agente de Definición (Fase 2); opcionales para
+// compatibilidad con specs previas (pasada ligera de Fase 1).
 export const OutcomeSchema = z.object({
   metric: z.string().min(1),
   baseline: z.string().nullable(),
   target: z.string().min(1),
   method: z.string().min(1),
+  heart: HeartCategorySchema.nullable().optional(),
+  signals: z.array(z.string()).optional(),
 });
 
 // 2. Alcance — qué entra y qué NO
@@ -178,6 +192,15 @@ export const VerificationCriterionSchema = z.object({
   evidence: z.string().nullable(),
 });
 
+// Jobs To Be Done (output de Definición). Cada job se ancla a los hallazgos que lo motivan
+// (procedencia heredada §D19): supported_by referencia ids de findings.
+export const JobSchema = z.object({
+  id: z.string().min(1),
+  statement: z.string().min(1), // "Cuando [situación], quiero [motivación], para [resultado]"
+  supported_by: z.array(z.string()).min(1), // ids de findings que lo sustentan
+});
+export type Job = z.infer<typeof JobSchema>;
+
 // Procedencia / auditoría: la versión sube SOLO al aprobar una compuerta.
 export const HistoryEntrySchema = z.object({
   version: z.number().int().nonnegative(),
@@ -205,6 +228,7 @@ export const SpecSchema = z.object({
   tasks: z.array(TaskSchema),
   verification: z.array(VerificationCriterionSchema),
   findings: z.array(FindingSchema),
+  jtbd: z.array(JobSchema).default([]), // Jobs To Be Done (Definición)
   history: z.array(HistoryEntrySchema),
 });
 export type Spec = z.infer<typeof SpecSchema>;
@@ -252,6 +276,7 @@ export function createSpecV0(input: { id: string; title: string }): Spec {
     tasks: [],
     verification: [],
     findings: [],
+    jtbd: [],
     history: [],
   };
 }
