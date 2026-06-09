@@ -1,0 +1,253 @@
+:root {
+  --bg: #0f1115;
+  --panel: #181b22;
+  --panel-2: #1f2430;
+  --line: #2a2f3a;
+  --text: #e7e9ee;
+  --muted: #9aa3b2;
+  --accent: #6ea8fe;
+  --real: #3fb950;
+  --mock: #d29922;
+  --danger: #f85149;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+a {
+  color: var(--accent);
+}
+
+.app-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.app-header h1 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.app-header .sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 16px;
+  padding: 16px 24px;
+  align-items: start;
+}
+
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.panel > h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.badge.real {
+  color: var(--real);
+  border-color: var(--real);
+}
+.badge.mock {
+  color: var(--mock);
+  border-color: var(--mock);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot.real {
+  background: var(--real);
+}
+.dot.mock {
+  background: var(--mock);
+}
+
+.spec-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.spec-title {
+  font-size: 20px;
+  font-weight: 650;
+  margin: 4px 0 2px;
+}
+.pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.section {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+.section:first-of-type {
+  border-top: none;
+}
+.section h3 {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+.empty {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+}
+ul.tight {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--panel-2);
+}
+.stage .num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.stage .name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.stage .meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+.gate-tag {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.gate-box {
+  border: 1px dashed var(--mock);
+  border-radius: 10px;
+  padding: 14px;
+  background: rgba(210, 153, 34, 0.06);
+}
+.gate-box .gate-title {
+  font-weight: 650;
+  margin-bottom: 4px;
+}
+.gate-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+button.gate {
+  font: inherit;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+button.gate.approve {
+  border-color: var(--real);
+  color: var(--real);
+}
+button.gate.iterate {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.audit-entry {
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0;
+}
+.audit-entry .who {
+  color: var(--text);
+  font-weight: 600;
+}
+.audit-entry .what {
+  color: var(--accent);
+}
+.audit-entry .when {
+  color: var(--muted);
+}
+.error {
+  color: var(--danger);
+}

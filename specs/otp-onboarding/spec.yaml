@@ -1,0 +1,22 @@
+id: otp-onboarding
+title: Reducir el abandono en la verificación OTP del onboarding
+version: 0
+status: draft
+current_stage: descubrimiento
+outcomes: []
+scope:
+  in_scope: []
+  non_goals: []
+constraints:
+  regulatory: []
+  accessibility: ""
+  design_system:
+    name: ""
+    version: ""
+    link: ""
+  technical: []
+decisions: []
+tasks: []
+verification: []
+findings: []
+history: []
