@@ -1,7 +1,12 @@
 import { Navigate, useParams } from "react-router-dom";
 
-import { findStage } from "../stages";
+import { findStage, type StageDef } from "../stages";
 import { SectionTabs } from "../components/SectionTabs";
+import { FindingsTriage } from "../components/FindingsTriage";
+import { EvidenceList } from "../components/EvidenceList";
+import { VerificationPanel } from "../components/VerificationPanel";
+import { useShell } from "../App";
+import { discoveryVerification, type SpecData } from "../api";
 
 /** /etapa/:stageId → redirige a la primera sección. */
 export function StageIndexRedirect() {
@@ -16,6 +21,7 @@ export function StageIndexRedirect() {
 export function StagePage() {
   const { stageId, sectionId } = useParams();
   const stage = findStage(stageId);
+  const shell = useShell();
   if (!stage) return <Navigate to="/" replace />;
 
   return (
@@ -35,11 +41,46 @@ export function StagePage() {
 
       <SectionTabs stageId={stage.id} sections={stage.sections} />
 
-      <div className="panel">
-        <p className="meta">
-          Sección: <strong>{sectionId}</strong> — contenido en D.3–D.5.
-        </p>
-      </div>
+      <StageContent stage={stage} section={sectionId} shell={shell} />
+    </div>
+  );
+}
+
+function StageContent({
+  stage,
+  section,
+  shell,
+}: {
+  stage: StageDef;
+  section: string | undefined;
+  shell: SpecData;
+}) {
+  if (stage.id === "descubrimiento") {
+    if (section === "hallazgos")
+      return (
+        <FindingsTriage
+          specId={shell.specId}
+          findings={shell.findings}
+          onChange={shell.refetch}
+        />
+      );
+    if (section === "evidencia")
+      return <EvidenceList findings={shell.findings} />;
+    if (section === "verificacion")
+      return (
+        <VerificationPanel
+          criteria={discoveryVerification(shell.findings)}
+          title="Verificación de Descubrimiento"
+        />
+      );
+  }
+
+  // Definición (D.4) y etapas mockeadas (D.5): pendiente.
+  return (
+    <div className="panel">
+      <p className="meta">
+        Sección <strong>{section}</strong> — próximo paso.
+      </p>
     </div>
   );
 }
