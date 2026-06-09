@@ -128,23 +128,6 @@
   feeds: scope
   reviewed_by: null
   review_note: null
-- id: F-009
-  statement: "El abandono en OTP puede ser definitivo: usuarios indican que solo
-    regresaron por necesidad de la cuenta y que de otro modo no volverían."
-  type: qualitative
-  evidence:
-    - source: entrevista-03.pdf
-      locator: p.1, línea 10
-      quote: Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la
-        cuenta, pero si no la hubiera
-    - source: entrevista-03.pdf
-      locator: p.1, línea 11
-      quote: necesitado, no vuelvo.
-  confidence: medium
-  status: validated
-  feeds: outcomes
-  reviewed_by: null
-  review_note: null
 - id: F-010
   statement: Reintentar el ingreso no resuelve el problema, ya que el código
     vuelve a demorar en el segundo intento, reforzando la sensación de pérdida
