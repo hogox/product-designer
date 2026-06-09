@@ -257,7 +257,9 @@ export async function approveGate(
   };
 
   await writeSpec(rootDir, next);
+  // la propuesta y los findings de trabajo quedan consumidos (los findings viven en la spec)
   await rm(specPaths(rootDir, specId).proposed, { force: true });
+  await rm(specPaths(rootDir, specId).findings, { force: true });
 
   await appendAudit(rootDir, {
     actor: opts.approver,

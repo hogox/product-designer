@@ -6,7 +6,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import express from "express";
-import { readAudit, readSpec, readProposedSpec } from "@pda/spec";
+import { readAudit, readSpec, readProposedSpec, readFindings } from "@pda/spec";
 import {
   getState,
   approveGate,
@@ -133,6 +133,15 @@ app.get("/api/state/:id", async (req, res) => {
     res.json(await getState(REPO_ROOT, req.params.id));
   } catch (err) {
     res.status(404).json({ error: String(err) });
+  }
+});
+
+// hallazgos en el store (para el triage tras Descubrimiento, antes de la propuesta)
+app.get("/api/findings/:id", async (req, res) => {
+  try {
+    res.json(await readFindings(REPO_ROOT, req.params.id));
+  } catch {
+    res.json([]);
   }
 });
 

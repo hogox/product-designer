@@ -35,18 +35,21 @@ export function App() {
   const [specId, setSpecId] = useState<string | null>(null);
   const [spec, setSpec] = useState<Spec | null>(null);
   const [proposed, setProposed] = useState<Spec | null>(null);
+  const [findings, setFindings] = useState<Finding[]>([]);
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async (id: string) => {
-    const [s, p, a] = await Promise.all([
+    const [s, p, f, a] = await Promise.all([
       getJson<Spec>(`/api/spec/${id}`),
       getJson<Spec | null>(`/api/proposed/${id}`),
+      getJson<Finding[]>(`/api/findings/${id}`).catch(() => []),
       getJson<AuditEntry[]>(`/api/audit/${id}`).catch(() => []),
     ]);
     setSpec(s);
     setProposed(p);
+    setFindings(f);
     setAudit(a);
   }, []);
 
@@ -66,6 +69,8 @@ export function App() {
   const enmarcar = pipeline.find((s) => s.gate === "enmarcar");
   const hasProposal = proposed !== null;
   const shown = proposed ?? spec;
+  const discoveryPhase = !hasProposal && findings.length > 0;
+  const showTriage = findings.length > 0;
 
   return (
     <>
@@ -73,8 +78,8 @@ export function App() {
         <div>
           <h1>Product Designer Agéntico</h1>
           <div className="sub">
-            Dashboard centrado en la spec · Fase 1 — el agente propone, el
-            humano aprueba
+            Dashboard centrado en la spec · Fase 2 (diamante Problema) — el
+            agente propone, el humano aprueba
           </div>
         </div>
         <div className="legend">
@@ -98,24 +103,39 @@ export function App() {
           {hasProposal && (
             <div className="panel" style={{ borderColor: "var(--accent)" }}>
               <h2>
-                Propuesta del Agente 1{" "}
+                Propuesta de Definición (Agente 2){" "}
                 <span className="badge real">pendiente</span>
               </h2>
               <div className="meta">
-                El Agente 1 (Descubrimiento) propone la <strong>v+1</strong> de
-                la spec. La versión sube solo si el humano aprueba la compuerta{" "}
+                El Agente 2 propone la <strong>v+1</strong> con problem
+                statement, JTBD y métricas, desde los hallazgos validados. La
+                versión sube solo si el humano aprueba la compuerta{" "}
                 <em>enmarcar</em>.
               </div>
               <VerificationPanel criteria={shown!.verification} />
             </div>
           )}
 
+          {discoveryPhase && (
+            <div className="panel" style={{ borderColor: "var(--accent)" }}>
+              <h2>
+                Descubrimiento (Agente 1){" "}
+                <span className="badge real">{findings.length} hallazgos</span>
+              </h2>
+              <div className="meta">
+                Triá los hallazgos abajo (validación micro). Luego corré
+                Definición (<code>orchestrator define</code>) para que el Agente
+                2 produzca el enmarcado: problem statement, JTBD y métricas.
+              </div>
+            </div>
+          )}
+
           <SpecViewer spec={shown} current={spec} isProposal={hasProposal} />
 
-          {hasProposal && specId && (
+          {showTriage && specId && (
             <FindingsTriage
               specId={specId}
-              findings={shown!.findings}
+              findings={findings}
               onChange={() => refetch(specId)}
             />
           )}
@@ -211,13 +231,33 @@ function SpecViewer({
           <ul className="tight">
             {spec.outcomes.map((o, i) => (
               <li key={i}>
+                {o.heart && <span className="badge mock">{o.heart}</span>}{" "}
                 <strong>{o.metric}</strong>: {o.baseline ?? "—"} → {o.target}{" "}
                 <span className="meta">({o.method})</span>
+                {o.signals && o.signals.length > 0 && (
+                  <div className="meta">señales: {o.signals.join("; ")}</div>
+                )}
               </li>
             ))}
           </ul>
         )}
       </Section>
+
+      {spec.jtbd.length > 0 && (
+        <Section title="JTBD — Jobs To Be Done">
+          {isNew((current?.jtbd.length ?? 0) === 0 && spec.jtbd.length > 0)}
+          <ul className="tight">
+            {spec.jtbd.map((j) => (
+              <li key={j.id}>
+                {j.statement}{" "}
+                <span className="meta">
+                  ({j.id} ← {j.supported_by.join(", ")})
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       <Section title="2 · Alcance">
         {isNew(
