@@ -1,5 +1,7 @@
 // @pda/agent1 — Agente 1 (Descubrimiento).
 // Loop: recolectar → extraer evidencia → computar (determinista) → derivar hallazgos → sintetizar.
-// Esqueleto del paso 0.1. La ingestión/extracción/cómputo/derivación se implementan en Fase 1.
+// Paso 1.2: ingestión (recolectar). Extracción/cómputo/derivación llegan en 1.3–1.6.
 
 export const PACKAGE_NAME = "@pda/agent1";
+
+export * from "./ingest.js";
