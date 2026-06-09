@@ -1,0 +1,2 @@
+{"timestamp":"2026-06-09T16:08:52.119Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-09T16:09:33.962Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"10 hallazgos; verificación OK"}
