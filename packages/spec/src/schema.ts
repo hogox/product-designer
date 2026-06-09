@@ -39,6 +39,10 @@ export const FindingFeedsSchema = z.enum([
   "hypothesis",
   "scope",
 ]);
+export type FindingType = z.infer<typeof FindingTypeSchema>;
+export type Confidence = z.infer<typeof ConfidenceSchema>;
+export type FindingStatus = z.infer<typeof FindingStatusSchema>;
+export type FindingFeeds = z.infer<typeof FindingFeedsSchema>;
 
 export const TaskOwnerSchema = z.enum(["agent", "human"]);
 export const TaskStatusSchema = z.enum([
