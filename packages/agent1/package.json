@@ -14,6 +14,7 @@
     "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0",
     "@pda/spec": "workspace:*",
     "papaparse": "^5.4.1",
     "pdfjs-dist": "^4.10.38",
