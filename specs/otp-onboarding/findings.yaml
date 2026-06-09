@@ -1,6 +1,7 @@
 - id: F-001
-  statement: El 43.2% (136/315) de los usuarios que llegan al paso de verificación
-    OTP abandonan sin completarlo.
+  statement: El 43.2% de los usuarios que llegan al paso de verificación OTP
+    abandonan sin completarlo (136 de 315), señalando un punto crítico de
+    fricción en el onboarding.
   type: quantitative
   evidence:
     - source: funnel-otp.csv
@@ -14,9 +15,9 @@
   reviewed_by: null
   review_note: null
 - id: F-002
-  statement: El abandono en el paso OTP es prácticamente idéntico entre usuarios
-    nuevos (42.9%) y recurrentes (43.4%), lo que sugiere que el problema no está
-    segmentado por tipo de usuario.
+  statement: El abandono en el OTP es prácticamente igual entre usuarios nuevos
+    (42.9%) y recurrentes (43.4%), por lo que el problema no se concentra en un
+    segmento específico y afecta a toda la base.
   type: quantitative
   evidence:
     - source: funnel-otp.csv
@@ -33,8 +34,9 @@
   reviewed_by: null
   review_note: null
 - id: F-003
-  statement: En los casos de abandono, el tiempo de espera promedio del código es
-    de 71.9 segundos, evidenciando demoras relevantes en la entrega del OTP.
+  statement: Los usuarios que abandonan en el OTP esperaron en promedio 71.9
+    segundos, lo que sugiere que la demora en la llegada del código es un factor
+    asociado al abandono.
   type: quantitative
   evidence:
     - source: funnel-otp.csv
@@ -42,13 +44,13 @@
       computation: tiempo de espera promedio en abandonos = 71.9 s (n=136)
   confidence: high
   status: validated
-  feeds: outcomes
+  feeds: hypothesis
   reviewed_by: null
   review_note: null
 - id: F-004
-  statement: "La demora en la llegada del SMS con el código es un motivo directo
-    de abandono: usuarios cierran la app antes de recibirlo, llegando incluso
-    minutos después."
+  statement: "La demora en la llegada del SMS provoca abandono: usuarios cierran
+    la app antes de recibir el código, que llega minutos después cuando ya
+    desistieron."
   type: qualitative
   evidence:
     - source: entrevista-01.txt
@@ -65,9 +67,9 @@
   reviewed_by: null
   review_note: null
 - id: F-005
-  statement: La falta de retroalimentación en pantalla (no se indica si el código
-    fue enviado, a qué número llega, ni cuánto esperar) genera incertidumbre y
-    desconfianza en la app.
+  statement: La falta de retroalimentación en la pantalla (no indicar si el código
+    fue enviado, a qué número llega ni cuánto esperar) genera incertidumbre y
+    desconfianza hacia la app.
   type: qualitative
   evidence:
     - source: entrevista-01.txt
@@ -87,8 +89,8 @@
   reviewed_by: null
   review_note: null
 - id: F-006
-  statement: Los usuarios sugieren mostrar el número de destino enmascarado y un
-    contador de tiempo como mejora para reducir la incertidumbre.
+  statement: Los usuarios desean señales claras como el número de destino
+    enmascarado y un contador de tiempo durante la espera del código.
   type: qualitative
   evidence:
     - source: entrevista-03.pdf
@@ -101,22 +103,22 @@
   reviewed_by: null
   review_note: null
 - id: F-007
-  statement: El botón de reenviar el código se activa demasiado tarde, lo que
-    aumenta la frustración del usuario durante la espera.
+  statement: El botón de reenvío de código se activa solo después de un tiempo
+    largo, lo que aumenta la frustración del usuario durante la espera.
   type: qualitative
   evidence:
     - source: entrevista-02.txt
       locator: párrafo 3
       quote: Pido reenviar, pero el botón de reenviar recién se activa después de un
         rato largo. Eso me desespera.
-  confidence: high
+  confidence: medium
   status: validated
   feeds: constraints
   reviewed_by: null
   review_note: null
 - id: F-008
-  statement: Algunos usuarios desean métodos de verificación alternativos (como
-    huella) en lugar del SMS OTP.
+  statement: Algunos usuarios preferirían métodos de verificación alternativos
+    como la huella digital en lugar del OTP por SMS.
   type: qualitative
   evidence:
     - source: entrevista-02.txt
@@ -128,18 +130,21 @@
   feeds: scope
   reviewed_by: null
   review_note: null
-- id: F-010
-  statement: Reintentar el ingreso no resuelve el problema, ya que el código
-    vuelve a demorar en el segundo intento, reforzando la sensación de pérdida
-    de tiempo.
+- id: F-009
+  statement: "El abandono en el OTP puede traducirse en pérdida de usuarios:
+    quienes no tienen necesidad fuerte de la cuenta no regresan tras una
+    experiencia frustrante."
   type: qualitative
   evidence:
-    - source: entrevista-01.txt
-      locator: párrafo 4
-      quote: Sí, pero a la segunda me pidió el código otra vez y tampoco llegaba
-        rápido. Sentí que perdía el tiempo.
+    - source: entrevista-03.pdf
+      locator: p.1, línea 10
+      quote: Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la
+        cuenta, pero si no la hubiera
+    - source: entrevista-03.pdf
+      locator: p.1, línea 11
+      quote: necesitado, no vuelvo.
   confidence: medium
   status: validated
-  feeds: hypothesis
+  feeds: outcomes
   reviewed_by: null
   review_note: null
