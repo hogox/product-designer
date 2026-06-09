@@ -9,6 +9,7 @@ import { GatePanel } from "../components/GatePanel";
 import { Framing } from "../components/Framing";
 import { Jtbd } from "../components/Jtbd";
 import { Metrics } from "../components/Metrics";
+import { StagePlaceholder } from "../components/StagePlaceholder";
 import { useShell } from "../App";
 import { discoveryVerification, type SpecData } from "../api";
 
@@ -59,6 +60,8 @@ function StageContent({
   section: string | undefined;
   shell: SpecData;
 }) {
+  if (!stage.real) return <StagePlaceholder stage={stage} />;
+
   if (stage.id === "descubrimiento") {
     if (section === "hallazgos")
       return (
