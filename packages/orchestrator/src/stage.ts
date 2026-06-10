@@ -222,14 +222,18 @@ export async function reviewFinding(
   updated[idx] = apply(findings[idx]!);
   await writeFindings(rootDir, specId, updated);
 
-  // espejar en la propuesta de Definición si existe (mismo estado por ítem)
+  // espejar en la propuesta de Definición si existe (mismo estado por ítem) y RECOMPUTAR
+  // su verificación: así el gate (que lee proposed.verification) bloquea/desbloquea en vivo
+  // según los estados de revisión (W2.3).
   try {
     const proposed = await readProposedSpec(rootDir, specId);
     const pidx = proposed.findings.findIndex((f) => f.id === findingId);
     if (pidx >= 0) {
       const pf = [...proposed.findings];
       pf[pidx] = apply(proposed.findings[pidx]!);
-      await writeProposedSpec(rootDir, { ...proposed, findings: pf });
+      const next: Spec = { ...proposed, findings: pf };
+      next.verification = verifyProposal(next);
+      await writeProposedSpec(rootDir, next);
     }
   } catch {
     // no hay propuesta todavía (triage de descubrimiento): ok

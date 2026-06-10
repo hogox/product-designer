@@ -177,6 +177,11 @@ verification:
     blocking: true
     status: pass
     evidence: 7 métricas
+  - criterion: Sin hallazgos de impacto alto pendientes ni en pausa
+    type: automated
+    blocking: true
+    status: fail
+    evidence: "5 high sin resolver: F-001, F-002, F-003, F-004, F-005"
 findings:
   - id: F-001
     statement: El 43.2% de los usuarios que llegan al paso de verificación OTP lo
@@ -191,8 +196,10 @@ findings:
     confidence: high
     status: validated
     feeds: outcomes
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-002
     statement: El abandono en el paso OTP es prácticamente idéntico entre usuarios
       nuevos (42.9%) y recurrentes (43.4%), lo que sugiere que el problema no
@@ -210,8 +217,10 @@ findings:
     confidence: high
     status: validated
     feeds: scope
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-003
     statement: Entre los usuarios que abandonan, el tiempo de espera promedio del
       código es de 71.9 segundos, evidenciando una demora relevante asociada al
@@ -224,8 +233,10 @@ findings:
     confidence: high
     status: validated
     feeds: hypothesis
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-004
     statement: "La demora en la recepción del código (SMS) es un detonante clave del
       abandono: los usuarios se cansan de esperar y cierran la app antes de que
@@ -243,8 +254,10 @@ findings:
     confidence: high
     status: validated
     feeds: hypothesis
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-005
     statement: La falta de retroalimentación en pantalla (no indicar si el código
       fue enviado, a qué número llega ni cuánto esperar) genera incertidumbre y
@@ -265,8 +278,10 @@ findings:
     confidence: high
     status: validated
     feeds: hypothesis
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-006
     statement: Los usuarios solicitan mejoras concretas como mostrar el número de
       destino enmascarado y un contador de tiempo durante la espera del código.
@@ -279,8 +294,10 @@ findings:
     confidence: medium
     status: validated
     feeds: scope
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-007
     statement: El botón de reenviar el código se activa tras un tiempo demasiado
       largo, lo que frustra a los usuarios que ya esperaban el SMS.
@@ -293,8 +310,10 @@ findings:
     confidence: medium
     status: validated
     feeds: constraints
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-008
     statement: Algunos usuarios preferirían métodos de verificación alternativos
       como la huella en lugar del SMS OTP.
@@ -307,8 +326,10 @@ findings:
     confidence: medium
     status: validated
     feeds: scope
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-009
     statement: "El abandono en el OTP puede traducirse en pérdida definitiva de
       usuarios: quienes no necesitaban la cuenta con urgencia no regresarían."
@@ -324,8 +345,10 @@ findings:
     confidence: medium
     status: validated
     feeds: outcomes
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
   - id: F-010
     statement: Reintentar la verificación no resuelve el problema, ya que el código
       vuelve a demorar y refuerza la sensación de pérdida de tiempo.
@@ -338,8 +361,10 @@ findings:
     confidence: medium
     status: validated
     feeds: hypothesis
+    review_status: pendiente
     reviewed_by: null
     review_note: null
+    reviewed_at: null
 jtbd:
   - id: J-001
     statement: Cuando estoy en el paso de verificación OTP y espero el código por

@@ -273,11 +273,57 @@ test("runDefinition propone, verifica y BLOQUEA en el gate (sin subir versión)"
     assert.equal(gate.blocked, true);
     assert.equal(gate.gate, "enmarcar");
     assert.equal(gate.proposed.jtbd.length, 1);
-    assert.equal(blockingPasses(gate.verification), true);
+    // W2.3: con F-001 (high) pendiente, el gate bloquea por estado de revisión
+    assert.equal(blockingPasses(gate.verification), false);
     const current = await readSpec(root, id);
     assert.equal(current.version, 0); // sin subir
     const st = await getState(root, id);
     assert.equal(st.hasProposal, true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("W2.3: el gate bloquea con un high pendiente/en_pausa y desbloquea al resolverlo", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await runDiscovery(root, id, {
+      runner: discoveryStub([finding("F-001", "t"), finding("F-002", "q")]),
+      author: AUTHOR,
+    });
+    await runDefinition(root, id, { runner: definitionStub(), author: AUTHOR });
+
+    // F-001 es high y arranca pendiente → bloquea
+    assert.equal(
+      blockingPasses((await readProposedSpec(root, id)).verification),
+      false,
+    );
+    // pausar tampoco desbloquea (sigue sin resolver)
+    await reviewFinding(root, id, "F-001", {
+      status: "en_pausa",
+      comment: "validar con analítica",
+      actor: "Hugo",
+    });
+    assert.equal(
+      blockingPasses((await readProposedSpec(root, id)).verification),
+      false,
+    );
+    await assert.rejects(
+      () => approveGate(root, id, { approver: "Lead PM", author: AUTHOR }),
+      /no se puede aprobar/i,
+    );
+
+    // aprobar el high desbloquea (reviewFinding recomputa la verificación de la propuesta)
+    await reviewFinding(root, id, "F-001", { status: "aprobado", actor: "Hugo" });
+    assert.equal(
+      blockingPasses((await readProposedSpec(root, id)).verification),
+      true,
+    );
+    const next = await approveGate(root, id, {
+      approver: "Lead PM",
+      author: AUTHOR,
+    });
+    assert.equal(next.version, 1);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -304,6 +350,8 @@ test("flujo completo: discover → define → approve sube a v1 con history", as
       author: AUTHOR,
     });
     await runDefinition(root, id, { runner: definitionStub(), author: AUTHOR });
+    // W2.3: hay que resolver el high pendiente antes de aprobar
+    await reviewFinding(root, id, "F-001", { status: "aprobado", actor: "Hugo" });
     const next = await approveGate(root, id, {
       approver: "Lead PM",
       author: AUTHOR,

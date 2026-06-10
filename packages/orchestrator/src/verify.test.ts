@@ -5,6 +5,7 @@ import { createSpecV0, type Finding, type Spec } from "@pda/spec";
 
 import {
   definitionVerification,
+  reviewVerification,
   verifyProposal,
   blockingPasses,
 } from "./index.js";
@@ -23,9 +24,9 @@ const finding: Finding = {
   confidence: "high",
   status: "validated",
   feeds: "outcomes",
-  reviewed_by: null,
+  reviewed_by: "Lead",
   review_note: null,
-  review_status: "pendiente",
+  review_status: "aprobado",
   reviewed_at: null,
 };
 
@@ -89,4 +90,48 @@ test("falla si una métrica no declara categoría HEART", () => {
     ],
   });
   assert.equal(blockingPasses(definitionVerification(p)), false);
+});
+
+// ---------- W2.3: el gate respeta los estados de revisión ----------
+
+const highWith = (rs: Finding["review_status"]): Finding => ({
+  ...finding,
+  review_status: rs,
+});
+
+test("un hallazgo high pendiente o en_pausa BLOQUEA la compuerta", () => {
+  assert.equal(
+    blockingPasses(verifyProposal(proposal({ findings: [highWith("pendiente")] }))),
+    false,
+  );
+  assert.equal(
+    blockingPasses(verifyProposal(proposal({ findings: [highWith("en_pausa")] }))),
+    false,
+  );
+});
+
+test("un hallazgo high aprobado o rechazado NO bloquea", () => {
+  assert.equal(
+    blockingPasses(verifyProposal(proposal({ findings: [highWith("aprobado")] }))),
+    true,
+  );
+  assert.equal(
+    blockingPasses(verifyProposal(proposal({ findings: [highWith("rechazado")] }))),
+    true,
+  );
+});
+
+test("medium/low en pausa ADVIERTE pero no bloquea", () => {
+  const medPaused: Finding = {
+    ...finding,
+    confidence: "medium",
+    review_status: "en_pausa",
+  };
+  const criteria = reviewVerification([medPaused]);
+  // hay una advertencia (no bloqueante) en estado fail
+  const warn = criteria.find((c) => !c.blocking);
+  assert.ok(warn);
+  assert.equal(warn?.status, "fail");
+  // pero no bloquea
+  assert.equal(blockingPasses(criteria), true);
 });

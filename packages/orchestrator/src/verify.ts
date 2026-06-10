@@ -87,11 +87,51 @@ export function definitionVerification(
   ];
 }
 
-/** Verificación completa de una propuesta de Definición: hallazgos + enmarcado. */
+/**
+ * Verificación por ESTADO DE REVISIÓN (D2 · W2.3): la compuerta no puede aprobarse con
+ * hallazgos de impacto alto (`confidence: high`) sin resolver — `pendiente` o `en_pausa`
+ * bloquean. Los `medium/low` en pausa generan una advertencia NO bloqueante (umbral
+ * confirmado: high bloquea, medium/low advierte).
+ */
+export function reviewVerification(
+  findings: Finding[],
+): VerificationCriterion[] {
+  const highUnresolved = findings.filter(
+    (f) =>
+      f.confidence === "high" &&
+      (f.review_status === "pendiente" || f.review_status === "en_pausa"),
+  );
+  const lowMedPaused = findings.filter(
+    (f) => f.confidence !== "high" && f.review_status === "en_pausa",
+  );
+
+  const out: VerificationCriterion[] = [
+    crit(
+      "Sin hallazgos de impacto alto pendientes ni en pausa",
+      highUnresolved.length === 0,
+      highUnresolved.length === 0
+        ? "todos los high resueltos (aprobado/rechazado)"
+        : `${highUnresolved.length} high sin resolver: ${highUnresolved.map((f) => f.id).join(", ")}`,
+    ),
+  ];
+  if (lowMedPaused.length > 0) {
+    out.push({
+      criterion: "Hallazgos de impacto medio/bajo en pausa (advertencia)",
+      type: "automated",
+      blocking: false, // advierte, no bloquea
+      status: "fail",
+      evidence: `${lowMedPaused.length} en pausa: ${lowMedPaused.map((f) => f.id).join(", ")}`,
+    });
+  }
+  return out;
+}
+
+/** Verificación completa de una propuesta de Definición: hallazgos + enmarcado + revisión. */
 export function verifyProposal(proposed: Spec): VerificationCriterion[] {
   return [
     ...automatedVerification(proposed.findings),
     ...definitionVerification(proposed),
+    ...reviewVerification(proposed.findings),
   ];
 }
 
