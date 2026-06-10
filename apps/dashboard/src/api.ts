@@ -69,6 +69,22 @@ export function discardSource(
   });
 }
 
+// --- revisión humana por hallazgo (D2 · W2.4) ---
+
+export type ReviewStatus = "pendiente" | "aprobado" | "rechazado" | "en_pausa";
+
+export function reviewFinding(
+  specId: string,
+  fid: string,
+  body: { status: ReviewStatus; comment?: string; by?: string },
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/findings/${fid}/review`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export interface StageState {
   specId: string;
   version: number;

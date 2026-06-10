@@ -636,3 +636,66 @@ button.primary {
   color: var(--danger);
   border-color: var(--danger);
 }
+
+/* ---------- triage de hallazgos (D2 · W2.4) ---------- */
+.badge.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.badge.review-aprobado {
+  color: var(--real);
+  border-color: var(--real);
+}
+.badge.review-rechazado {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.badge.review-en_pausa {
+  color: var(--mock);
+  border-color: var(--mock);
+}
+.badge.review-pendiente {
+  color: var(--muted);
+}
+.triage-counts {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.triage-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.chip {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip:hover {
+  color: var(--text);
+}
+.chip.active {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.triage-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+button.gate.reject {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+button.gate:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

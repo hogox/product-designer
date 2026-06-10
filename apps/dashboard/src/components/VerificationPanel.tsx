@@ -5,6 +5,7 @@ export interface Criterion {
   criterion: string;
   status: string; // "pass" | "fail" | "pending"
   evidence: string | null;
+  blocking?: boolean; // si es false, un fail es advertencia (no bloquea la compuerta)
 }
 
 export function VerificationPanel({
@@ -24,15 +25,20 @@ export function VerificationPanel({
   return (
     <div className="panel">
       <h2>{title}</h2>
-      {criteria.map((c, i) => (
-        <div key={i} className="meta" style={{ marginBottom: 4 }}>
-          <span className={`badge ${c.status === "pass" ? "real" : "mock"}`}>
-            {c.status === "pass" ? "✓" : c.status === "fail" ? "✗" : "·"}
-          </span>{" "}
-          {c.criterion}
-          {c.evidence ? ` — ${c.evidence}` : ""}
-        </div>
-      ))}
+      {criteria.map((c, i) => {
+        // fail no bloqueante = advertencia (ámbar), no un ✗ rojo de bloqueo
+        const warning = c.status === "fail" && c.blocking === false;
+        const cls = c.status === "pass" ? "real" : warning ? "mock" : "danger";
+        const glyph =
+          c.status === "pass" ? "✓" : c.status === "fail" ? (warning ? "⚠" : "✗") : "·";
+        return (
+          <div key={i} className="meta" style={{ marginBottom: 4 }}>
+            <span className={`badge ${cls}`}>{glyph}</span> {c.criterion}
+            {warning ? " (advertencia)" : ""}
+            {c.evidence ? ` — ${c.evidence}` : ""}
+          </div>
+        );
+      })}
     </div>
   );
 }
