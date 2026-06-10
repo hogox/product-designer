@@ -78,6 +78,9 @@ export function StageSidebar({
         <NavLink to={specPath(specId)} end className={navCls}>
           <span className="nm">Spec viva</span>
         </NavLink>
+        <NavLink to={specPath(specId, "/fuentes")} className={navCls}>
+          <span className="nm">Fuentes</span>
+        </NavLink>
 
         <div className="nav-group">Pipeline (7 etapas)</div>
         {STAGES.map((s) => (

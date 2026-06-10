@@ -558,3 +558,81 @@ button.primary {
   font-size: 12px;
   margin-top: 10px;
 }
+
+/* ---------- página de Fuentes (D2 · W1.4) ---------- */
+.dropzone {
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.dropzone:hover {
+  border-color: var(--accent);
+}
+.dropzone.over {
+  border-color: var(--accent);
+  background: rgba(110, 168, 254, 0.08);
+  color: var(--text);
+}
+.source-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.source-row.discarded {
+  opacity: 0.55;
+}
+.source-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.source-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
+}
+.source-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: none;
+}
+.source-actions select {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 12px;
+}
+.badge.kind {
+  color: var(--accent);
+  border-color: var(--accent);
+  text-transform: capitalize;
+}
+.badge.status-subido {
+  color: var(--muted);
+}
+.badge.status-ingerido {
+  color: var(--real);
+  border-color: var(--real);
+}
+.badge.status-descartado {
+  color: var(--danger);
+  border-color: var(--danger);
+}

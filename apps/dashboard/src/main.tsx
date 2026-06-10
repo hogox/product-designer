@@ -6,6 +6,7 @@ import { App } from "./App";
 import { SpecsHomePage } from "./pages/SpecsHomePage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { StagePage, StageIndexRedirect } from "./pages/StagePage";
+import { SourcesPage } from "./pages/SourcesPage";
 import { AuditPage } from "./pages/AuditPage";
 import "./styles.css";
 
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
         {/* Toda spec cuelga de /spec/:specId (D2 · W0.3): la URL aísla el contexto */}
         <Route path="/spec/:specId" element={<App />}>
           <Route index element={<OverviewPage />} />
+          <Route path="fuentes" element={<SourcesPage />} />
           <Route path="etapa/:stageId" element={<StageIndexRedirect />} />
           <Route path="etapa/:stageId/:sectionId" element={<StagePage />} />
           <Route path="auditoria" element={<AuditPage />} />

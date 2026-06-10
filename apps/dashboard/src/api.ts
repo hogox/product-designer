@@ -2,7 +2,15 @@
 // páginas. La spec es la fuente de verdad: aquí se centraliza su lectura y refetch.
 
 import { useCallback, useEffect, useState } from "react";
-import type { Spec, Finding, AuditEntry } from "@pda/spec";
+import type {
+  Spec,
+  Finding,
+  AuditEntry,
+  SourceEntry,
+  SourceKind,
+} from "@pda/spec";
+
+export type { SourceEntry, SourceKind } from "@pda/spec";
 
 export async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -15,6 +23,49 @@ export async function postJson(url: string, body: unknown): Promise<Response> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
+  });
+}
+
+// --- hub de Fuentes (D2 · W1.4) ---
+
+export function getSources(specId: string): Promise<SourceEntry[]> {
+  return getJson<SourceEntry[]>(`/api/specs/${specId}/sources`);
+}
+
+/** Sube un archivo (multipart). El server computa size+sha256. */
+export async function uploadSource(
+  specId: string,
+  file: File,
+  opts: { kind?: SourceKind; by?: string } = {},
+): Promise<Response> {
+  const form = new FormData();
+  form.append("file", file);
+  if (opts.kind) form.append("kind", opts.kind);
+  if (opts.by) form.append("by", opts.by);
+  return fetch(`/api/specs/${specId}/sources`, { method: "POST", body: form });
+}
+
+export function patchSource(
+  specId: string,
+  sourceId: string,
+  patch: { kind?: SourceKind; status?: string; linkedStages?: string[]; by?: string },
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/sources/${sourceId}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+}
+
+export function discardSource(
+  specId: string,
+  sourceId: string,
+  opts: { reason?: string; by?: string } = {},
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/sources/${sourceId}`, {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(opts),
   });
 }
 
