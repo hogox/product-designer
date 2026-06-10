@@ -48,7 +48,12 @@ export async function uploadSource(
 export function patchSource(
   specId: string,
   sourceId: string,
-  patch: { kind?: SourceKind; status?: string; linkedStages?: string[]; by?: string },
+  patch: {
+    kind?: SourceKind;
+    status?: string;
+    linkedStages?: string[];
+    by?: string;
+  },
 ): Promise<Response> {
   return fetch(`/api/specs/${specId}/sources/${sourceId}`, {
     method: "PATCH",

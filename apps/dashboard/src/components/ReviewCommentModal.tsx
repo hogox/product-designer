@@ -58,11 +58,7 @@ export function ReviewCommentModal({
           <button type="button" onClick={onClose}>
             Cancelar
           </button>
-          <button
-            type="submit"
-            className="primary"
-            disabled={!comment.trim()}
-          >
+          <button type="submit" className="primary" disabled={!comment.trim()}>
             {verb}
           </button>
         </div>

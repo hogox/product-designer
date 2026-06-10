@@ -46,7 +46,11 @@ export function FindingsTriage({
     .filter((f) => filter === "todos" || f.review_status === filter)
     .sort((a, b) => (order[a.confidence] ?? 9) - (order[b.confidence] ?? 9));
 
-  async function setStatus(fid: string, status: ReviewStatus, comment?: string) {
+  async function setStatus(
+    fid: string,
+    status: ReviewStatus,
+    comment?: string,
+  ) {
     if (!specId) return;
     const res = await reviewFinding(specId, fid, {
       status,
@@ -75,7 +79,8 @@ export function FindingsTriage({
   return (
     <div className="panel">
       <h2>
-        Triage de hallazgos <span className="badge real">{findings.length}</span>
+        Triage de hallazgos{" "}
+        <span className="badge real">{findings.length}</span>
       </h2>
       <div className="triage-counts">
         {findings.length} hallazgos · {count("aprobado")} aprobados ·{" "}
@@ -152,10 +157,7 @@ function FindingCard({
           {f.confidence}
         </span>
         <strong style={{ fontSize: 14, flex: 1 }}>{f.statement}</strong>
-        <span
-          className={`badge review-${f.review_status}`}
-          title={reviewedTip}
-        >
+        <span className={`badge review-${f.review_status}`} title={reviewedTip}>
           {STATUS_LABEL[f.review_status]}
         </span>
       </div>

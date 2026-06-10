@@ -75,7 +75,8 @@ export function SourcesPage() {
 
   async function onDiscard(sid: string) {
     if (!specId) return;
-    const reason = window.prompt("Motivo del descarte (opcional):") ?? undefined;
+    const reason =
+      window.prompt("Motivo del descarte (opcional):") ?? undefined;
     await discardSource(specId, sid, { reason });
     await refetch();
   }
@@ -103,7 +104,8 @@ export function SourcesPage() {
         onDrop={(e) => {
           e.preventDefault();
           setDragOver(false);
-          if (e.dataTransfer.files.length) void uploadFiles(e.dataTransfer.files);
+          if (e.dataTransfer.files.length)
+            void uploadFiles(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
       >

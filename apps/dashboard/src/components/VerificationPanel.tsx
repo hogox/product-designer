@@ -30,7 +30,13 @@ export function VerificationPanel({
         const warning = c.status === "fail" && c.blocking === false;
         const cls = c.status === "pass" ? "real" : warning ? "mock" : "danger";
         const glyph =
-          c.status === "pass" ? "✓" : c.status === "fail" ? (warning ? "⚠" : "✗") : "·";
+          c.status === "pass"
+            ? "✓"
+            : c.status === "fail"
+              ? warning
+                ? "⚠"
+                : "✗"
+              : "·";
         return (
           <div key={i} className="meta" style={{ marginBottom: 4 }}>
             <span className={`badge ${cls}`}>{glyph}</span> {c.criterion}

@@ -4,8 +4,14 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
 
-import { getSpecGroups, useSpecData, type SpecData, type SpecGroup } from "./api";
+import {
+  getSpecGroups,
+  useSpecData,
+  type SpecData,
+  type SpecGroup,
+} from "./api";
 import { StageSidebar } from "./components/StageSidebar";
+import { SpecBreadcrumb } from "./components/SpecBreadcrumb";
 
 export function App() {
   // El specId vive en la URL (D2 · W0.3): refresh lo conserva y dos pestañas son
@@ -15,7 +21,9 @@ export function App() {
 
   useEffect(() => {
     // grupos para el switcher del sidebar (specs del mismo producto + "ver todas")
-    getSpecGroups().then(setGroups).catch(() => {});
+    getSpecGroups()
+      .then(setGroups)
+      .catch(() => {});
   }, []);
 
   const data = useSpecData(specId ?? null);
@@ -28,16 +36,20 @@ export function App() {
         spec={data.spec}
         state={data.state}
       />
-      <main className="content">
-        {data.error && (
-          <div className="panel error">
-            Error: {data.error}
-            <div style={{ marginTop: 8 }}>
-              <Link to="/">← Mis specs</Link>
+      <main className="min-w-0 px-6 py-5">
+        {/* Contenido centrado con ancho máximo (ANEXO §2) + breadcrumb persistente */}
+        <div className="mx-auto max-w-5xl space-y-4">
+          <SpecBreadcrumb />
+          {data.error && (
+            <div className="rounded-lg border border-destructive/40 bg-card p-4 text-sm text-destructive">
+              Error: {data.error}
+              <div className="mt-2">
+                <Link to="/">← Mis specs</Link>
+              </div>
             </div>
-          </div>
-        )}
-        <Outlet context={data} />
+          )}
+          <Outlet context={data} />
+        </div>
       </main>
     </div>
   );
