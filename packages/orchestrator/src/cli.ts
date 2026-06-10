@@ -8,6 +8,13 @@
 
 import { join } from "node:path";
 
+import {
+  createSpec,
+  updateSpecMeta,
+  archiveSpec,
+  readSpecGroups,
+} from "@pda/spec";
+
 import { blockingPasses } from "./verify.js";
 import {
   getState,
@@ -42,11 +49,86 @@ function printVerification(criteria: Parameters<typeof blockingPasses>[0]) {
 
 async function main() {
   const [, , cmd, specId] = process.argv;
+
+  // --- gestión multi-spec (D2 · W0): no requieren specId posicional ---
+
+  if (cmd === "list-specs") {
+    const groups = await readSpecGroups(ROOT);
+    if (groups.length === 0) {
+      console.log("(sin specs)");
+      return;
+    }
+    for (const g of groups) {
+      console.log(`\n▸ ${g.product}`);
+      for (const s of g.specs) {
+        const flagArchivada = s.status === "archivada" ? " [archivada]" : "";
+        console.log(`   ${s.id} — ${s.name} · ${s.stage}${flagArchivada}`);
+      }
+    }
+    return;
+  }
+
+  if (cmd === "create-spec") {
+    const name = flag("name");
+    const product = flag("product");
+    if (!name || !product) {
+      console.error(
+        'Uso: create-spec --name "..." --product "..." [--id kebab] [--description "..."] [--by "..."]',
+      );
+      process.exit(1);
+    }
+    const entry = await createSpec(
+      ROOT,
+      { id: flag("id"), name, product, description: flag("description") },
+      flag("by") ?? AUTHOR.name,
+    );
+    console.log(
+      `✓ Spec creada: ${entry.id} — ${entry.name} (producto "${entry.product}", etapa ${entry.stage}).`,
+    );
+    return;
+  }
+
   if (!cmd || !specId) {
     console.log(
-      "Uso: orchestrator <discover|define|status|approve|iterate> <specId> [flags]",
+      "Uso: orchestrator <discover|define|status|approve|iterate|list-specs|create-spec|update-spec|archive-spec> <specId> [flags]",
     );
     process.exit(cmd ? 1 : 0);
+  }
+
+  if (cmd === "update-spec") {
+    const patch: {
+      name?: string;
+      product?: string;
+      description?: string;
+    } = {};
+    if (flag("name") !== undefined) patch.name = flag("name");
+    if (flag("product") !== undefined) patch.product = flag("product");
+    if (flag("description") !== undefined)
+      patch.description = flag("description");
+    const entry = await updateSpecMeta(
+      ROOT,
+      specId,
+      patch,
+      flag("by") ?? AUTHOR.name,
+    );
+    console.log(
+      `✓ Metadatos actualizados: ${entry.id} — ${entry.name} (producto "${entry.product}").`,
+    );
+    return;
+  }
+
+  if (cmd === "archive-spec") {
+    const reason = flag("reason");
+    if (!reason) {
+      console.error('Uso: archive-spec <specId> --reason "motivo" [--by "..."]');
+      process.exit(1);
+    }
+    const entry = await archiveSpec(ROOT, specId, {
+      reason,
+      actor: flag("by") ?? AUTHOR.name,
+    });
+    console.log(`✓ Spec archivada (soft delete): ${entry.id} — ${entry.name}.`);
+    return;
   }
 
   if (cmd === "status") {
