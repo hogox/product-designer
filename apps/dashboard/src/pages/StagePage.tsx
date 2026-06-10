@@ -90,6 +90,7 @@ function StageContent({
         <FindingsTriage
           specId={shell.specId}
           findings={shell.findings}
+          jtbd={(shell.proposed ?? shell.spec)?.jtbd ?? []}
           onChange={shell.refetch}
         />
       );
