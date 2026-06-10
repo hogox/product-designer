@@ -13,14 +13,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   getSources,
+  getSourceCompleteness,
   uploadSource,
   patchSource,
   discardSource,
   type SourceEntry,
   type SourceKind,
+  type SourceCompleteness,
 } from "../api";
 import { SourceKindBadge } from "../components/badges";
-import { SectionIcon } from "../components/icons";
+import { SectionIcon, SOURCE_KIND_ICON } from "../components/icons";
 
 const KINDS: SourceKind[] = [
   "documento",
@@ -48,6 +50,9 @@ function humanSize(bytes: number): string {
 export function SourcesPage() {
   const { specId } = useParams();
   const [sources, setSources] = useState<SourceEntry[]>([]);
+  const [completeness, setCompleteness] = useState<SourceCompleteness | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -56,7 +61,12 @@ export function SourcesPage() {
   const refetch = useCallback(async () => {
     if (!specId) return;
     try {
-      setSources(await getSources(specId));
+      const [srcs, comp] = await Promise.all([
+        getSources(specId),
+        getSourceCompleteness(specId).catch(() => null),
+      ]);
+      setSources(srcs);
+      setCompleteness(comp);
       setError(null);
     } catch (e) {
       setError(String(e));
@@ -119,6 +129,8 @@ export function SourcesPage() {
           </p>
         </div>
       </div>
+
+      <CompletenessIndicator completeness={completeness} />
 
       <div
         className={cn(
@@ -189,6 +201,47 @@ export function SourcesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Completitud del plan de discovery (W6.2b): tipos esperados (del intake) vs. subidos.
+// Solo se muestra si hay un plan que exige tipos (sin intake → expected vacío → no aparece).
+function CompletenessIndicator({
+  completeness: c,
+}: {
+  completeness: SourceCompleteness | null;
+}) {
+  if (!c || c.expected.length === 0) return null;
+  return (
+    <Card className="gap-0 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium">Completitud del plan</span>
+        {c.satisfied ? (
+          <Badge variant="aprobado">plan cubierto</Badge>
+        ) : (
+          <Badge variant="enPausa">
+            faltan {c.missing.length} tipo{c.missing.length === 1 ? "" : "s"}
+          </Badge>
+        )}
+      </div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        {c.expected.map((kind) => {
+          const present = c.present.includes(kind);
+          const Icon = SOURCE_KIND_ICON[kind];
+          return present ? (
+            <Badge key={kind} variant="real" className="capitalize">
+              <Icon className="size-3" />
+              {kind}
+            </Badge>
+          ) : (
+            <Badge key={kind} variant="enPausa" className="capitalize">
+              <Icon className="size-3" />
+              falta: {kind}
+            </Badge>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

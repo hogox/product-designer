@@ -20,6 +20,8 @@ import {
   addSource,
   updateSource,
   discardSource,
+  updateIntake,
+  computeSourceCompleteness,
   StageSchema,
   type SourceKind,
   type SourceStatus,
@@ -222,6 +224,21 @@ app.post("/api/specs/reindex", async (_req, res) => {
   }
 });
 
+// --- intake (D2 · W6): enmarcado del discovery ---
+
+// setear/reemplazar el intake de la spec (researchQuestion + plan). Audita intake.update.
+app.patch("/api/specs/:id/intake", async (req, res) => {
+  const { by: _by, ...intake } = req.body ?? {};
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  try {
+    const next = await updateIntake(REPO_ROOT, req.params.id, intake, actor);
+    res.json(next.intake);
+  } catch (err) {
+    // researchQuestion faltante / enum inválido → 400; spec inexistente → cae acá también
+    res.status(400).json({ error: String(err) });
+  }
+});
+
 // --- hub de Fuentes (D2 · W1): documentación que alimenta al Agente 1 ---
 
 // listar fuentes de una spec
@@ -230,6 +247,15 @@ app.get("/api/specs/:id/sources", async (req, res) => {
     res.json(await readSources(REPO_ROOT, req.params.id));
   } catch (err) {
     res.status(500).json({ error: String(err) });
+  }
+});
+
+// completitud de fuentes (W6.2b): tipos esperados (del plan) vs. subidos
+app.get("/api/specs/:id/sources/completeness", async (req, res) => {
+  try {
+    res.json(await computeSourceCompleteness(REPO_ROOT, req.params.id));
+  } catch (err) {
+    res.status(404).json({ error: String(err) });
   }
 });
 

@@ -74,6 +74,37 @@ export function discardSource(
   });
 }
 
+// --- intake / completitud de fuentes (D2 · W6) ---
+
+export interface SourceCompleteness {
+  expected: SourceKind[];
+  present: SourceKind[];
+  missing: SourceKind[];
+  satisfied: boolean;
+}
+
+/** Completitud de fuentes: tipos esperados (plan de discovery) vs. subidos. */
+export function getSourceCompleteness(
+  specId: string,
+): Promise<SourceCompleteness> {
+  return getJson<SourceCompleteness>(
+    `/api/specs/${specId}/sources/completeness`,
+  );
+}
+
+/** Setea/reemplaza el intake de la spec (base del wizard y el retrofit, W6.3/W6.4). */
+export function patchIntake(
+  specId: string,
+  intake: unknown,
+  by?: string,
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/intake`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ...(intake as object), by }),
+  });
+}
+
 // --- revisión humana por hallazgo (D2 · W2.4) ---
 
 export type ReviewStatus = "pendiente" | "aprobado" | "rechazado" | "en_pausa";
