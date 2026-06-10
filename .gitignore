@@ -5,6 +5,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# índice de specs: cache regenerable desde el filesystem (la verdad es specs/<id>/)
+specs/index.yaml
+
 # env / secrets (ANTHROPIC_API_KEY must never be committed)
 .env
 .env.*

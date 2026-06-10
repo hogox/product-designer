@@ -54,6 +54,9 @@ function fullValidSpec(): Spec {
   return {
     id: "spec-demo",
     title: "Reducir abandono en verificación OTP",
+    product: "Onboarding",
+    description: null,
+    archived: false,
     version: 1,
     status: "in_review",
     current_stage: "descubrimiento",
@@ -138,6 +141,37 @@ test("createSpecV0 produce una spec v0 válida", () => {
   assert.equal(spec.version, 0);
   assert.equal(spec.status, "draft");
   assert.equal(spec.current_stage, "descubrimiento");
+});
+
+test("createSpecV0 acepta product/description y por default los completa (compat)", () => {
+  const conMeta = createSpecV0({
+    id: "spec-002",
+    title: "Con producto",
+    product: "Onboarding",
+    description: "una descripción",
+  });
+  assert.equal(conMeta.product, "Onboarding");
+  assert.equal(conMeta.description, "una descripción");
+  assert.equal(conMeta.archived, false);
+
+  const sinMeta = createSpecV0({ id: "spec-003", title: "Sin producto" });
+  assert.equal(sinMeta.product, "Sin producto");
+  assert.equal(sinMeta.description, null);
+});
+
+test("SpecSchema aplica defaults de product/description/archived a una spec previa", () => {
+  // simula una spec serializada antes de D2 (sin los campos nuevos)
+  const legacy = { ...fullValidSpec() } as Record<string, unknown>;
+  delete legacy.product;
+  delete legacy.description;
+  delete legacy.archived;
+  const res = safeParseSpec(legacy);
+  assert.equal(res.success, true);
+  if (res.success) {
+    assert.equal(res.data.product, "Sin producto");
+    assert.equal(res.data.description, null);
+    assert.equal(res.data.archived, false);
+  }
 });
 
 test("una spec completa y bien formada valida", () => {

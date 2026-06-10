@@ -5,3 +5,4 @@ export const PACKAGE_NAME = "@pda/spec";
 export * from "./schema.js";
 export * from "./store.js";
 export * from "./audit.js";
+export * from "./specs.js";

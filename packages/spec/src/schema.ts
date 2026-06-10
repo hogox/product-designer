@@ -216,6 +216,13 @@ export const HistoryEntrySchema = z.object({
 export const SpecSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
+  // Metadatos de gestión multi-spec (Fase D2 · W0). `product` es un string agrupador
+  // (no una entidad; un CRUD de productos es Fase 5). `archived` es el soft-delete:
+  // el índice deriva su `status` (activa|archivada) de aquí — la verdad vive en el
+  // spec.yaml, el índice es cache regenerable. Defaults para compat con specs previas.
+  product: z.string().min(1).default("Sin producto"),
+  description: z.string().min(1).nullable().default(null),
+  archived: z.boolean().default(false),
   version: z.number().int().nonnegative(), // incrementa solo al aprobar una compuerta
   status: SpecStatusSchema,
   current_stage: StageSchema,
@@ -256,10 +263,18 @@ export function safeParseSpec(
  * Crea una spec v0 mínima y válida (PRD §10: título + etapa de descubrimiento).
  * El esquema v0 es desechable; se revisa tras el Agente 1 (invariante 6).
  */
-export function createSpecV0(input: { id: string; title: string }): Spec {
+export function createSpecV0(input: {
+  id: string;
+  title: string;
+  product?: string;
+  description?: string | null;
+}): Spec {
   return {
     id: input.id,
     title: input.title,
+    product: input.product ?? "Sin producto",
+    description: input.description ?? null,
+    archived: false,
     version: 0,
     status: "draft",
     current_stage: "descubrimiento",
