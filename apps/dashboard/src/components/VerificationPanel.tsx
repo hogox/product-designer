@@ -11,6 +11,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SectionIcon } from "./icons";
 
 export interface Criterion {
   criterion: string;
@@ -56,7 +57,7 @@ export function VerificationPanel({
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <ShieldCheck className="size-4 text-muted-foreground" />
+          <SectionIcon icon={ShieldCheck} tone="emerald" />
           {title}
           <Badge variant="secondary">{criteria.length}</Badge>
         </CardTitle>

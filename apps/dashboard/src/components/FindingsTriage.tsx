@@ -31,6 +31,7 @@ import {
   ReviewStatusBadge,
   REVIEW_LABEL,
 } from "./badges";
+import { SectionIcon } from "./icons";
 
 const FILTERS: ("todos" | ReviewStatus)[] = [
   "todos",
@@ -99,7 +100,7 @@ export function FindingsTriage({
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <ClipboardCheck className="size-4 text-muted-foreground" />
+          <SectionIcon icon={ClipboardCheck} tone="primary" />
           Triage de hallazgos
           <RealMockBadge real />
           <Badge variant="secondary">{findings.length}</Badge>

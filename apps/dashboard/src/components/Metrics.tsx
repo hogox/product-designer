@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HeartBadge, RealMockBadge } from "./badges";
+import { SectionIcon } from "./icons";
 
 export function Metrics({ shown }: { shown: Spec }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <Gauge className="size-4 text-muted-foreground" />
+          <SectionIcon icon={Gauge} tone="violet" />
           Métricas (HEART / GSM)
           <RealMockBadge real />
           <Badge variant="secondary">{shown.outcomes.length}</Badge>

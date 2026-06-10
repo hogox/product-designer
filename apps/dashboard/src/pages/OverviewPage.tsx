@@ -15,12 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { useShell } from "../App";
 import { SpecOverview } from "../components/SpecOverview";
 import { AuditPanel } from "../components/AuditPanel";
+import { StatCards } from "../components/StatCards";
 import { RealMockBadge } from "../components/badges";
+import { SectionIcon, STAGE_ICON } from "../components/icons";
 import { STAGES } from "../stages";
 import { specPath } from "../nav";
 
 export function OverviewPage() {
-  const { specId, spec, audit, state } = useShell();
+  const { specId, spec, findings, audit, state } = useShell();
 
   if (!spec) {
     return (
@@ -29,13 +31,15 @@ export function OverviewPage() {
   }
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <SpecOverview spec={spec} />
-      <div className="space-y-4">
+    <div className="space-y-4">
+      <StatCards spec={spec} findings={findings} />
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <SpecOverview spec={spec} />
+        <div className="space-y-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Workflow className="size-4 text-muted-foreground" />
+              <SectionIcon icon={Workflow} tone="primary" />
               Pipeline
               <Badge variant="secondary">7 etapas</Badge>
             </CardTitle>
@@ -57,14 +61,15 @@ export function OverviewPage() {
               <Link
                 key={s.id}
                 to={specPath(specId, `/etapa/${s.id}`)}
-                className="flex items-center gap-3 rounded-lg border p-3 text-foreground transition-colors hover:bg-muted/50"
+                className="flex items-center gap-3 rounded-lg border p-3 text-foreground transition-colors hover:border-primary/30 hover:bg-muted/50"
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">
-                  {s.n}
-                </span>
+                <SectionIcon
+                  icon={STAGE_ICON[s.id] ?? Workflow}
+                  tone={s.real ? "primary" : "slate"}
+                />
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                    {s.name} <RealMockBadge real={s.real} />
+                    {s.n}. {s.name} <RealMockBadge real={s.real} />
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {s.diamante} · {s.modo}
@@ -82,7 +87,8 @@ export function OverviewPage() {
             ))}
           </CardContent>
         </Card>
-        <AuditPanel entries={audit} limit={6} title="Auditoría reciente" />
+          <AuditPanel entries={audit} limit={6} title="Auditoría reciente" />
+        </div>
       </div>
     </div>
   );

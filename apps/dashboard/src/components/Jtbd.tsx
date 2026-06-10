@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RealMockBadge } from "./badges";
+import { SectionIcon } from "./icons";
 
 export function Jtbd({ shown }: { shown: Spec }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <Briefcase className="size-4 text-muted-foreground" />
+          <SectionIcon icon={Briefcase} tone="sky" />
           JTBD — Jobs To Be Done
           <RealMockBadge real />
           <Badge variant="secondary">{shown.jtbd.length}</Badge>

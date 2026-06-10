@@ -9,6 +9,7 @@ import type { Spec } from "@pda/spec";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SectionIcon } from "./icons";
 import { postJson } from "../api";
 
 export function GatePanel({
@@ -55,7 +56,7 @@ export function GatePanel({
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <UserCheck className="size-4 text-muted-foreground" />
+          <SectionIcon icon={UserCheck} tone="amber" />
           Compuerta humana
           {pending ? (
             <Badge variant="aprobado">activa</Badge>

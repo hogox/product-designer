@@ -29,7 +29,7 @@ export function App() {
   const data = useSpecData(specId ?? null);
 
   return (
-    <div className="shell">
+    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[264px_minmax(0,1fr)]">
       <StageSidebar
         specId={specId ?? null}
         groups={groups}
