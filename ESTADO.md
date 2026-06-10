@@ -313,7 +313,23 @@ cuando los haya (el motor corre igual).
   `main.tsx`).
 - **Semánticos sin token (D2·W3.1):** real/mock/revisión/evidencia van como clases Tailwind
   (hoy centralizadas en `src/components/badges.tsx`), NO como CSS vars nuevas — mantener así
-  hasta que la sesión 8 las convierta en variantes cva de Badge.
+  hasta que la sesión 8 las convierta en variantes cva de Badge. Usar tono **-700** (emerald/amber/
+  red) para texto de badge chico: -600 sobre fondo claro queda en ~3.5:1 (debajo de AA).
+- **Colisión de tokens legado↔shadcn (D2·W3 fix):** el `:root` de `globals.css` NO está en `@layer`,
+  así que **le gana** al `@layer base` de `styles.css`. NO reusar en el remap legado nombres que
+  ya son tokens shadcn (`--muted`, `--accent`): resolvían al gris claro shadcn → texto/links
+  ilegibles. Por eso se renombraron a `--legacy-muted` (= slate-600, AA en 11-12px) y
+  `--legacy-accent` (= primary). Al matar `styles.css` en la sesión 8 estas vars desaparecen.
+  También se removió la regla global `a { color }` (pisaba los links de shadcn, p. ej. breadcrumb).
+- **Contraste del texto secundario (D2·W3 fix):** `--muted-foreground` se subió de slate-500 a
+  **slate-600** (`hsl(215 19% 35%)`) para que el texto muted pase AA también sobre fondos tintados
+  (`bg-muted`, `--background`), no solo sobre tarjetas blancas. El anexo pide "no bajar" el
+  contraste; oscurecer lo eleva. Si se vuelve a slate-500, revisar los muted sobre fondo no-blanco.
+- **Medir contraste en el preview:** `getComputedStyle().color` devuelve **oklch** para clases
+  Tailwind de color (emerald/amber) y el canvas del preview tampoco lo parsea → da falsos "ratio 1".
+  Saltar los oklch en el scan y medir esos badges a mano (emerald-700/-50 = 5.26:1, amber-700/-50 =
+  4.82:1). Fondos `/50` (translúcidos, p. ej. `bg-amber-50/50`) también rompen el parser: blendear
+  sobre la tarjeta blanca antes de calcular.
 
 ## 8. Qué falta — próximos pasos
 
