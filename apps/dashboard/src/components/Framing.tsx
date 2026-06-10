@@ -14,12 +14,7 @@ function NewBadge({
   cond: boolean;
 }): ReactNode {
   return isProposal && cond ? (
-    <Badge
-      variant="outline"
-      className="border-emerald-200 bg-emerald-50 text-emerald-700"
-    >
-      nuevo
-    </Badge>
+    <Badge variant="aprobado">nuevo</Badge>
   ) : null;
 }
 
@@ -38,14 +33,7 @@ export function Framing({
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
           <Frame className="size-4 text-muted-foreground" />
           Enmarcado
-          {isProposal && (
-            <Badge
-              variant="outline"
-              className="border-emerald-200 bg-emerald-50 text-emerald-700"
-            >
-              propuesta v+1
-            </Badge>
-          )}
+          {isProposal && <Badge variant="aprobado">propuesta v+1</Badge>}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5 text-sm">

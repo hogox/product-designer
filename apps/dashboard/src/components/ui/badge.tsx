@@ -18,6 +18,24 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
+        // Variantes semánticas (D2 · W3.3): nombradas por significado, no por color.
+        // Par uniforme border-{c}-200 bg-{c}-50 text-{c}-700 — el tono -700 sobre -50
+        // cumple AA (≥4.5:1) en texto chico (ver ESTADO §7, paleta de chips).
+        // real / aprobado = verde "ok"; mock / enPausa = ámbar "atención".
+        real: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        aprobado: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        mock: "border-amber-200 bg-amber-50 text-amber-700",
+        enPausa: "border-amber-200 bg-amber-50 text-amber-700",
+        rechazado: "border-red-200 bg-red-50 text-red-700",
+        pendiente: "border-border bg-muted text-muted-foreground",
+        // Evidencia: cita (texto) = sky, cálculo (tabular) = violet.
+        cita: "border-sky-200 bg-sky-50 text-sky-700",
+        calculo: "border-violet-200 bg-violet-50 text-violet-700",
+        // Tipo de hallazgo: separado de evidencia para no confundirse en la misma tarjeta.
+        quantitative: "border-indigo-200 bg-indigo-50 text-indigo-700",
+        qualitative: "border-teal-200 bg-teal-50 text-teal-700",
+        // Categoría HEART (métricas de Definición).
+        heart: "border-rose-200 bg-rose-50 text-rose-700",
       },
     },
     defaultVariants: {

@@ -26,6 +26,7 @@ import { reviewFinding, type ReviewStatus } from "../api";
 import { ReviewCommentModal } from "./ReviewCommentModal";
 import {
   ConfidenceBadge,
+  FindingTypeBadge,
   RealMockBadge,
   ReviewStatusBadge,
   REVIEW_LABEL,
@@ -176,6 +177,7 @@ function FindingCard({
     <div className="space-y-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start gap-2">
         <ConfidenceBadge confidence={f.confidence} />
+        <FindingTypeBadge type={f.type} />
         <span className="min-w-40 flex-1 text-sm font-medium">
           {f.statement}
         </span>
@@ -191,7 +193,7 @@ function FindingCard({
         </Tooltip>
       </div>
       <div className="text-xs text-muted-foreground">
-        {f.id} · {f.type} · →{f.feeds}
+        {f.id} · →{f.feeds}
         {f.review_note ? ` · “${f.review_note}”` : ""}
       </div>
       {/* Evidencia anclada (invariante 5): cita/cálculo legible, locator como chip mono */}

@@ -58,12 +58,7 @@ export function GatePanel({
           <UserCheck className="size-4 text-muted-foreground" />
           Compuerta humana
           {pending ? (
-            <Badge
-              variant="outline"
-              className="border-emerald-200 bg-emerald-50 text-emerald-700"
-            >
-              activa
-            </Badge>
+            <Badge variant="aprobado">activa</Badge>
           ) : (
             <Badge variant="secondary">inactiva</Badge>
           )}

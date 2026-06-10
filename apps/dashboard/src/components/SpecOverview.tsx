@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RealMockBadge } from "./badges";
+import { HeartBadge, RealMockBadge } from "./badges";
 
 function EmptyNote() {
   return <p className="text-sm text-muted-foreground italic">Vacío.</p>;
@@ -80,7 +80,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
               {spec.outcomes.map((o, i) => (
                 <li key={i}>
                   <div className="flex flex-wrap items-center gap-2">
-                    {o.heart && <Badge variant="secondary">{o.heart}</Badge>}
+                    {o.heart && <HeartBadge category={o.heart} />}
                     <strong>{o.metric}</strong>
                   </div>
                   <div>
