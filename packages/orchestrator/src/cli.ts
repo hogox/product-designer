@@ -22,6 +22,7 @@ import {
   approveGate,
   iterateGate,
   rejectFinding,
+  reviewFinding,
 } from "./stage.js";
 import { runDiscoveryWithSources, createDefinitionRunner } from "./runner.js";
 
@@ -189,8 +190,27 @@ async function main() {
       actor: flag("by") ?? "Lead de diseño",
     });
     console.log(
-      `✗ Hallazgo ${fid} rechazado. Quedan ${remaining.length} hallazgos.`,
+      `✗ Hallazgo ${fid} rechazado (queda marcado, no se borra). ${remaining.length} hallazgos en total.`,
     );
+    return;
+  }
+
+  if (cmd === "review") {
+    const fid = process.argv[4];
+    const status = flag("status");
+    const valid = ["pendiente", "aprobado", "rechazado", "en_pausa"];
+    if (!fid || !status || !valid.includes(status)) {
+      console.error(
+        'Uso: review <specId> <findingId> --status <pendiente|aprobado|rechazado|en_pausa> [--reason "..."] [--by "..."]',
+      );
+      process.exit(1);
+    }
+    const f = await reviewFinding(ROOT, specId, fid, {
+      status: status as "pendiente" | "aprobado" | "rechazado" | "en_pausa",
+      comment: flag("reason"),
+      actor: flag("by") ?? "Lead de diseño",
+    });
+    console.log(`✓ Hallazgo ${fid} → ${f.review_status}.`);
     return;
   }
 

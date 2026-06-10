@@ -29,8 +29,17 @@ import {
   getState,
   approveGate,
   rejectFinding,
+  reviewFinding,
   iterateGate,
 } from "@pda/orchestrator";
+
+const REVIEW_STATUSES = [
+  "pendiente",
+  "aprobado",
+  "rechazado",
+  "en_pausa",
+] as const;
+type ReviewStatusLiteral = (typeof REVIEW_STATUSES)[number];
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const SPECS_DIR = resolve(REPO_ROOT, "specs");
@@ -377,6 +386,29 @@ app.post("/api/findings/:id/:fid/reject", async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: String(err) });
+  }
+});
+
+// revisión humana por hallazgo (W2): aprobar / rechazar / pausar / pendiente
+// rechazado y en_pausa exigen comentario (400 si falta).
+app.patch("/api/specs/:id/findings/:fid/review", async (req, res) => {
+  const status = String(req.body?.status ?? "");
+  const comment =
+    req.body?.comment != null ? String(req.body.comment) : undefined;
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  if (!REVIEW_STATUSES.includes(status as ReviewStatusLiteral))
+    return res.status(400).json({ error: `status inválido: ${status}` });
+  try {
+    const finding = await reviewFinding(
+      REPO_ROOT,
+      req.params.id,
+      req.params.fid,
+      { status: status as ReviewStatusLiteral, comment, actor },
+    );
+    res.json(finding);
+  } catch (err) {
+    // comentario faltante (rechazado/en_pausa) o hallazgo inexistente
+    res.status(400).json({ error: String(err) });
   }
 });
 

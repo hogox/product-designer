@@ -183,8 +183,10 @@ findings:
     confidence: high
     status: validated
     feeds: outcomes
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-002
     statement: El abandono en OTP es prácticamente idéntico entre usuarios nuevos
       (42.9%) y recurrentes (43.4%), lo que sugiere que el problema no depende
@@ -202,8 +204,10 @@ findings:
     confidence: high
     status: validated
     feeds: scope
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-003
     statement: En los casos de abandono, el tiempo de espera promedio del código fue
       de 71.9 segundos.
@@ -215,8 +219,10 @@ findings:
     confidence: high
     status: validated
     feeds: outcomes
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-004
     statement: "La demora en la llegada del SMS con el código es un motivo directo
       de abandono: los usuarios se cansan de esperar y cierran o salen de la app
@@ -234,8 +240,10 @@ findings:
     confidence: high
     status: validated
     feeds: hypothesis
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-005
     statement: La falta de retroalimentación en pantalla (no indicar si el código
       fue enviado, a qué número llega ni cuánto esperar) genera incertidumbre y
@@ -260,8 +268,10 @@ findings:
     confidence: high
     status: validated
     feeds: hypothesis
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-006
     statement: El botón de reenviar el código tarda demasiado en activarse, lo que
       aumenta la frustración del usuario durante la espera.
@@ -274,8 +284,10 @@ findings:
     confidence: medium
     status: validated
     feeds: constraints
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-007
     statement: Existe interés por métodos de verificación alternativos al SMS, como
       la huella digital, especialmente ante fallas en la entrega del código.
@@ -288,8 +300,10 @@ findings:
     confidence: medium
     status: validated
     feeds: scope
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
   - id: F-008
     statement: "El abandono puede volverse permanente: algunos usuarios solo retoman
       el proceso porque necesitan la cuenta, y de lo contrario no regresarían."
@@ -305,8 +319,10 @@ findings:
     confidence: medium
     status: validated
     feeds: outcomes
-    reviewed_by: null
+    review_status: aprobado
+    reviewed_by: Lead PM
     review_note: null
+    reviewed_at: null
 jtbd:
   - id: J-001
     statement: Cuando estoy esperando el código OTP por SMS, quiero recibirlo rápido

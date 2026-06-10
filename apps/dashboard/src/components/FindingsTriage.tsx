@@ -14,11 +14,14 @@ export function FindingsTriage({
   findings: Finding[];
   onChange: () => void;
 }) {
+  // W2 (transición): los rechazados ya no se borran (quedan marcados + auditados); acá
+  // se ocultan para preservar la UX actual. La UI plena de estados/filtros llega en W2.4.
+  const visible = findings.filter((f) => f.review_status !== "rechazado");
   const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
-  const sorted = [...findings].sort(
+  const sorted = [...visible].sort(
     (a, b) => (order[a.confidence] ?? 9) - (order[b.confidence] ?? 9),
   );
-  const high = findings.filter((f) => f.confidence === "high").length;
+  const high = visible.filter((f) => f.confidence === "high").length;
 
   async function reject(f: Finding) {
     if (!specId) return;
@@ -33,11 +36,11 @@ export function FindingsTriage({
     if (res.ok) onChange();
   }
 
-  if (findings.length === 0) {
+  if (visible.length === 0) {
     return (
       <div className="panel">
         <p className="empty">
-          No hay hallazgos en el store. Corré Descubrimiento (
+          No hay hallazgos por revisar. Corré Descubrimiento (
           <code>orchestrator discover</code>).
         </p>
       </div>
@@ -48,7 +51,7 @@ export function FindingsTriage({
     <div className="panel">
       <h2>
         Triage de hallazgos{" "}
-        <span className="badge real">{findings.length}</span>
+        <span className="badge real">{visible.length}</span>
       </h2>
       <div className="meta" style={{ marginBottom: 10 }}>
         Validación micro (no es la compuerta): {high} en{" "}
