@@ -65,7 +65,19 @@
     lo citan); la tarjeta del triage queda compacta. Migradas a shadcn las últimas superficies
     legadas (sidebar, home, fuentes, placeholder); `styles.css` quedó solo con los modales
     (W4.2 → sesión 9). Único editado en `ui/`: `badge.tsx` (sheet/avatar son stock nuevo).
-  - Faltan W4.2+W4.3 (modales con Dialog stock + accesibilidad), W5 (capa de usuario mock).
+  - Sesión 11 hecha (W6.1+W6.2 — intake de spec, ADELANTADA antes de W4.2/W5): sección `intake`
+    opcional en la spec (nullable → specs previas cargan sin migrar): `researchQuestion`
+    (obligatoria), `hypotheses`, `productContext`, `discoveryPlan { methods, instruments
+    (nps/ces/csat/isn), expectedSourceKinds }`. `SourceKindSchema` movido a schema.ts (vocabulario
+    core) + nuevo kind `persona` (evidencia citable, nunca grounding). GROUNDING del Agente 1: el
+    intake (pregunta + contexto + hipótesis) se inyecta SOLO en la derivación (`derive.ts`), la
+    extracción queda sin sesgo (invariante 3); el runner lo deriva de `current.intake`. Completitud
+    de fuentes (esperado-vs-subido) + `PATCH /api/specs/:id/intake` (auditoría `intake.update`) +
+    `GET …/sources/completeness`; indicador con chips "falta: <tipo>" en el hub de Fuentes (reusa
+    variantes de Badge; cero edición de ui/). Corrida comparativa real: con intake los hallazgos
+    se ordenan por relevancia a la pregunta (reenvío sube a high, biométrica off-question baja a low).
+  - Faltan: W4.2+W4.3 (modales Dialog + accesibilidad), W5 (capa de usuario mock), W6.3+W6.4
+    (wizard de intake + retrofit) + re-ensayo del guión de demo.
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 

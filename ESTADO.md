@@ -227,7 +227,41 @@ El sistema queda correcto Y se ve como producto (referencia Stratify), sin salir
   mueren en la sesión 9 (W4.2 → Dialog stock). `git diff` de `ui/`: único modificado = `badge.tsx`;
   `sheet.tsx`/`avatar.tsx` son stock nuevo SIN editar (sancionados por ANEXO §0.4 + W4.1/avatares).
 
-**Tests:** ~93 (spec 47 · agent1 21 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
+### Fase D2 · Sesión 11 (W6.1+W6.2 — intake de spec) ✅ — enmarcado del discovery + grounding
+
+Adelantada antes de W4.2/W5: la Fase 3 no arranca sin W6 (los agentes nuevos deben nacer leyendo
+el intake). Crear una spec deja de ser metadatos y pasa a enmarcar el discovery; su output alimenta
+al motor. Hoy: esquema + grounding + completitud (el wizard UI es la sesión 12).
+
+- **Esquema final del intake** (`schema.ts`, opcional → specs previas cargan sin migrar):
+  ```
+  intake: { researchQuestion (obligatoria), hypotheses[], productContext?,
+            discoveryPlan: { methods[], instruments[], expectedSourceKinds[] } } | null
+  methods     = entrevistas | encuestas | analitica | benchmark | soporte | otros
+  instruments = nps | ces | csat | isn | otros   (satisfacción; mapeo HEART = Agente 2, no hoy)
+  ```
+  `SourceKindSchema` se **movió a schema.ts** (vocabulario core compartido con el intake; evita
+  import circular) y ganó el kind **`persona`** (artefacto subible como EVIDENCIA citable, nunca
+  grounding; como `entrevista`, no se auto-infiere). `deriveExpectedSourceKinds(methods)` = mapa
+  determinista (entrevistas→entrevista; encuestas/analitica→datos; benchmark/soporte→documento;
+  otros→∅), unión deduplicada.
+- **Grounding del Agente 1 (W6.2a):** el intake (researchQuestion + productContext + hypotheses) se
+  inyecta SOLO en el prompt de **derivación** (`derive.ts`: regla de foco en el system + bloque en
+  el mensaje); la **extracción no se toca** (invariante 3: la evidencia se extrae sin sesgo, el
+  grounding solo orienta QUÉ derivar del pool ya fijo). `createDiscoveryRunner` lo deriva de
+  `current.intake`; sin intake → `undefined` → derivación idéntica a la previa (sin regresión).
+- **Completitud (W6.2b):** `computeSourceCompleteness` compara `expectedSourceKinds` (plan) vs. los
+  kinds subidos (no descartados); `PATCH /api/specs/:id/intake` (auditoría `intake.update`) +
+  `GET …/sources/completeness`. UI: indicador en el hub de Fuentes con chips "falta: <tipo>"
+  reusando variantes de Badge (cero edición de `ui/`).
+- **Resultado de la comparativa (real, samples OTP, mismo pool de 16 anclajes, aislando la variable
+  al grounding):** SIN intake = 10 hallazgos más planos y dispersos (biométrica como medium, reenvío
+  como medium/constraints). CON intake = 9 hallazgos ordenados por relevancia a la pregunta: el
+  **reenvío deficiente sube a high/hypothesis** (atado a la hipótesis 3), el **feedback en pantalla**
+  se nombra explícito, la **biométrica off-question baja a low/scope**. Sin inventar evidencia (mismas
+  citas/cálculos). Outputs en `/tmp/intake-ab/` + harness reproducible `scripts/intake-ab.mjs`.
+
+**Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
 routing, home, Fuentes y la triage plena (aprobar/pausar/rechazar/filtros) en el preview. La ingestión
@@ -256,6 +290,11 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
   avatares de actor en auditoría; drawer de hallazgo (Sheet) con cadena de evidencia + trazabilidad
   inversa. Sidebar, home y fuentes ya migrados; solo los **modales** quedan con CSS legado (migran en
   la sesión 9). Home del dashboard: `http://localhost:5173`.
+- **Intake (sesión 11):** la spec puede llevar un `intake` (pregunta de discovery + plan); cuando
+  existe, el Agente 1 deriva hallazgos orientados a la pregunta (grounding solo en derivación) y el
+  hub de Fuentes muestra la completitud (esperado-vs-subido). `otp-onboarding` sigue **sin intake**
+  (carga con `intake: null`, demo-able). El wizard que lo carga desde la UI llega en la sesión 12;
+  hoy se setea por `PATCH /api/specs/:id/intake`.
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -394,6 +433,34 @@ cuando los haya (el motor corre igual).
   `button.primary`) — todo el resto es shadcn/Tailwind. Al migrar los modales a Dialog stock (sesión 9)
   el archivo `styles.css` y su import en `main.tsx` se borran enteros (y con ellos `--legacy-muted`/
   `--legacy-accent`). No agregar reglas nuevas acá: cualquier estilo va como utilidad Tailwind.
+- **Intake opcional, cero migración (D2·W6.1):** `intake` es `nullable + default(null)` → toda spec
+  previa (otp-onboarding incluida) carga con `intake: null` sin tocar el YAML. `createSpecV0` arranca
+  con `intake: null`. Al agregar `intake` a `SpecSchema` se rompió un fixture tipado (`: Spec`) en
+  `schema.test.ts` — el patrón de siempre: los literales tipados exigen el campo nuevo aunque tenga
+  default. Si extendés el intake, revisá esos fixtures.
+- **SourceKind movido a schema.ts (D2·W6.1):** el vocabulario `documento|datos|entrevista|persona|otro`
+  vive en `schema.ts` (lo comparte el intake); `sources.ts` lo **re-exporta** (`export { SourceKindSchema }`)
+  para no romper imports `from "@pda/spec"`. OJO con `export *`: funciona porque `sources.ts` re-exporta
+  el MISMO binding de `schema.ts` (no una redefinición) → sin conflicto de nombres. `persona`, como
+  `entrevista`, NO se infiere en `inferKind` (lo clasifica el humano). Al sumar un kind, tocá: `inferKind`
+  (si aplica), `SOURCE_KIND_ICON`, los arrays `SOURCE_KINDS`/`KINDS` (server + SourcesPage) y el mapa
+  `METHOD_TO_KINDS`.
+- **Grounding SOLO en derivación (D2·W6.2):** el intake entra en `derive.ts` (foco de QUÉ derivar),
+  NUNCA en `extract.ts` (la evidencia se extrae sin sesgo, invariante 3). El seam es
+  `FindingsProposer.propose({ ..., grounding? })`; `createDiscoveryRunner` lo arma de `current.intake`.
+  Para auditar el efecto sin que el modelo de extracción sea variable, `scripts/intake-ab.mjs` extrae
+  UNA vez y deriva dos veces (sin/con) sobre el mismo pool — repetir así cualquier A/B de prompts.
+- **updateIntake NO commitea ni reindexa (D2·W6.2):** espeja a `updateSpecMeta` (writeSpec + appendAudit),
+  pero NO regenera el índice (el intake no es campo del índice) ni hace `git commit` (el versionado real
+  es solo al aprobar compuerta). El server lee de disco, así que el cambio se ve sin commit. Si `intake`
+  pasara a influir el índice, agregar `regenerateIndex`.
+- **Completitud = manifest real (D2·W6.2b):** `computeSourceCompleteness` cuenta solo fuentes NO
+  descartadas; sin intake o sin `expectedSourceKinds` → `satisfied:true` (nada exigido) y el indicador no
+  se muestra. `expectedSourceKinds` se DERIVA en `updateIntake` cuando viene vacío + hay métodos, pero es
+  editable (si el cliente manda tipos explícitos, se respetan).
+- **Verificar API con RTK/curl (gotcha de tooling):** el hook RTK reformatea la salida de `curl` a una
+  vista tipo-esquema (no JSON crudo) → `python -m json.tool`/`jq` sobre ese output fallan. Para leer
+  respuestas crudas en verificación, usar `node -e "fetch(...).then(r=>r.json()).then(...)"` en vez de curl.
 
 ## 8. Qué falta — próximos pasos
 
@@ -419,7 +486,12 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   de etapa expresivo; auditoría del overview acotada a la última propuesta; drawer de hallazgo
   (Sheet) con cadena evidencia→fuente + historial + trazabilidad inversa JTBD; migradas las últimas
   superficies legadas (sidebar/home/fuentes/placeholder). `styles.css` quedó solo con los modales.
-- **PRÓXIMA = Sesión 9 (W4.2 + W4.3):**
+- **Sesión 11 (W6.1+W6.2 — intake) — HECHA (adelantada antes de W4.2/W5):** esquema `intake` opcional
+  (researchQuestion + hypotheses + productContext + discoveryPlan con methods/instruments/
+  expectedSourceKinds) + kind `persona`; grounding del Agente 1 SOLO en la derivación; completitud de
+  fuentes + `PATCH …/intake` (auditoría `intake.update`) + indicador con chips "falta:" en Fuentes.
+  Comparativa real validó el efecto del grounding (ver Sesión 11 arriba). Falta el wizard UI (sesión 12).
+- **Sesión 9 (W4.2 + W4.3) — PENDIENTE:**
   - **W4.2 (modales con propósito único):** migrar `NewSpecModal` y `ReviewCommentModal` a **Dialog
     stock** + el modal de **confirmación de compuerta** (resumen de versión/conteos/criterios antes
     del commit). Al migrarlos, **borrar `styles.css` entero** y su import en `main.tsx` (mueren
@@ -428,8 +500,18 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   - **W4.3 (accesibilidad mínima):** foco atrapado en modales (Dialog lo trae stock), cierre con Esc,
     navegación por teclado en el triage. Pendiente menor: el warning dev-only del Sheet en React 18
     (ver §7) — evaluar `forwardRef` shim o subir a React 19.
-- **Luego:** W5 (capa de usuario mock: login, avatar, perfil, settings; identidad real firma la
-  auditoría) + ensayo del guión de demo (<12 min).
+- **Sesión 10 (W5) — PENDIENTE:** capa de usuario mock (login, avatar, perfil, settings; identidad
+  real firma la auditoría — `reviewedBy`/`uploadedBy`/`--by` y el actor del `intake.update`).
+- **PRÓXIMA = Sesión 12 (W6.3 + W6.4 — wizard + retrofit):**
+  - **W6.3 (wizard UI, 5 pasos):** stepper propio (shadcn no trae Stepper; números/checks, sin deps
+    nuevas): Identidad → Enmarcado (pregunta obligatoria, hipótesis, contexto) → Plan de discovery
+    (checklist de métodos; deriva `expectedSourceKinds` con `deriveExpectedSourceKinds`, editable;
+    **plantillas deterministas, SIN modelo**) → Fuentes (reusa el modal del hub W1) → Resumen→crear
+    (commit v0 con intake + `spec.create` enriquecida). El overview "Spec viva" muestra la
+    researchQuestion como encabezado de contexto. Usar el cliente `patchIntake` ya cableado.
+  - **W6.4 (retrofit):** pantalla "editar intake" (pasos 2–3 como formulario) para specs previas;
+    ya existe `PATCH …/intake` con auditoría `intake.update`.
+  - Cerrar con **re-ensayo del guión de demo** (paso 0 nuevo: crear por wizard; <12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 
