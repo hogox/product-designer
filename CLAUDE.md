@@ -53,7 +53,19 @@
     (icono+título+badge+contador); pipeline clickeable; jerarquía de la evidencia corregida (cita a
     text-sm, locator chip outline mono). `styles.css` quedó como legado en retirada (@layer base);
     chips semánticos provisorios en `badges.tsx` hasta las variantes cva de la sesión 8.
-  - Faltan W3.3+W3.4 (sistema de chips cva + microcorrecciones), W4 (drawer + modales), W5 (usuario).
+  - Sesión 8 hecha (W3.3+W3.4+W4.1 + impulso visual): sistema de chips = 11 variantes cva en
+    `ui/badge.tsx` (real/aprobado/mock/enPausa/rechazado/pendiente/cita/calculo/quantitative/
+    qualitative/heart, todas AA ≥4.5:1, par -700 sobre -50); `badges.tsx` delega TODO el color a
+    las variantes (cero clases sueltas) + mapa lucide por concepto en `icons.tsx` y `<SectionIcon>`
+    (contenedor de icono suave). IMPULSO VISUAL (composición stock): iconos tintados en headers,
+    fila de stat-cards en el overview, cards interactivas (hover), avatares de actor en Auditoría
+    (humano iniciales / agente Bot), header de etapa expresivo. W3.4: resumen de auditoría del
+    overview acotado a la última propuesta + "ver todo". W4.1: drawer de hallazgo (Sheet stock,
+    derecha) con cadena evidencia→fuente + historial de revisión + trazabilidad inversa (JTBD que
+    lo citan); la tarjeta del triage queda compacta. Migradas a shadcn las últimas superficies
+    legadas (sidebar, home, fuentes, placeholder); `styles.css` quedó solo con los modales
+    (W4.2 → sesión 9). Único editado en `ui/`: `badge.tsx` (sheet/avatar son stock nuevo).
+  - Faltan W4.2+W4.3 (modales con Dialog stock + accesibilidad), W5 (capa de usuario mock).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 

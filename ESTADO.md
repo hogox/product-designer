@@ -190,6 +190,43 @@ uploadedBy, uploadedAt, status(subido|ingerido|descartado), linkedStages[] }`. *
   legado envuelto en `@layer base` con vars remapeadas a los tokens — solo le quedan sidebar,
   home, fuentes, placeholder mock y modales.
 
+### Fase D2 · Sesión 8 (W3.3+W3.4+W4.1 + impulso visual) ✅ — chips cva, drawer y salto visual
+
+El sistema queda correcto Y se ve como producto (referencia Stratify), sin salir de shadcn-stock.
+
+- **W3.3 (chips):** 11 variantes cva en `ui/badge.tsx` (ÚNICA edición permitida de `ui/`):
+  `real|aprobado|mock|enPausa|rechazado|pendiente|cita|calculo|quantitative|qualitative|heart`.
+  Nombradas por semántica, no por color; par uniforme `border-{c}-200 bg-{c}-50 text-{c}-700`.
+  **Paleta final (contraste texto/fondo medido, AA ≥4.5):** real/aprobado=emerald (5.09), mock/
+  enPausa=amber (4.87), rechazado=red (5.88), pendiente=slate-token (6.51), cita=sky (5.49),
+  calculo=violet (6.64), quantitative=indigo (7.22), qualitative=teal (5.17), heart=rose (5.51).
+  `badges.tsx` delega TODO el color a las variantes (cero clases sueltas); agrega `FindingTypeBadge`,
+  `HeartBadge`, `SourceKindBadge`. **Mapa de iconos por concepto** en `icons.tsx`:
+  etapa (Compass/Target/Lightbulb/PenTool/FlaskConical/PackageCheck/GraduationCap), fuente
+  (FileText/Table2/MessageSquareQuote/File), evidencia (Quote/Calculator), HEART (Smile/Activity/
+  UserPlus/Repeat2/CircleCheck), agente (Bot). `<SectionIcon>` = icono en contenedor suave
+  (`bg-{c}-50 text-{c}-600`, AA 3:1 gráfico).
+- **Impulso visual (composición stock):** iconos tintados en todos los headers de Card/etapa;
+  fila de **stat-cards** en el overview (`StatCards`: versión, hallazgos con desglose por estado,
+  JTBD, métricas); cards interactivas (`hover:bg-muted/50` + `hover:border-primary/30`) en pipeline,
+  home y fuentes; **avatares de actor** en Auditoría (`ActorAvatar`: humano con iniciales de color
+  estable por hash, agente/sistema con icono Bot neutro); header de etapa expresivo (círculo
+  numerado size-12 + icono, título text-2xl, subtítulo muted).
+- **W3.4 (microcorrecciones):** el resumen de auditoría del overview muestra SOLO la actividad
+  desde la última `agent.proposed` ("Auditoría de la propuesta") + footer "Ver todo el log (N) →"
+  a `/auditoria`; leyenda real/mock vía el sidebar persistente; numeración/subtítulo de etapa se
+  mantienen.
+- **W4.1 (drawer):** `FindingDrawer` con **Sheet stock** (lado derecho): cadena completa
+  evidencia → cita/cálculo → fuente con locator, historial de revisión (estado/revisor/comentario/
+  fecha) y **trazabilidad inversa real** (JTBD que citan el hallazgo vía `supported_by`; las
+  métricas v0 NO ligan hallazgo→métrica, no se inventan links). La tarjeta del triage queda
+  compacta (badges + título + "Ver detalle →" + acciones) y abre el drawer; guarda el id (no el
+  objeto) para reflejar el estado nuevo tras un refetch. Esc + foco atrapado + click-afuera (stock).
+- **Migración legado:** sidebar, home, fuentes y placeholder pasaron a shadcn/Tailwind + shell grid
+  en Tailwind. `styles.css` quedó SOLO con los modales legados (`.modal*`, `button.primary`) —
+  mueren en la sesión 9 (W4.2 → Dialog stock). `git diff` de `ui/`: único modificado = `badge.tsx`;
+  `sheet.tsx`/`avatar.tsx` son stock nuevo SIN editar (sancionados por ANEXO §0.4 + W4.1/avatares).
+
 **Tests:** ~93 (spec 47 · agent1 21 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
@@ -214,9 +251,11 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
   hallazgos high `pendiente|en_pausa`. El demo es: revisar/aprobar los high en el triage → el gate
   se desbloquea → aprobar. (Ojo: el triage en vivo muta `findings.yaml`/`spec.proposed.yaml`/
   `audit.jsonl`; para resetear el demo, `git restore specs/`.)
-- **Piel nueva (sesión 7):** tema claro shadcn en todo el dashboard; overview y etapas reales en
-  Cards modulares con breadcrumb. Home, Fuentes, sidebar y modales aún con CSS legado re-tokenizado
-  (migran en sesiones 8–9). Home del dashboard: `http://localhost:5173`.
+- **Piel nueva (sesiones 7–8):** tema claro shadcn en TODO el dashboard. Sistema de chips = variantes
+  cva de Badge (AA verificado); iconos tintados por concepto; stat-cards y cards interactivas;
+  avatares de actor en auditoría; drawer de hallazgo (Sheet) con cadena de evidencia + trazabilidad
+  inversa. Sidebar, home y fuentes ya migrados; solo los **modales** quedan con CSS legado (migran en
+  la sesión 9). Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -329,7 +368,32 @@ cuando los haya (el motor corre igual).
   Tailwind de color (emerald/amber) y el canvas del preview tampoco lo parsea → da falsos "ratio 1".
   Saltar los oklch en el scan y medir esos badges a mano (emerald-700/-50 = 5.26:1, amber-700/-50 =
   4.82:1). Fondos `/50` (translúcidos, p. ej. `bg-amber-50/50`) también rompen el parser: blendear
-  sobre la tarjeta blanca antes de calcular.
+  sobre la tarjeta blanca antes de calcular. **W3.3:** para medir las 11 variantes de golpe se
+  implementó la conversión **oklch→sRGB lineal→luminancia** en JS dentro de `preview_eval` (matrices
+  estándar de oklab) y se computó el contraste WCAG — método repetible para auditar AA sin canvas.
+- **Variantes cva de Badge (D2·W3.3):** son la ÚNICA edición permitida de `components/ui/`. Nombrar
+  por SEMÁNTICA (no por color): `real/aprobado/mock/enPausa/...`. `aprobado`≈`real` (verde) y
+  `enPausa`≈`mock` (ámbar) comparten clases a propósito. Se separó **evidencia** (cita=sky/cálculo=
+  violet) de **tipo de hallazgo** (quantitative=indigo/qualitative=teal) para no confundirlos en la
+  misma tarjeta. Todo color semántico nuevo vive como variante acá, NO inline en componentes.
+- **Avatares de actor (D2·paso 2d):** `ActorAvatar` decide humano vs agente con un regex sobre el
+  nombre (`/agent|agente|ia|bot|modelo|orquestador|orchestrator|sistema|system/i`). Humano = iniciales
+  con tono `bg-{c}-100 text-{c}-700` (AA, amber el más justo a 4.54); agente/sistema = icono Bot sobre
+  `bg-muted`. Si un actor nuevo es máquina y no matchea, agregalo al regex o saldrá como humano.
+- **Sheet stock + React 18 (D2·W4.1):** el `sheet.tsx` de shadcn@latest está escrito para React 19
+  (refs como prop, sin `forwardRef`); el proyecto pinea **React 18.3** → emite el warning dev-only
+  `Function components cannot be given refs` en `SheetOverlay` en cada render del drawer. Es **inocuo**
+  (el overlay cierra al click-afuera, Esc y foco atrapado funcionan; el build de prod lo elimina) y se
+  dejó stock SIN editar para respetar la disciplina (solo `badge.tsx` se edita en `ui/`). Fix futuro:
+  envolver `SheetOverlay`/`SheetContent` en `forwardRef` (shim de compat) o subir a React 19.
+- **Resumen de auditoría del overview (D2·W3.4):** muestra solo la rebanada desde la última entrada
+  `agent.proposed` (`audit.lastIndexOf`), no el log completo — evita conteos confusos de iteraciones
+  viejas. El verbo que marca "propuesta nueva" es `agent.proposed` (lo escribe `stage.ts`); si cambia,
+  actualizar el filtro en `OverviewPage`. El log completo vive en `/auditoria` ("Ver todo el log").
+- **styles.css en la última milla (D2·W3.3):** ya solo quedan los **modales** (`.modal*`,
+  `button.primary`) — todo el resto es shadcn/Tailwind. Al migrar los modales a Dialog stock (sesión 9)
+  el archivo `styles.css` y su import en `main.tsx` se borran enteros (y con ellos `--legacy-muted`/
+  `--legacy-accent`). No agregar reglas nuevas acá: cualquier estilo va como utilidad Tailwind.
 
 ## 8. Qué falta — próximos pasos
 
@@ -350,17 +414,22 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   - layout modular (Cards con header, breadcrumb, pipeline clickeable, jerarquía de evidencia §2).
     La skill `frontend-design` que menciona el plan NO existe en el entorno; la dirección la cubrió
     el ANEXO-D2 §1.
-- **PRÓXIMA = Sesión 8 (W3.3 + W3.4 + W4.1):**
-  - **W3.3 (chips):** variantes cva en `ui/badge.tsx` (ÚNICA edición permitida de `components/ui/`):
-    `real|mock|aprobado|rechazado|enPausa|pendiente|calculo|cita|quantitative|qualitative|heart`.
-    Migrar `badges.tsx` y los `.badge/.pill/.gate-tag/.proposal-tag` legados; idealmente matar
-    `styles.css` (quedan sidebar, home, fuentes, placeholder, modales).
-  - **W3.4 (microcorrecciones):** resumen de auditoría del overview solo con la última propuesta +
-    "ver todo"; leyenda real/mock en todas las vistas; numeración/subtítulo de etapa se mantienen.
-  - **W4.1 (drawer):** detalle de hallazgo en `Sheet` stock (cadena evidencia→fuente, historial de
-    revisión, trazabilidad inversa JTBD/métricas); la tarjeta del triage queda compacta.
-- **Luego:** W4.2–W4.3 (modales + accesibilidad), W5 (capa de usuario mock) + ensayo del guión
-  de demo (<12 min).
+- **Sesión 8 (W3.3+W3.4+W4.1 + impulso visual) — HECHA:** 11 variantes cva de Badge (AA verificado),
+  mapa de iconos lucide + `<SectionIcon>`, stat-cards, cards interactivas, avatares de actor, header
+  de etapa expresivo; auditoría del overview acotada a la última propuesta; drawer de hallazgo
+  (Sheet) con cadena evidencia→fuente + historial + trazabilidad inversa JTBD; migradas las últimas
+  superficies legadas (sidebar/home/fuentes/placeholder). `styles.css` quedó solo con los modales.
+- **PRÓXIMA = Sesión 9 (W4.2 + W4.3):**
+  - **W4.2 (modales con propósito único):** migrar `NewSpecModal` y `ReviewCommentModal` a **Dialog
+    stock** + el modal de **confirmación de compuerta** (resumen de versión/conteos/criterios antes
+    del commit). Al migrarlos, **borrar `styles.css` entero** y su import en `main.tsx` (mueren
+    `--legacy-muted`/`--legacy-accent`). Regla: un modal = una decisión; lo exploratorio ya vive en
+    el drawer (W4.1).
+  - **W4.3 (accesibilidad mínima):** foco atrapado en modales (Dialog lo trae stock), cierre con Esc,
+    navegación por teclado en el triage. Pendiente menor: el warning dev-only del Sheet en React 18
+    (ver §7) — evaluar `forwardRef` shim o subir a React 19.
+- **Luego:** W5 (capa de usuario mock: login, avatar, perfil, settings; identidad real firma la
+  auditoría) + ensayo del guión de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 
