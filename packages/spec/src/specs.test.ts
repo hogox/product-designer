@@ -20,6 +20,7 @@ import {
   readAudit,
   specPaths,
   writeSpec,
+  writeProposedSpec,
   createSpecV0,
 } from "./index.js";
 
@@ -237,6 +238,26 @@ test("readSpecGroups agrupa por producto", async () => {
     assert.equal(onboarding?.specs.length, 2);
     const pagos = groups.find((g) => g.product === "Pagos");
     assert.equal(pagos?.specs.length, 1);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("hasProposal del índice refleja la existencia de spec.proposed.yaml", async () => {
+  const root = await tempRepo();
+  try {
+    const { id } = await createSpec(
+      root,
+      { id: "con-propuesta", name: "Con propuesta", product: "P" },
+      "Hugo",
+    );
+    const sinPropuesta = (await buildIndex(root)).find((e) => e.id === id);
+    assert.equal(sinPropuesta?.hasProposal, false);
+
+    const spec = await readSpec(root, id);
+    await writeProposedSpec(root, { ...spec, status: "in_review" });
+    const conPropuesta = (await buildIndex(root)).find((e) => e.id === id);
+    assert.equal(conPropuesta?.hasProposal, true);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

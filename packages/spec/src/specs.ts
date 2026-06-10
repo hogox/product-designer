@@ -11,7 +11,7 @@
 //  - archivar = soft delete (`archived: true` + entrada de auditoría); NUNCA se borra
 //    el directorio de la spec.
 
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
@@ -33,6 +33,7 @@ export const SpecIndexEntrySchema = z.object({
   stage: StageSchema, // = spec.current_stage
   status: SpecIndexStatusSchema, // derivado de spec.archived
   updatedAt: z.string().nullable(), // último timestamp de auditoría (fallback: history)
+  hasProposal: z.boolean(), // ¿existe spec.proposed.yaml? (propuesta de compuerta pendiente)
 });
 export type SpecIndexEntry = z.infer<typeof SpecIndexEntrySchema>;
 
@@ -49,6 +50,16 @@ const INDEX_FILE = "index.yaml";
 
 function indexPath(rootDir: string): string {
   return join(rootDir, "specs", INDEX_FILE);
+}
+
+/** ¿Existe el archivo? (sin leerlo). */
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ---------- validación de id ----------
@@ -118,6 +129,7 @@ export async function buildIndex(rootDir: string): Promise<SpecIndex> {
       stage: spec.current_stage,
       status: spec.archived ? "archivada" : "activa",
       updatedAt: await deriveUpdatedAt(rootDir, spec.id, spec.history),
+      hasProposal: await fileExists(specPaths(rootDir, spec.id).proposed),
     });
   }
   // orden estable: producto, luego nombre (no dependemos del orden del filesystem)

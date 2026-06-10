@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getSpecGroups, type SpecGroup, type SpecIndexEntry } from "../api";
+import { NewSpecModal } from "../components/NewSpecModal";
 import { specPath } from "../nav";
 
 export function SpecsHomePage() {
   const [groups, setGroups] = useState<SpecGroup[]>([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,6 +20,8 @@ export function SpecsHomePage() {
       .then(setGroups)
       .catch((e) => setError(String(e)));
   }, []);
+
+  const products = groups.map((g) => g.product);
 
   const archivedCount = groups
     .flatMap((g) => g.specs)
@@ -40,8 +44,18 @@ export function SpecsHomePage() {
             hallazgos y auditoría.
           </div>
         </div>
-        {/* "Nueva spec" (modal) llega en el paso 2.2 */}
+        <button
+          type="button"
+          className="primary"
+          onClick={() => setShowModal(true)}
+        >
+          + Nueva spec
+        </button>
       </header>
+
+      {showModal && (
+        <NewSpecModal products={products} onClose={() => setShowModal(false)} />
+      )}
 
       {error && <div className="panel error">Error: {error}</div>}
 
@@ -91,6 +105,9 @@ function SpecCard({ entry }: { entry: SpecIndexEntry }) {
         </span>
       </div>
       <div className="meta">etapa: {entry.stage}</div>
+      {entry.hasProposal && (
+        <span className="proposal-tag">propuesta pendiente</span>
+      )}
       <div className="spec-card-foot">
         <span className="pill">{entry.id}</span>
       </div>
