@@ -64,12 +64,34 @@ Sidebar persistente (7 etapas + Spec viva + Auditoría, con meta de spec siempre
 (hallazgos/evidencia/verificación) y Definición (enmarcado/JTBD/métricas/compuerta) reales; etapas
 3–7 mockeadas con su plan (artefactos/gate del PRD). Commits `b930a61`→`293643d` (D.1–D.6).
 
-**Tests:** ~55 (spec 21 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
-offline (stubs) + verificada con corridas reales contra la API.
+### Fase D2 — experiencia del dashboard (EN CURSO) · Sesión 1 (W0.1+W0.2) ✅
+Gestión multi-spec: el dashboard deja de estar pegado a `otp-onboarding`.
+- **Esquema:** `SpecSchema += product` (string agrupador), `description?`, `archived` (soft-delete),
+  todos con default para compat con specs previas. `createSpecV0` los acepta.
+- **Índice (`packages/spec/src/specs.ts`):** `specs/index.yaml` es **cache regenerable** (la verdad
+  es `specs/<id>/`); `buildIndex` escanea el filesystem y omite dirs inválidos, `readIndex` regenera
+  si falta/corrupto. Entrada: `{id, name, product, stage, status(activa|archivada), updatedAt}`
+  (`status` deriva de `archived`; `updatedAt` del último timestamp de auditoría).
+- **CRUD con auditoría:** `createSpec` (id inmutable kebab-case y único; slug del name si se omite),
+  `updateSpecMeta` (id intacto), `archiveSpec` (soft delete, exige motivo, nunca borra el directorio).
+  Verbos `spec.create|update|archive`.
+- **API** (server del dashboard): `GET /api/specs` (agrupado por producto), `POST /api/specs`,
+  `PATCH /api/specs/:id`, `POST /api/specs/:id/archive`, `POST /api/specs/reindex`. Shim temporal en
+  `App.tsx` (aplana grupos a ids activas hasta que Sesión 2 rediseñe el home).
+- **CLI espejo** (orquestador): `list-specs`, `create-spec`, `update-spec`, `archive-spec`.
+- **Migración:** `otp-onboarding` gana `product: Onboarding` en `spec.yaml` y `spec.proposed.yaml`
+  (el Agente 2 preserva `product` vía `...current`, así sobrevive a la aprobación de la compuerta).
+
+**Tests:** ~70 (spec 36 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
+offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec se verificó
+además live por curl y por CLI (crear/listar/editar/archivar + regeneración del índice).
 
 ## 5. Estado actual del repo
-- Spec `otp-onboarding`: **v3 approved**, etapa `definicion`, con una **propuesta de Definición
-  pendiente** (10 hallazgos, 5 JTBD, 7 métricas HEART, verificación 6/6 ✓). **Ready-to-demo**.
+- Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
+  **propuesta de Definición pendiente** (8 hallazgos en la spec, 5 JTBD, propuesta `in_review`).
+  **Ready-to-demo**.
+- Multi-spec operativo por API/CLI (sin UI de "Mis specs" todavía → Sesión 2). El índice
+  `specs/index.yaml` es cache regenerable y está **gitignored**.
 - Working tree limpio. Demo levantable en `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
@@ -99,8 +121,31 @@ cuando los haya (el motor corre igual).
 - **Dashboard:** BrowserRouter (Vite sirve el fallback SPA; el Express solo responde `/api`). Puerto API `DASH_PORT` (default 8791; el 8787 lo usa otro proyecto local).
 - **Store:** `writeSpec/writeProposedSpec/writeFindings` validan contra el esquema **antes** de escribir; `approveGate` limpia `findings.yaml` y `spec.proposed.yaml` al aprobar (los findings quedan en la spec).
 - **Procedencia:** la verificación re-ancla por código (la evidencia/los ids de findings se re-adjuntan; no se confía en lo que reproduzca el modelo).
+- **Índice de specs (D2):** `specs/index.yaml` es CACHE; la verdad es `specs/<id>/spec.yaml`. Toda
+  mutación regenera el índice escaneando el filesystem (no se parchea a mano); está gitignored.
+  `archived` vive en la spec (no solo en el índice) para que `status` activa/archivada sea
+  reconstruible. `buildIndex` omite dirs sin spec válida — no tumba el listado por una spec rota.
+- **Metadatos y aprobación (D2):** `product`/`description`/`archived` los preserva el Agente 2 vía
+  `...current` en `define.ts`, y `approveGate` los hereda con `...proposed`. Si en el futuro un
+  runner construye la propuesta desde cero (sin spread de `current`), hay que re-inyectar estos
+  campos o se perderá el agrupador al aprobar.
+- **id de spec inmutable (D2):** el `id` es ruta en git + clave de auditoría; `PATCH`/`update-spec`
+  NO lo tocan. Validación kebab-case `^[a-z0-9]+(-[a-z0-9]+)*$`; si se omite, se deriva del name
+  por slug (acentos removidos vía NFD).
 
-## 8. Qué falta — próximos pasos (del PRD §15)
+## 8. Qué falta — próximos pasos
+
+### Inmediato: Fase D2 (experiencia del dashboard) — bloquea la Fase 3
+Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md).
+- **Sesión 1 (W0.1+W0.2) — HECHA:** índice + CRUD multi-spec (API/CLI).
+- **PRÓXIMA = Sesión 2 (W0.3+W0.4):** routing `/spec/:id/...` con aislamiento de contexto por spec
+  (cero estado compartido salvo el índice; el shim de `App.tsx` se reemplaza) + pantalla **"Mis specs"**
+  como home (tarjetas agrupadas por producto, modal "Nueva spec") + **switcher de spec** en el sidebar.
+  Hecho cuando: dos specs en pestañas distintas no se pisan; crear spec + correr Descubrimiento desde la UI.
+- **Luego:** W1 (hub de Fuentes), W2 (revisión humana granular por hallazgo), W3 (rediseño visual
+  modular), W4 (drawer + modales), W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
+
+### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración
   real del **design system** (los 3 roles §D10: restricción/fuente/validador) y chequeos automatizables
   (contraste, tokens). Las páginas mockeadas 3–5 del dashboard ya anticipan estas etapas.

@@ -13,15 +13,20 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: Fase 0 + Fase 1 (hechas) · Fase 2 (en curso)
+## Alcance actual: F0+F1+F2 (hechas) · Fase D2 (en curso) · Fase 3 (bloqueada por D2)
 
 - HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
   mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
-- EN CURSO (F2): Agente 2 (Definición completo) — problem statement, JTBD y métricas HEART/GSM
+- HECHO (F2): Agente 2 (Definición completo) — problem statement, JTBD y métricas HEART/GSM
   anclados a los hallazgos; routing de dos etapas (Descubrimiento → Definición → gate enmarcar);
   cierre del diamante Problema.
-- NO: los 5 agentes restantes (Exploración→Aprendizaje), config real de MCP/conectores, RBAC,
-  pulido de UI, multi-agente paralelo.
+- EN CURSO (D2 — experiencia del dashboard, ver [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md)):
+  se ejecuta COMPLETA antes de la Fase 3. Sesión 1 hecha (W0.1+W0.2): gestión multi-spec —
+  metadatos `product`/`description`/`archived`, índice `specs/index.yaml` (cache regenerable),
+  CRUD de specs (API + CLI) con auditoría `spec.create|update|archive`. Faltan W0.3–W5
+  (routing /spec/:id, fuentes, revisión granular, rediseño visual, capa de usuario).
+- BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
+  (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
 ## Metodología de trabajo
 
