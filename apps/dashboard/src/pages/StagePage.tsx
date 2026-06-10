@@ -11,6 +11,7 @@ import { Framing } from "../components/Framing";
 import { Jtbd } from "../components/Jtbd";
 import { Metrics } from "../components/Metrics";
 import { StagePlaceholder } from "../components/StagePlaceholder";
+import { RealMockBadge } from "../components/badges";
 import { useShell } from "../App";
 import { discoveryVerification, type SpecData } from "../api";
 
@@ -34,18 +35,16 @@ export function StagePage() {
   if (!stage) return <Navigate to={specPath(specId)} replace />;
 
   return (
-    <div>
-      <div className="stage-head">
-        <h1>
-          {stage.n}. {stage.name}{" "}
-          <span className={`badge ${stage.real ? "real" : "mock"}`}>
-            {stage.real ? "real" : "mock"}
-          </span>
+    <div className="space-y-4">
+      <div>
+        <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
+          {stage.n}. {stage.name}
+          <RealMockBadge real={stage.real} />
         </h1>
-        <div className="meta">
+        <p className="text-sm text-muted-foreground">
           {stage.diamante} · {stage.modo}
           {stage.gate ? ` · gate: ${stage.gate}` : ""}
-        </div>
+        </p>
       </div>
 
       <SectionTabs stageId={stage.id} sections={stage.sections} />
@@ -91,9 +90,7 @@ function StageContent({
     const shown = shell.proposed ?? shell.spec;
     if (!shown)
       return (
-        <div className="panel">
-          <p className="empty">Cargando spec…</p>
-        </div>
+        <p className="text-sm text-muted-foreground italic">Cargando spec…</p>
       );
     if (section === "enmarcado")
       return (
@@ -103,7 +100,7 @@ function StageContent({
     if (section === "metricas") return <Metrics shown={shown} />;
     if (section === "compuerta")
       return (
-        <div className="layout">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <GatePanel
             specId={shell.specId}
             proposed={shell.proposed}
@@ -120,10 +117,8 @@ function StageContent({
 
   // Etapas mockeadas (D.5): pendiente.
   return (
-    <div className="panel">
-      <p className="meta">
-        Sección <strong>{section}</strong> — próximo paso.
-      </p>
-    </div>
+    <p className="text-sm text-muted-foreground">
+      Sección <strong>{section}</strong> — próximo paso.
+    </p>
   );
 }

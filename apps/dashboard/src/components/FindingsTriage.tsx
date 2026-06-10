@@ -1,19 +1,35 @@
 // Triage de hallazgos (D2 · W2.4): revisión humana por ítem — aprobar / rechazar / pausar
 // (las dos últimas exigen comentario). Estado visible (badge semántico + tooltip), filtros
 // por estado y contadores. No-destructivo y auditado: usa PATCH …/findings/:fid/review.
+// W3.2: Card modular; la evidencia anclada sube de jerarquía (cita a text-sm, locator chip).
 
 import { useState } from "react";
+import { ClipboardCheck } from "lucide-react";
+
 import type { Finding } from "@pda/spec";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { reviewFinding, type ReviewStatus } from "../api";
 import { ReviewCommentModal } from "./ReviewCommentModal";
-
-const STATUS_LABEL: Record<ReviewStatus, string> = {
-  pendiente: "Pendiente",
-  aprobado: "Aprobado",
-  rechazado: "Rechazado",
-  en_pausa: "En pausa",
-};
+import {
+  ConfidenceBadge,
+  RealMockBadge,
+  ReviewStatusBadge,
+  REVIEW_LABEL,
+} from "./badges";
 
 const FILTERS: ("todos" | ReviewStatus)[] = [
   "todos",
@@ -67,64 +83,75 @@ export function FindingsTriage({
 
   if (findings.length === 0) {
     return (
-      <div className="panel">
-        <p className="empty">
-          No hay hallazgos en el store. Corré Descubrimiento (
-          <code>orchestrator discover</code>).
-        </p>
-      </div>
+      <Card>
+        <CardContent>
+          <p className="text-sm text-muted-foreground italic">
+            No hay hallazgos en el store. Corré Descubrimiento (
+            <code>orchestrator discover</code>).
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="panel">
-      <h2>
-        Triage de hallazgos{" "}
-        <span className="badge real">{findings.length}</span>
-      </h2>
-      <div className="triage-counts">
-        {findings.length} hallazgos · {count("aprobado")} aprobados ·{" "}
-        {count("pendiente")} pendientes · {count("en_pausa")} en pausa ·{" "}
-        {count("rechazado")} rechazados
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+          <ClipboardCheck className="size-4 text-muted-foreground" />
+          Triage de hallazgos
+          <RealMockBadge real />
+          <Badge variant="secondary">{findings.length}</Badge>
+        </CardTitle>
+        <CardDescription>
+          {findings.length} hallazgos · {count("aprobado")} aprobados ·{" "}
+          {count("pendiente")} pendientes · {count("en_pausa")} en pausa ·{" "}
+          {count("rechazado")} rechazados
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-1.5">
+          {FILTERS.map((f) => (
+            <Button
+              key={f}
+              type="button"
+              size="sm"
+              variant={filter === f ? "default" : "outline"}
+              className="rounded-full"
+              onClick={() => setFilter(f)}
+            >
+              {f === "todos" ? "Todos" : REVIEW_LABEL[f]}
+            </Button>
+          ))}
+        </div>
 
-      <div className="triage-filters">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            className={`chip${filter === f ? " active" : ""}`}
-            onClick={() => setFilter(f)}
-          >
-            {f === "todos" ? "Todos" : STATUS_LABEL[f]}
-          </button>
+        {filtered.length === 0 && (
+          <p className="text-sm text-muted-foreground italic">
+            Ningún hallazgo en este estado.
+          </p>
+        )}
+
+        {filtered.map((f) => (
+          <FindingCard
+            key={f.id}
+            finding={f}
+            onApprove={() => setStatus(f.id, "aprobado")}
+            onReject={() => setModal({ fid: f.id, action: "rechazado" })}
+            onPause={() => setModal({ fid: f.id, action: "en_pausa" })}
+            onResume={() => setStatus(f.id, "pendiente")}
+          />
         ))}
-      </div>
 
-      {filtered.length === 0 && (
-        <p className="empty">Ningún hallazgo en este estado.</p>
-      )}
-
-      {filtered.map((f) => (
-        <FindingCard
-          key={f.id}
-          finding={f}
-          onApprove={() => setStatus(f.id, "aprobado")}
-          onReject={() => setModal({ fid: f.id, action: "rechazado" })}
-          onPause={() => setModal({ fid: f.id, action: "en_pausa" })}
-          onResume={() => setStatus(f.id, "pendiente")}
-        />
-      ))}
-
-      {modal && (
-        <ReviewCommentModal
-          findingId={modal.fid}
-          action={modal.action}
-          onClose={() => setModal(null)}
-          onSubmit={(comment) => setStatus(modal.fid, modal.action, comment)}
-        />
-      )}
-    </div>
+        {modal && (
+          <ReviewCommentModal
+            findingId={modal.fid}
+            action={modal.action}
+            onClose={() => setModal(null)}
+            onSubmit={(comment) => setStatus(modal.fid, modal.action, comment)}
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -142,71 +169,88 @@ function FindingCard({
   onResume: () => void;
 }) {
   const reviewedTip = f.reviewed_by
-    ? `${STATUS_LABEL[f.review_status]} por ${f.reviewed_by}${f.reviewed_at ? ` · ${new Date(f.reviewed_at).toLocaleString()}` : ""}${f.review_note ? `\n"${f.review_note}"` : ""}`
+    ? `${REVIEW_LABEL[f.review_status]} por ${f.reviewed_by}${f.reviewed_at ? ` · ${new Date(f.reviewed_at).toLocaleString()}` : ""}${f.review_note ? `\n"${f.review_note}"` : ""}`
     : "Sin revisar";
 
   return (
-    <div
-      className="stage"
-      style={{ alignItems: "flex-start", flexDirection: "column" }}
-    >
-      <div
-        style={{ display: "flex", gap: 8, width: "100%", alignItems: "center" }}
-      >
-        <span className={`badge ${f.confidence === "high" ? "real" : "mock"}`}>
-          {f.confidence}
+    <div className="space-y-3 rounded-lg border p-4">
+      <div className="flex flex-wrap items-start gap-2">
+        <ConfidenceBadge confidence={f.confidence} />
+        <span className="min-w-40 flex-1 text-sm font-medium">
+          {f.statement}
         </span>
-        <strong style={{ fontSize: 14, flex: 1 }}>{f.statement}</strong>
-        <span className={`badge review-${f.review_status}`} title={reviewedTip}>
-          {STATUS_LABEL[f.review_status]}
-        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <ReviewStatusBadge status={f.review_status} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-sm whitespace-pre-line">
+            {reviewedTip}
+          </TooltipContent>
+        </Tooltip>
       </div>
-      <div className="meta" style={{ marginTop: 4 }}>
+      <div className="text-xs text-muted-foreground">
         {f.id} · {f.type} · →{f.feeds}
         {f.review_note ? ` · “${f.review_note}”` : ""}
       </div>
-      {f.evidence.map((e, i) => (
-        <div key={i} className="meta" style={{ paddingLeft: 8 }}>
-          └ {e.source} · {e.locator}: {e.quote ? `"${e.quote}"` : e.computation}
-        </div>
-      ))}
-      <div className="triage-actions">
-        <button
+      {/* Evidencia anclada (invariante 5): cita/cálculo legible, locator como chip mono */}
+      <div className="space-y-2">
+        {f.evidence.map((e, i) => (
+          <div key={i} className="space-y-1 border-l-2 pl-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">{e.source}</span>
+              <Badge variant="outline" className="font-mono text-xs">
+                {e.locator}
+              </Badge>
+            </div>
+            <p className="text-sm">
+              {e.quote ? `"${e.quote}"` : e.computation}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
           type="button"
-          className="gate approve"
-          style={{ cursor: "pointer", padding: "3px 12px" }}
+          size="sm"
+          variant="outline"
+          className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
           disabled={f.review_status === "aprobado"}
           onClick={onApprove}
         >
           Aprobar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="gate iterate"
-          style={{ cursor: "pointer", padding: "3px 12px" }}
+          size="sm"
+          variant="outline"
+          className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
           disabled={f.review_status === "en_pausa"}
           onClick={onPause}
         >
           Pausar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="gate reject"
-          style={{ cursor: "pointer", padding: "3px 12px" }}
+          size="sm"
+          variant="outline"
+          className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
           disabled={f.review_status === "rechazado"}
           onClick={onReject}
         >
           Rechazar
-        </button>
+        </Button>
         {f.review_status !== "pendiente" && (
-          <button
+          <Button
             type="button"
-            className="link-button"
-            onClick={onResume}
+            size="sm"
+            variant="ghost"
             title="Volver a pendiente"
+            onClick={onResume}
           >
             Reabrir
-          </button>
+          </Button>
         )}
       </div>
     </div>

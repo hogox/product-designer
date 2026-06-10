@@ -2,8 +2,13 @@
 // Aprobar sube versión (commit + historial); iterar registra feedback. Bloquea si la
 // verificación tiene criterios bloqueantes sin pasar.
 
+import { UserCheck } from "lucide-react";
+
 import type { Spec } from "@pda/spec";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { postJson } from "../api";
 
 export function GatePanel({
@@ -47,46 +52,46 @@ export function GatePanel({
   }
 
   return (
-    <div className="panel">
-      <h2>
-        Compuerta humana{" "}
-        <span className={`badge ${pending ? "real" : "mock"}`}>
-          {pending ? "activa" : "inactiva"}
-        </span>
-      </h2>
-      <div className="gate-box">
-        <div className="gate-title">Compuerta: {gateName}</div>
-        <div className="meta">
-          {pending
-            ? "Aprobar el problema enmarcado sube la spec de versión (commit + historial). Iterar re-corre el agente con tu feedback."
-            : "No hay propuesta pendiente. Corré la etapa (orchestrator define) para generar una v+1."}
-        </div>
-        {pending && blockingFail && (
-          <div className="meta error" style={{ marginTop: 6 }}>
-            Hay criterios bloqueantes sin pasar: la aprobación está bloqueada.
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+          <UserCheck className="size-4 text-muted-foreground" />
+          Compuerta humana
+          {pending ? (
+            <Badge
+              variant="outline"
+              className="border-emerald-200 bg-emerald-50 text-emerald-700"
+            >
+              activa
+            </Badge>
+          ) : (
+            <Badge variant="secondary">inactiva</Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-4">
+          <div className="font-semibold">Compuerta: {gateName}</div>
+          <p className="text-sm text-muted-foreground">
+            {pending
+              ? "Aprobar el problema enmarcado sube la spec de versión (commit + historial). Iterar re-corre el agente con tu feedback."
+              : "No hay propuesta pendiente. Corré la etapa (orchestrator define) para generar una v+1."}
+          </p>
+          {pending && blockingFail && (
+            <p className="text-sm text-destructive">
+              Hay criterios bloqueantes sin pasar: la aprobación está bloqueada.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={!pending || blockingFail} onClick={approve}>
+              Aprobar
+            </Button>
+            <Button variant="outline" disabled={!pending} onClick={iterate}>
+              Iterar
+            </Button>
           </div>
-        )}
-        <div className="gate-actions">
-          <button
-            className="gate approve"
-            disabled={!pending || blockingFail}
-            style={{
-              cursor: pending && !blockingFail ? "pointer" : "not-allowed",
-            }}
-            onClick={approve}
-          >
-            Aprobar
-          </button>
-          <button
-            className="gate iterate"
-            disabled={!pending}
-            style={{ cursor: pending ? "pointer" : "not-allowed" }}
-            onClick={iterate}
-          >
-            Iterar
-          </button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

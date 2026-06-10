@@ -1,27 +1,53 @@
+import { Briefcase } from "lucide-react";
+
 import type { Spec } from "@pda/spec";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RealMockBadge } from "./badges";
 
 export function Jtbd({ shown }: { shown: Spec }) {
   return (
-    <div className="panel">
-      <h2>
-        JTBD — Jobs To Be Done{" "}
-        <span className="badge real">{shown.jtbd.length}</span>
-      </h2>
-      <div className="meta" style={{ marginBottom: 8 }}>
-        Cada job se ancla a los hallazgos que lo motivan (procedencia heredada).
-      </div>
-      {shown.jtbd.length === 0 ? (
-        <p className="empty">Aún sin JTBD (corré Definición).</p>
-      ) : (
-        shown.jtbd.map((j) => (
-          <div className="section" key={j.id}>
-            <div>{j.statement}</div>
-            <div className="meta">
-              {j.id} ← sustentado por: {j.supported_by.join(", ")}
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+          <Briefcase className="size-4 text-muted-foreground" />
+          JTBD — Jobs To Be Done
+          <RealMockBadge real />
+          <Badge variant="secondary">{shown.jtbd.length}</Badge>
+        </CardTitle>
+        <CardDescription>
+          Cada job se ancla a los hallazgos que lo motivan (procedencia
+          heredada).
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {shown.jtbd.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">
+            Aún sin JTBD (corré Definición).
+          </p>
+        ) : (
+          <div className="divide-y">
+            {shown.jtbd.map((j) => (
+              <div className="space-y-1 py-3 first:pt-0 last:pb-0" key={j.id}>
+                <p className="text-sm">{j.statement}</p>
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {j.id}
+                  </Badge>
+                  ← sustentado por: {j.supported_by.join(", ")}
+                </div>
+              </div>
+            ))}
           </div>
-        ))
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
