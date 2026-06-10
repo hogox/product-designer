@@ -30,6 +30,13 @@ export function OverviewPage() {
     );
   }
 
+  // W3.4(a): el resumen del overview muestra SOLO la actividad de la última propuesta
+  // (desde la última entrada `agent.proposed`), no iteraciones viejas que confunden los
+  // conteos. El log completo vive en /auditoria ("ver todo").
+  const lastProposalIdx = audit.map((e) => e.action).lastIndexOf("agent.proposed");
+  const proposalAudit =
+    lastProposalIdx >= 0 ? audit.slice(lastProposalIdx) : audit.slice(-6);
+
   return (
     <div className="space-y-4">
       <StatCards spec={spec} findings={findings} />
@@ -87,7 +94,16 @@ export function OverviewPage() {
             ))}
           </CardContent>
         </Card>
-          <AuditPanel entries={audit} limit={6} title="Auditoría reciente" />
+          <AuditPanel
+            entries={proposalAudit}
+            title={
+              lastProposalIdx >= 0
+                ? "Auditoría de la propuesta"
+                : "Auditoría reciente"
+            }
+            viewAllHref={specPath(specId, "/auditoria")}
+            viewAllCount={audit.length}
+          />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 // Log de auditoría (invariante 7): quién/qué/cuándo. Card modular (W3.2) con avatar de
 // actor (impulso visual, paso 2d): humano con iniciales, agente con icono Bot.
 
+import { Link } from "react-router-dom";
 import { ScrollText } from "lucide-react";
 
 import type { AuditEntry } from "@pda/spec";
@@ -15,10 +16,14 @@ export function AuditPanel({
   entries,
   limit,
   title = "Log de auditoría",
+  viewAllHref,
+  viewAllCount,
 }: {
   entries: AuditEntry[];
   limit?: number;
   title?: string;
+  viewAllHref?: string; // si está, muestra footer "Ver todo (N) →"
+  viewAllCount?: number; // total real del log (para el contador del footer)
 }) {
   const recent = [...entries].reverse().slice(0, limit ?? entries.length);
   return (
@@ -61,6 +66,14 @@ export function AuditPanel({
               </div>
             ))}
           </div>
+        )}
+        {viewAllHref && (
+          <Link
+            to={viewAllHref}
+            className="mt-3 inline-block text-xs text-primary underline-offset-4 hover:underline"
+          >
+            Ver todo el log{viewAllCount != null ? ` (${viewAllCount})` : ""} →
+          </Link>
         )}
       </CardContent>
     </Card>
