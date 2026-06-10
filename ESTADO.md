@@ -121,10 +121,25 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
   (requiere endpoint que llame al Agente 1 real → mover credenciales/llamadas al modelo al server;
   se pospuso por decisión explícita). El selector no tiene consumidor hasta que exista ese botón.
 
-**Tests:** ~86 (spec 47 · agent1 21 · agent2 3 · orchestrator 15). Lógica anti-alucinación testeada
-offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec y el hub de
-Fuentes se verificaron además live por curl/CLI; routing, home y la página Fuentes (subir/reclasificar/
-descartar), en el preview. La ingestión W1.3 se verificó **offline** (runner stub, sin gastar tokens).
+### Fase D2 · Sesión 5 (W2.1+W2.2) ✅ — estados de revisión por hallazgo
+- **Esquema:** `finding` gana `review_status (pendiente|aprobado|rechazado|en_pausa`, default
+  `pendiente`) y `reviewed_at`; **reusa** `reviewed_by` (quién) y `review_note` (comentario). Default
+  → specs previas cargan sin romper; `derive.ts` usa `safeParse` (defaults aplican solos).
+- **Orquestador:** `reviewFinding(status, comment, by)` setea el estado **en su lugar** (no borra),
+  espeja en la propuesta si existe, **exige comentario** para `rechazado`/`en_pausa` (extiende inv. 7),
+  audita `finding.approve|reject|pause|resume`. `rejectFinding` se reimplementó sobre
+  `reviewFinding(rechazado)`: **ya no destruye** (recuperable).
+- **API/CLI:** `PATCH /api/specs/:id/findings/:fid/review {status, comment, by}` (400 inválido/sin
+  comentario) + CLI `review <spec> <fid> --status [--reason] [--by]`.
+- **UI (tweak mínimo, la triage plena es W2.4):** `FindingsTriage` oculta los `rechazado` (preserva la
+  UX "rechazar lo saca de la vista"); conteo/empty usan los visibles.
+- **Migración (decisión confirmada):** los 8 findings de `otp-onboarding/spec.yaml` → `aprobado`;
+  la propuesta/working set quedan `pendiente` por default.
+
+**Tests:** ~89 (spec 47 · agent1 21 · agent2 3 · orchestrator 18). Lógica anti-alucinación testeada
+offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes
+y los estados de revisión se verificaron además live por curl/CLI; routing, home, página Fuentes y el
+filtro de triage, en el preview. La ingestión W1.3 se verificó **offline** (runner stub, sin tokens).
 
 ## 5. Estado actual del repo
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
@@ -136,6 +151,10 @@ descartar), en el preview. La ingestión W1.3 se verificó **offline** (runner s
 - Hub de Fuentes operativo de punta a punta por UI: subir (drag&drop), listar, reclasificar,
   descartar; y `discover` (CLI) ya lee las fuentes subidas (cae a `samples/` si no hay) y marca
   `ingerido`. Falta el botón "Correr Descubrimiento desde la UI" (diferido).
+- Revisión por hallazgo operativa por API/CLI (aprobar/rechazar/pausar/pendiente, no-destructivo,
+  auditado). En la UI: por ahora solo se ocultan los rechazados; la triage plena (badges, filtros,
+  botones aprobar/pausar, modal de comentario) es W2.4 (Sesión 6). El gate todavía NO mira los estados
+  (W2.3, Sesión 6).
 - Working tree limpio. Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
@@ -199,6 +218,15 @@ cuando los haya (el motor corre igual).
 - **Subir archivos en el preview:** los `<input type=file>` no se pueden llenar con `preview_fill`;
   para probar el onChange real, crear un `DataTransfer`, `input.files = dt.files` y disparar
   `change` vía `preview_eval` (Chromium lo permite).
+- **Revisión por hallazgo (D2·W2):** `review_status` arranca `pendiente` (default zod → specs previas
+  cargan). `rechazado`/`en_pausa` exigen comentario en `reviewFinding` (no en `aprobado`/`pendiente`).
+  `reviewFinding` espeja el estado en `findings.yaml` Y en `spec.proposed.yaml` si hay propuesta.
+  **`rejectFinding` ya NO borra** (enruta por `reviewFinding(rechazado)`): si algo esperaba que el
+  hallazgo desapareciera del store, ahora queda con status `rechazado`. La triage UI lo oculta por
+  ahora; cuando W2.3 toque el gate, recordar que los `rechazado` siguen en el array de findings.
+- **Agregar campos a `finding`/`Spec` rompe los fixtures tipados:** los literales `: Finding`/`: Spec`
+  de los tests exigen los campos nuevos (el tipo `infer` los pide aunque tengan `.default()`).
+  Al extender el esquema, actualizar los fixtures (hay varios en spec/agent2/orchestrator tests).
 
 ## 8. Qué falta — próximos pasos
 
@@ -209,18 +237,20 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   "Mis specs" + modal "Nueva spec" + switcher.
 - **Sesión 3 (W1.1+W1.2) — HECHA:** modelo + API del hub de Fuentes (multipart, auditado).
 - **Sesión 4 (W1.3+W1.4) — HECHA:** ingestión desde fuentes (cae a samples) + UI página "Fuentes".
-- **PRÓXIMA = Sesión 5 (W2.1 esquema estados por hallazgo + W2.2 API/CLI):**
-  - **W2.1:** en `finding`: `reviewStatus (pendiente|aprobado|rechazado|en_pausa)`, `reviewComment?`,
-    `reviewedBy?`, `reviewedAt?`. **Migración a decidir/confirmar** (riesgo abierto sección 6 del plan):
-    findings ya en la spec (pasaron compuerta) → `aprobado`; findings de propuestas vivas → `pendiente`.
-    Hecho cuando: esquema + tests de store; las specs existentes (otp-onboarding) cargan sin romper.
-  - **W2.2:** `PATCH /api/specs/:id/findings/:fid/review {status, comment, by}` — `rechazado`/`en_pausa`
-    exigen `comment` (400 si falta; extiende invariante 7); verbos `finding.approve|reject|pause|resume`;
-    CLI espejo (`review <spec> <fid> --status --reason --by`). Hecho cuando: tests de reglas + auditoría.
-  - **Ojo:** ya existe `reviewed_by`/`review_note` en `finding` (Fase 1) y `rejectFinding` que QUITA el
-    hallazgo del store. W2 cambia el modelo a estados POR ítem (no se borra): reconciliar ambos.
-- **Luego:** W2.3–W2.4 (gate respeta estados + UI triage), W3 (rediseño visual modular), W4 (drawer +
-  modales), W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
+- **Sesión 5 (W2.1+W2.2) — HECHA:** estados de revisión por hallazgo + API/CLI (no-destructivo).
+- **PRÓXIMA = Sesión 6 (W2.3 gate respeta estados + W2.4 UI triage plena):**
+  - **W2.3:** criterio bloqueante nuevo del gate — "Sin hallazgos `pendiente` ni `en_pausa` de
+    **impacto alto** (`confidence: high`)"; `medium/low` en pausa → advertencia no bloqueante
+    (documentar el umbral; es el riesgo abierto "umbral de bloqueo" de la sección 6 del plan, a
+    confirmar). "Iterar" en Definición acepta comentarios por ítem (JTBD/métrica) concatenados al
+    feedback del agente. Tocar `packages/orchestrator/src/verify.ts` (verifyProposal) y el gate.
+    Hecho cuando: test del gate que bloquea con un high `en_pausa` y desbloquea al resolverlo.
+  - **W2.4:** triage plena en la UI — por tarjeta: Aprobar / Rechazar / Pausar (las dos últimas abren
+    **modal de comentario obligatorio**); badge de estado con color semántico + tooltip (comentario/
+    revisor/fecha); filtros por estado; contadores en el header ("10 · 6 aprobados · 1 en pausa").
+    Reemplaza el tweak actual de FindingsTriage. Usa `PATCH …/findings/:fid/review` (ya existe).
+- **Luego:** W3 (rediseño visual modular), W4 (drawer + modales), W5 (capa de usuario mock) + ensayo
+  del guión de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración

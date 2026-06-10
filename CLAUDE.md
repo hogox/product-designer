@@ -35,7 +35,13 @@
     hay) y marca `ingerido`; ruteo por tipo ingerido (text→citas, tabular→métricas). UI página
     "Fuentes" (subir drag&drop/picker, listar con badges, reclasificar, descartar). Diferido: modal
     selector + botón "Correr Descubrimiento desde la UI" (no se movieron llamadas al modelo al server).
-  - Faltan W2 (revisión granular), W3–W4 (rediseño visual + superficies), W5 (usuario).
+  - Sesión 5 hecha (W2.1+W2.2): estados de revisión por hallazgo — `review_status`
+    (pendiente|aprobado|rechazado|en_pausa) + `reviewed_at` (reusa `reviewed_by`/`review_note`).
+    `reviewFinding` no-destructivo (rechazar/pausar exigen comentario, audita
+    `finding.approve|reject|pause|resume`); `rejectFinding` ya NO borra. API `PATCH …/findings/:fid/review`
+    + CLI `review`. Migrado otp-onboarding (spec.findings → aprobado). UI triage oculta rechazados (tweak).
+  - Faltan W2.3 (gate respeta estados) + W2.4 (UI triage plena), W3–W4 (rediseño visual + superficies),
+    W5 (usuario).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
