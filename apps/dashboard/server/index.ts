@@ -1,12 +1,21 @@
 // Server delgado del dashboard: SOLO lee el almacén de spec (PRD §14: centrado en la spec).
 // No ejecuta agentes ni muta versiones — eso llega con el orquestador (Fase 1, pasos 1.7–1.8).
 
-import { readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import express from "express";
-import { readAudit, readSpec, readProposedSpec, readFindings } from "@pda/spec";
+import {
+  readAudit,
+  readSpec,
+  readProposedSpec,
+  readFindings,
+  readSpecGroups,
+  regenerateIndex,
+  createSpec,
+  updateSpecMeta,
+  archiveSpec,
+} from "@pda/spec";
 import {
   getState,
   approveGate,
@@ -96,12 +105,87 @@ const PIPELINE = [
 const app = express();
 app.use(express.json());
 
+// --- gestión multi-spec (D2 · W0): índice agrupado por producto + CRUD ---
+
+// lista de specs agrupadas por producto (el índice es cache regenerable)
 app.get("/api/specs", async (_req, res) => {
   try {
-    const entries = await readdir(SPECS_DIR, { withFileTypes: true });
-    res.json(entries.filter((e) => e.isDirectory()).map((e) => e.name));
-  } catch {
-    res.json([]);
+    res.json(await readSpecGroups(REPO_ROOT));
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// crear spec: id kebab-case (derivado del name si se omite), inmutable y único
+app.post("/api/specs", async (req, res) => {
+  const name = String(req.body?.name ?? "").trim();
+  const product = String(req.body?.product ?? "").trim();
+  const id = req.body?.id ? String(req.body.id).trim() : undefined;
+  const description =
+    req.body?.description != null ? String(req.body.description) : null;
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  if (!name) return res.status(400).json({ error: "falta el nombre (name)" });
+  if (!product)
+    return res.status(400).json({ error: "falta el producto (product)" });
+  try {
+    const entry = await createSpec(
+      REPO_ROOT,
+      { id, name, product, description },
+      actor,
+    );
+    res.status(201).json(entry);
+  } catch (err) {
+    // id inválido / duplicado / nombre faltante → error de cliente
+    res.status(400).json({ error: String(err) });
+  }
+});
+
+// editar metadatos mutables (name/product/description); el id es inmutable
+app.patch("/api/specs/:id", async (req, res) => {
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  const patch: {
+    name?: string;
+    product?: string;
+    description?: string | null;
+  } = {};
+  if (req.body?.name !== undefined) patch.name = String(req.body.name);
+  if (req.body?.product !== undefined) patch.product = String(req.body.product);
+  if (req.body?.description !== undefined)
+    patch.description =
+      req.body.description === null ? null : String(req.body.description);
+  try {
+    const entry = await updateSpecMeta(REPO_ROOT, req.params.id, patch, actor);
+    res.json(entry);
+  } catch (err) {
+    res
+      .status(404)
+      .json({ error: `spec no encontrada o inválida: ${String(err)}` });
+  }
+});
+
+// archivar = soft delete (status archivada); exige motivo, nunca borra el directorio
+app.post("/api/specs/:id/archive", async (req, res) => {
+  const reason = String(req.body?.reason ?? "").trim();
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  if (!reason)
+    return res.status(400).json({ error: "falta el motivo del archivado" });
+  try {
+    const entry = await archiveSpec(REPO_ROOT, req.params.id, {
+      reason,
+      actor,
+    });
+    res.json(entry);
+  } catch (err) {
+    res.status(404).json({ error: String(err) });
+  }
+});
+
+// regenerar el índice manualmente (cache); útil para diagnóstico
+app.post("/api/specs/reindex", async (_req, res) => {
+  try {
+    res.json(await regenerateIndex(REPO_ROOT));
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
   }
 });
 

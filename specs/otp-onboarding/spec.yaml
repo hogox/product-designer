@@ -1,5 +1,8 @@
 id: otp-onboarding
 title: Reducir el abandono en la verificación OTP del onboarding
+product: Onboarding
+description: null
+archived: false
 version: 3
 status: approved
 current_stage: definicion

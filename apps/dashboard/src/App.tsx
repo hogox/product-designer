@@ -12,8 +12,18 @@ export function App() {
   const [specId, setSpecId] = useState<string | null>(null);
 
   useEffect(() => {
-    getJson<string[]>("/api/specs")
-      .then((ids) => {
+    // /api/specs ahora devuelve grupos por producto (D2 · W0). Shim temporal:
+    // aplanamos a ids de specs activas hasta que la Sesión 2 rediseñe el home.
+    type SpecGroup = {
+      product: string;
+      specs: { id: string; status: "activa" | "archivada" }[];
+    };
+    getJson<SpecGroup[]>("/api/specs")
+      .then((groups) => {
+        const ids = groups
+          .flatMap((g) => g.specs)
+          .filter((s) => s.status === "activa")
+          .map((s) => s.id);
         setSpecs(ids);
         setSpecId((cur) => cur ?? ids[0] ?? null);
       })
