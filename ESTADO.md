@@ -109,9 +109,22 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
 - **API (server):** `GET/POST(multipart, multer)/PATCH/DELETE(lógico) /api/specs/:id/sources`, con
   400 en kind/status inválidos y 404 si no existe. Cada mutación audita actor/target/timestamp.
 
-**Tests:** ~81 (spec 47 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
+### Fase D2 · Sesión 4 (W1.3+W1.4) ✅ — ingestión desde fuentes + UI de Fuentes
+- **W1.3 (ingestión):** `createDiscoveryRunner` recibe `files[]` y rutea por **tipo ingerido**
+  (`text` → citas, `tabular` → métricas), no por el label `kind`. `resolveDiscoverySources` usa
+  `sources/files/` si el manifest tiene fuentes `subido|ingerido`; si no, cae a `samples/`.
+  `runDiscoveryWithSources` orquesta resolver → Agente 1 → marcar `ingerido` (makeRunner inyectable
+  para tests). El CLI `discover` usa el seam y reporta el origen.
+- **W1.4 (UI):** página `/spec/:id/fuentes` (nav nuevo): dropzone drag&drop + picker (POST multipart),
+  lista con badge de tipo/tamaño/estado/etapas, reclasificar `kind` (PATCH), descartar lógico (DELETE).
+- **Diferido (acoplado):** modal selector reutilizable + botón "Correr Descubrimiento desde la UI"
+  (requiere endpoint que llame al Agente 1 real → mover credenciales/llamadas al modelo al server;
+  se pospuso por decisión explícita). El selector no tiene consumidor hasta que exista ese botón.
+
+**Tests:** ~86 (spec 47 · agent1 21 · agent2 3 · orchestrator 15). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec y el hub de
-Fuentes se verificaron además live por curl/CLI; el routing y el home, en el preview.
+Fuentes se verificaron además live por curl/CLI; routing, home y la página Fuentes (subir/reclasificar/
+descartar), en el preview. La ingestión W1.3 se verificó **offline** (runner stub, sin gastar tokens).
 
 ## 5. Estado actual del repo
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
@@ -120,8 +133,9 @@ Fuentes se verificaron además live por curl/CLI; el routing y el home, en el pr
 - Multi-spec operativo por API/CLI **y por UI**: home "Mis specs" en `/`, crear/cambiar de spec sin
   terminal, contexto aislado por URL (`/spec/:id/...`). El índice `specs/index.yaml` es cache
   regenerable y está **gitignored**.
-- Hub de Fuentes operativo por API (multipart): subir/listar/editar/descartar; falta la **ingestión
-  real** (W1.3: que `discover` lea `sources/files/` en vez de `samples/`) y la **UI** (W1.4).
+- Hub de Fuentes operativo de punta a punta por UI: subir (drag&drop), listar, reclasificar,
+  descartar; y `discover` (CLI) ya lee las fuentes subidas (cae a `samples/` si no hay) y marca
+  `ingerido`. Falta el botón "Correr Descubrimiento desde la UI" (diferido).
 - Working tree limpio. Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
@@ -177,6 +191,14 @@ cuando los haya (el motor corre igual).
   venir `application/octet-stream` (p. ej. curl con .csv); por eso `inferKind` mira también la
   extensión. Subida = `multer` memoryStorage (límite 25 MB) en el server del dashboard. Descartar es
   soft delete (status `descartado`); el binario queda. Estos binarios SÍ se versionan (no gitignored).
+- **Ingestión (D2·W1.3):** el runner de Descubrimiento rutea por **tipo ingerido** (`text`/`tabular`),
+  NO por el label `kind` de la fuente (robusto: una fuente mal clasificada igual se procesa bien).
+  `runDiscoveryWithSources` es el seam reutilizable (CLI hoy; el endpoint de discover-desde-UI lo
+  reusaría). `computeFunnelMetrics` asume estructura tipo funnel: con un CSV arbitrario puede no
+  derivar métricas útiles (a revisitar si las fuentes reales no son funnels).
+- **Subir archivos en el preview:** los `<input type=file>` no se pueden llenar con `preview_fill`;
+  para probar el onChange real, crear un `DataTransfer`, `input.files = dt.files` y disparar
+  `change` vía `preview_eval` (Chromium lo permite).
 
 ## 8. Qué falta — próximos pasos
 
@@ -186,15 +208,18 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
 - **Sesión 2 (W0.3+W0.4) — HECHA:** routing `/spec/:id` con aislamiento de contexto + home
   "Mis specs" + modal "Nueva spec" + switcher.
 - **Sesión 3 (W1.1+W1.2) — HECHA:** modelo + API del hub de Fuentes (multipart, auditado).
-- **PRÓXIMA = Sesión 4 (W1.3 ingestión + W1.4 UI de fuentes):**
-  - **W1.3:** el runner de Descubrimiento usa `sources/files/` cuando el manifest tiene fuentes
-    `subido|ingerido`; si no, cae a `samples/` (transición suave). Al correr, marca `ingerido`.
-    Hecho cuando: `discover` corre E2E con un PDF y un CSV subidos por la UI y la evidencia cita esos
-    archivos. (Tocar `packages/orchestrator/src/runner.ts` y el cableado del CLI/`discover`.)
-  - **W1.4:** página "Fuentes" en el sidebar (lista con badge de tipo/tamaño/estado/etapas) + modal
-    selector reutilizable ("Seleccionar fuentes") con buscador y chips por tipo + "Subir fuentes"
-    (drag&drop). Hecho cuando: subir → ver en lista → seleccionar → correr Descubrimiento desde la UI.
-- **Luego:** W2 (revisión granular por hallazgo), W3 (rediseño visual modular), W4 (drawer +
+- **Sesión 4 (W1.3+W1.4) — HECHA:** ingestión desde fuentes (cae a samples) + UI página "Fuentes".
+- **PRÓXIMA = Sesión 5 (W2.1 esquema estados por hallazgo + W2.2 API/CLI):**
+  - **W2.1:** en `finding`: `reviewStatus (pendiente|aprobado|rechazado|en_pausa)`, `reviewComment?`,
+    `reviewedBy?`, `reviewedAt?`. **Migración a decidir/confirmar** (riesgo abierto sección 6 del plan):
+    findings ya en la spec (pasaron compuerta) → `aprobado`; findings de propuestas vivas → `pendiente`.
+    Hecho cuando: esquema + tests de store; las specs existentes (otp-onboarding) cargan sin romper.
+  - **W2.2:** `PATCH /api/specs/:id/findings/:fid/review {status, comment, by}` — `rechazado`/`en_pausa`
+    exigen `comment` (400 si falta; extiende invariante 7); verbos `finding.approve|reject|pause|resume`;
+    CLI espejo (`review <spec> <fid> --status --reason --by`). Hecho cuando: tests de reglas + auditoría.
+  - **Ojo:** ya existe `reviewed_by`/`review_note` en `finding` (Fase 1) y `rejectFinding` que QUITA el
+    hallazgo del store. W2 cambia el modelo a estados POR ítem (no se borra): reconciliar ambos.
+- **Luego:** W2.3–W2.4 (gate respeta estados + UI triage), W3 (rediseño visual modular), W4 (drawer +
   modales), W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)

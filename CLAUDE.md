@@ -31,8 +31,11 @@
   - Sesión 3 hecha (W1.1+W1.2): hub de Fuentes — modelo `sources/manifest.yaml` + binarios en
     `sources/files/<id>/<filename>` por spec; API multipart (multer) `GET/POST/PATCH/DELETE(lógico)
     /api/specs/:id/sources` con auditoría `source.upload|update|discard` (size/sha256 computados).
-  - Faltan W1.3–W1.4 (ingestión real + UI de fuentes), W2 (revisión granular), W3–W4 (rediseño
-    visual + superficies), W5 (usuario).
+  - Sesión 4 hecha (W1.3+W1.4): ingestión — `discover` lee `sources/files/` (cae a `samples/` si no
+    hay) y marca `ingerido`; ruteo por tipo ingerido (text→citas, tabular→métricas). UI página
+    "Fuentes" (subir drag&drop/picker, listar con badges, reclasificar, descartar). Diferido: modal
+    selector + botón "Correr Descubrimiento desde la UI" (no se movieron llamadas al modelo al server).
+  - Faltan W2 (revisión granular), W3–W4 (rediseño visual + superficies), W5 (usuario).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
