@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import express from "express";
+import multer from "multer";
 import {
   readAudit,
   readSpec,
@@ -15,6 +16,14 @@ import {
   createSpec,
   updateSpecMeta,
   archiveSpec,
+  readSources,
+  addSource,
+  updateSource,
+  discardSource,
+  StageSchema,
+  type SourceKind,
+  type SourceStatus,
+  type Stage,
 } from "@pda/spec";
 import {
   getState,
@@ -105,6 +114,15 @@ const PIPELINE = [
 const app = express();
 app.use(express.json());
 
+// Fuentes (D2 · W1): subida multipart en memoria; el binario lo persiste el store.
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB por archivo
+});
+
+const SOURCE_KINDS: SourceKind[] = ["documento", "datos", "entrevista", "otro"];
+const SOURCE_STATUSES: SourceStatus[] = ["subido", "ingerido", "descartado"];
+
 // --- gestión multi-spec (D2 · W0): índice agrupado por producto + CRUD ---
 
 // lista de specs agrupadas por producto (el índice es cache regenerable)
@@ -186,6 +204,106 @@ app.post("/api/specs/reindex", async (_req, res) => {
     res.json(await regenerateIndex(REPO_ROOT));
   } catch (err) {
     res.status(500).json({ error: String(err) });
+  }
+});
+
+// --- hub de Fuentes (D2 · W1): documentación que alimenta al Agente 1 ---
+
+// listar fuentes de una spec
+app.get("/api/specs/:id/sources", async (req, res) => {
+  try {
+    res.json(await readSources(REPO_ROOT, req.params.id));
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// subir una fuente (multipart, campo "file"; opcional kind, by)
+app.post(
+  "/api/specs/:id/sources",
+  upload.single("file"),
+  async (req, res) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "falta el archivo (file)" });
+    const actor = String(req.body?.by ?? "human").trim() || "human";
+    const rawKind = req.body?.kind ? String(req.body.kind) : undefined;
+    if (rawKind && !SOURCE_KINDS.includes(rawKind as SourceKind))
+      return res.status(400).json({ error: `kind inválido: ${rawKind}` });
+    try {
+      await readSpec(REPO_ROOT, req.params.id); // 404 si la spec no existe
+      const entry = await addSource(
+        REPO_ROOT,
+        req.params.id,
+        {
+          filename: file.originalname,
+          mime: file.mimetype,
+          bytes: file.buffer,
+          uploadedBy: actor,
+          kind: rawKind as SourceKind | undefined,
+        },
+        actor,
+      );
+      res.status(201).json(entry);
+    } catch (err) {
+      res
+        .status(404)
+        .json({ error: `spec no encontrada o fuente inválida: ${String(err)}` });
+    }
+  },
+);
+
+// editar metadatos de una fuente (kind/status/linkedStages)
+app.patch("/api/specs/:id/sources/:sid", async (req, res) => {
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  const patch: {
+    kind?: SourceKind;
+    status?: SourceStatus;
+    linkedStages?: Stage[];
+  } = {};
+  if (req.body?.kind !== undefined) {
+    if (!SOURCE_KINDS.includes(req.body.kind))
+      return res.status(400).json({ error: `kind inválido: ${req.body.kind}` });
+    patch.kind = req.body.kind;
+  }
+  if (req.body?.status !== undefined) {
+    if (!SOURCE_STATUSES.includes(req.body.status))
+      return res
+        .status(400)
+        .json({ error: `status inválido: ${req.body.status}` });
+    patch.status = req.body.status;
+  }
+  if (req.body?.linkedStages !== undefined) {
+    const parsed = StageSchema.array().safeParse(req.body.linkedStages);
+    if (!parsed.success)
+      return res.status(400).json({ error: "linkedStages inválido" });
+    patch.linkedStages = parsed.data;
+  }
+  try {
+    const entry = await updateSource(
+      REPO_ROOT,
+      req.params.id,
+      req.params.sid,
+      patch,
+      actor,
+    );
+    res.json(entry);
+  } catch (err) {
+    res.status(404).json({ error: String(err) });
+  }
+});
+
+// descartar una fuente (DELETE lógico → status descartado; nunca borra el binario)
+app.delete("/api/specs/:id/sources/:sid", async (req, res) => {
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  const reason = req.body?.reason ? String(req.body.reason) : undefined;
+  try {
+    const entry = await discardSource(REPO_ROOT, req.params.id, req.params.sid, {
+      actor,
+      reason,
+    });
+    res.json(entry);
+  } catch (err) {
+    res.status(404).json({ error: String(err) });
   }
 });
 
