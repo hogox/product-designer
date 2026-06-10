@@ -82,17 +82,32 @@ Gestión multi-spec: el dashboard deja de estar pegado a `otp-onboarding`.
 - **Migración:** `otp-onboarding` gana `product: Onboarding` en `spec.yaml` y `spec.proposed.yaml`
   (el Agente 2 preserva `product` vía `...current`, así sobrevive a la aprobación de la compuerta).
 
-**Tests:** ~70 (spec 36 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
+### Fase D2 · Sesión 2 (W0.3+W0.4) ✅ — routing spec-scoped + home "Mis specs"
+El dashboard deja de estar pegado a una spec en estado de React: el contexto vive en la URL.
+- **Routing:** toda spec cuelga de `/spec/:specId` (Overview, etapas, auditoría). `App` lee el
+  `specId` de `useParams`; helper `nav.ts:specPath` centraliza el prefijo en sidebar/overview/tabs/
+  redirects. **Aislamiento por URL:** refresh conserva dónde estabas y dos pestañas con specs
+  distintas no se pisan. `/` = home "Mis specs"; `*` → `/`.
+- **Home `SpecsHomePage`:** tarjetas agrupadas por producto (estado, etapa, badge **propuesta
+  pendiente**), toggle "ver archivadas", CTA **"+ Nueva spec"** → `NewSpecModal` (producto vía
+  datalist de existentes o nuevo; cierre con Esc) → `POST /api/specs` → navega a `/spec/:id`.
+- **Switcher** en el sidebar: specs activas del **mismo producto** + "Ver todas las specs" (→ `/`).
+- **Índice:** la entrada gana `hasProposal` (¿existe `spec.proposed.yaml`?) para el badge del home
+  en un solo fetch.
+
+**Tests:** ~71 (spec 37 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec se verificó
-además live por curl y por CLI (crear/listar/editar/archivar + regeneración del índice).
+además live por curl y por CLI (crear/listar/editar/archivar + regeneración del índice); el routing
+y el home se verificaron en el preview (deep-link + refresh; crear spec desde la UI).
 
 ## 5. Estado actual del repo
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
   **propuesta de Definición pendiente** (8 hallazgos en la spec, 5 JTBD, propuesta `in_review`).
-  **Ready-to-demo**.
-- Multi-spec operativo por API/CLI (sin UI de "Mis specs" todavía → Sesión 2). El índice
-  `specs/index.yaml` es cache regenerable y está **gitignored**.
-- Working tree limpio. Demo levantable en `http://localhost:5173`.
+  **Ready-to-demo** en `http://localhost:5173/spec/otp-onboarding`.
+- Multi-spec operativo por API/CLI **y por UI**: home "Mis specs" en `/`, crear/cambiar de spec sin
+  terminal, contexto aislado por URL (`/spec/:id/...`). El índice `specs/index.yaml` es cache
+  regenerable y está **gitignored**.
+- Working tree limpio. Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
 ```bash
@@ -132,18 +147,31 @@ cuando los haya (el motor corre igual).
 - **id de spec inmutable (D2):** el `id` es ruta en git + clave de auditoría; `PATCH`/`update-spec`
   NO lo tocan. Validación kebab-case `^[a-z0-9]+(-[a-z0-9]+)*$`; si se omite, se deriva del name
   por slug (acentos removidos vía NFD).
+- **Routing spec-scoped (D2·W0.3):** el `specId` vive SOLO en la URL (`/spec/:id/...`), no en estado.
+  Al agregar vistas nuevas (fuentes, etc.) construir los links con `nav.ts:specPath`, nunca rutas
+  absolutas sueltas. El home `/` no monta el `App` shell (no hay spec activa → sin sidebar de etapas).
+- **API dist en el server:** el server del dashboard importa `@pda/spec` desde `dist`. Tras tocar
+  `packages/spec`, correr `pnpm --filter @pda/spec build` y **reiniciar** el server del preview
+  (el `node --watch` no siempre recarga al cambiar el symlink de workspace) para ver el cambio en `/api`.
+- **preview_click + navegación:** un `preview_click` disparado justo tras `location.href=...` puede
+  perderse (la página aún recarga). Si el modal/elemento "no abre", reintentar tras estabilizar, o
+  clickear vía `preview_eval` (`el.click()`).
 
 ## 8. Qué falta — próximos pasos
 
 ### Inmediato: Fase D2 (experiencia del dashboard) — bloquea la Fase 3
 Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md).
 - **Sesión 1 (W0.1+W0.2) — HECHA:** índice + CRUD multi-spec (API/CLI).
-- **PRÓXIMA = Sesión 2 (W0.3+W0.4):** routing `/spec/:id/...` con aislamiento de contexto por spec
-  (cero estado compartido salvo el índice; el shim de `App.tsx` se reemplaza) + pantalla **"Mis specs"**
-  como home (tarjetas agrupadas por producto, modal "Nueva spec") + **switcher de spec** en el sidebar.
-  Hecho cuando: dos specs en pestañas distintas no se pisan; crear spec + correr Descubrimiento desde la UI.
-- **Luego:** W1 (hub de Fuentes), W2 (revisión humana granular por hallazgo), W3 (rediseño visual
-  modular), W4 (drawer + modales), W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
+- **Sesión 2 (W0.3+W0.4) — HECHA:** routing `/spec/:id` con aislamiento de contexto + home
+  "Mis specs" + modal "Nueva spec" + switcher.
+- **PRÓXIMA = Sesión 3 (W1.1+W1.2 — hub de Fuentes, modelo + API):** `sources.yaml` por spec
+  (`specs/<id>/sources/manifest.yaml` + binarios en `sources/files/`); esquema zod `id, filename,
+  mime, kind, size, sha256, uploadedBy, uploadedAt, status, linkedStages[]`; endpoints
+  `POST/GET/PATCH/DELETE(lógico) /api/specs/:id/sources` con auditoría `source.upload|update|discard`.
+  Hecho cuando: tests de store + curl de cada endpoint + auditoría con actor/acción/timestamp.
+- **Luego:** W1.3–W1.4 (ingestión real + UI de fuentes), W2 (revisión granular por hallazgo),
+  W3 (rediseño visual modular), W4 (drawer + modales), W5 (capa de usuario mock) + ensayo del
+  guión de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración

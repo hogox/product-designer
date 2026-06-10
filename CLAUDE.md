@@ -21,10 +21,14 @@
   anclados a los hallazgos; routing de dos etapas (Descubrimiento → Definición → gate enmarcar);
   cierre del diamante Problema.
 - EN CURSO (D2 — experiencia del dashboard, ver [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md)):
-  se ejecuta COMPLETA antes de la Fase 3. Sesión 1 hecha (W0.1+W0.2): gestión multi-spec —
-  metadatos `product`/`description`/`archived`, índice `specs/index.yaml` (cache regenerable),
-  CRUD de specs (API + CLI) con auditoría `spec.create|update|archive`. Faltan W0.3–W5
-  (routing /spec/:id, fuentes, revisión granular, rediseño visual, capa de usuario).
+  se ejecuta COMPLETA antes de la Fase 3.
+  - Sesión 1 hecha (W0.1+W0.2): gestión multi-spec — metadatos `product`/`description`/`archived`,
+    índice `specs/index.yaml` (cache regenerable), CRUD de specs (API + CLI) con auditoría
+    `spec.create|update|archive`.
+  - Sesión 2 hecha (W0.3+W0.4): routing spec-scoped `/spec/:id` (el specId vive en la URL → refresh
+    conserva, pestañas independientes; aislamiento de contexto), home "Mis specs" (tarjetas por
+    producto, badge de propuesta pendiente, "Nueva spec" por modal) y switcher de spec en el sidebar.
+  - Faltan W1 (fuentes), W2 (revisión granular), W3–W4 (rediseño visual + superficies), W5 (usuario).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
