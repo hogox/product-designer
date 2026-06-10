@@ -12,6 +12,7 @@ import {
   readSpec,
   readAudit,
   readFindings,
+  readProposedSpec,
   type Finding,
   type Spec,
 } from "@pda/spec";
@@ -22,6 +23,7 @@ import {
   approveGate,
   iterateGate,
   rejectFinding,
+  reviewFinding,
   getState,
   automatedVerification,
   blockingPasses,
@@ -50,6 +52,8 @@ function finding(id: string, kind: "q" | "t"): Finding {
         feeds: "outcomes",
         reviewed_by: null,
         review_note: null,
+        review_status: "pendiente",
+        reviewed_at: null,
       }
     : {
         id,
@@ -67,6 +71,8 @@ function finding(id: string, kind: "q" | "t"): Finding {
         feeds: "scope",
         reviewed_by: null,
         review_note: null,
+        review_status: "pendiente",
+        reviewed_at: null,
       };
 }
 
@@ -151,7 +157,7 @@ test("runDiscovery persiste hallazgos, verifica y audita (sin gatear)", async ()
   }
 });
 
-test("rejectFinding (triage) quita el hallazgo del store y audita el motivo", async () => {
+test("rejectFinding (compat) ya NO borra: marca rechazado + comentario + audita", async () => {
   const { root, id } = await tempRepoWithSpec();
   try {
     await runDiscovery(root, id, {
@@ -162,12 +168,91 @@ test("rejectFinding (triage) quita el hallazgo del store y audita el motivo", as
       reason: "la cita no respalda la afirmación",
       actor: "Lead",
     });
-    assert.equal(remaining.length, 1);
-    assert.equal((await readFindings(root, id)).length, 1);
+    // no se borra: siguen los 2, F-002 queda rechazado con su comentario
+    assert.equal(remaining.length, 2);
+    const f2 = (await readFindings(root, id)).find((f) => f.id === "F-002");
+    assert.equal(f2?.review_status, "rechazado");
+    assert.equal(f2?.review_note, "la cita no respalda la afirmación");
+    assert.equal(f2?.reviewed_by, "Lead");
+    assert.ok(f2?.reviewed_at);
     const audit = await readAudit(root, id);
     assert.equal(
       audit.find((a) => a.action === "finding.reject")?.target,
       "F-002",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewFinding aprueba un hallazgo (no exige comentario) y audita finding.approve", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await runDiscovery(root, id, {
+      runner: discoveryStub([finding("F-001", "t")]),
+      author: AUTHOR,
+    });
+    const f = await reviewFinding(root, id, "F-001", {
+      status: "aprobado",
+      actor: "Hugo",
+    });
+    assert.equal(f.review_status, "aprobado");
+    assert.equal(f.reviewed_by, "Hugo");
+    const audit = await readAudit(root, id);
+    assert.equal(audit.at(-1)?.action, "finding.approve");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewFinding exige comentario para rechazado y en_pausa", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await runDiscovery(root, id, {
+      runner: discoveryStub([finding("F-001", "t")]),
+      author: AUTHOR,
+    });
+    await assert.rejects(
+      () =>
+        reviewFinding(root, id, "F-001", { status: "en_pausa", actor: "Hugo" }),
+      /exige un comentario/,
+    );
+    await assert.rejects(
+      () =>
+        reviewFinding(root, id, "F-001", {
+          status: "rechazado",
+          comment: "   ",
+          actor: "Hugo",
+        }),
+      /exige un comentario/,
+    );
+    // pausar con comentario sí funciona → audita finding.pause
+    const f = await reviewFinding(root, id, "F-001", {
+      status: "en_pausa",
+      comment: "necesito validar con analítica",
+      actor: "Hugo",
+    });
+    assert.equal(f.review_status, "en_pausa");
+    const audit = await readAudit(root, id);
+    assert.equal(audit.at(-1)?.action, "finding.pause");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewFinding espeja el estado en la propuesta de Definición", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await runDiscovery(root, id, {
+      runner: discoveryStub([finding("F-001", "t"), finding("F-002", "q")]),
+      author: AUTHOR,
+    });
+    await runDefinition(root, id, { runner: definitionStub(), author: AUTHOR });
+    await reviewFinding(root, id, "F-001", { status: "aprobado", actor: "Hugo" });
+    const proposed = await readProposedSpec(root, id);
+    assert.equal(
+      proposed.findings.find((f) => f.id === "F-001")?.review_status,
+      "aprobado",
     );
   } finally {
     await rm(root, { recursive: true, force: true });

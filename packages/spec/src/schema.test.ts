@@ -30,6 +30,8 @@ const qualitativeFinding: Finding = {
   feeds: "outcomes",
   reviewed_by: null,
   review_note: null,
+  review_status: "pendiente",
+  reviewed_at: null,
 };
 
 const quantitativeFinding: Finding = {
@@ -48,6 +50,8 @@ const quantitativeFinding: Finding = {
   feeds: "outcomes",
   reviewed_by: null,
   review_note: null,
+  review_status: "pendiente",
+  reviewed_at: null,
 };
 
 function fullValidSpec(): Spec {

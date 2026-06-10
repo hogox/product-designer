@@ -27,6 +27,8 @@ const findings: Finding[] = [
     feeds: "outcomes",
     reviewed_by: null,
     review_note: null,
+    review_status: "pendiente",
+    reviewed_at: null,
   },
   {
     id: "F-002",
@@ -40,6 +42,8 @@ const findings: Finding[] = [
     feeds: "hypothesis",
     reviewed_by: null,
     review_note: null,
+    review_status: "pendiente",
+    reviewed_at: null,
   },
 ];
 

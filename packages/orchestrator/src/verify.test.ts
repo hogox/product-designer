@@ -25,6 +25,8 @@ const finding: Finding = {
   feeds: "outcomes",
   reviewed_by: null,
   review_note: null,
+  review_status: "pendiente",
+  reviewed_at: null,
 };
 
 function proposal(overrides: Partial<Spec> = {}): Spec {

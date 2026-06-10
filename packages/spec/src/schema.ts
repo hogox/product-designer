@@ -39,10 +39,18 @@ export const FindingFeedsSchema = z.enum([
   "hypothesis",
   "scope",
 ]);
+// Estado de revisión humana por hallazgo (Fase D2 · W2): ciclo de vida visible y auditado.
+export const ReviewStatusSchema = z.enum([
+  "pendiente",
+  "aprobado",
+  "rechazado",
+  "en_pausa",
+]);
 export type FindingType = z.infer<typeof FindingTypeSchema>;
 export type Confidence = z.infer<typeof ConfidenceSchema>;
 export type FindingStatus = z.infer<typeof FindingStatusSchema>;
 export type FindingFeeds = z.infer<typeof FindingFeedsSchema>;
+export type ReviewStatus = z.infer<typeof ReviewStatusSchema>;
 
 // Categorías HEART (métricas de Definición).
 export const HeartCategorySchema = z.enum([
@@ -101,8 +109,12 @@ export const FindingSchema = z
     confidence: ConfidenceSchema,
     status: FindingStatusSchema,
     feeds: FindingFeedsSchema,
+    // Revisión humana por ítem (W2): review_status arranca `pendiente` (default → las specs
+    // previas cargan sin romper); review_note guarda el comentario, reviewed_by/_at el quién/cuándo.
+    review_status: ReviewStatusSchema.default("pendiente"),
     reviewed_by: z.string().min(1).nullable().default(null),
     review_note: z.string().min(1).nullable().default(null),
+    reviewed_at: isoDateTime.nullable().default(null),
   })
   .superRefine((f, ctx) => {
     // Invariante 4/5: lo cuantitativo se computa, no se estima.

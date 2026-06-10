@@ -17,6 +17,7 @@ import {
   specPaths,
   type Finding,
   type GitAuthor,
+  type ReviewStatus,
   type Spec,
   type VerificationCriterion,
 } from "@pda/spec";
@@ -181,38 +182,85 @@ export async function runDefinition(
   };
 }
 
-/** Micro-validación: rechaza un hallazgo con motivo (invariante 7); lo quita del store. */
+// Verbo de auditoría por estado de revisión (W2): el ciclo queda trazado en el log.
+const REVIEW_VERB: Record<ReviewStatus, string> = {
+  aprobado: "finding.approve",
+  rechazado: "finding.reject",
+  en_pausa: "finding.pause",
+  pendiente: "finding.resume",
+};
+
+/**
+ * Revisión humana por hallazgo (W2): setea `review_status` + comentario/quién/cuándo EN SU LUGAR
+ * (no borra; el hallazgo queda visible y recuperable). `rechazado` y `en_pausa` exigen comentario
+ * (extiende invariante 7). Espeja el cambio en la propuesta si existe. Audita el verbo del estado.
+ */
+export async function reviewFinding(
+  rootDir: string,
+  specId: string,
+  findingId: string,
+  opts: { status: ReviewStatus; comment?: string; actor: string },
+): Promise<Finding> {
+  const status = opts.status;
+  const comment = opts.comment?.trim() || null;
+  if ((status === "rechazado" || status === "en_pausa") && !comment) {
+    throw new Error(`'${status}' exige un comentario (invariante 7)`);
+  }
+
+  const apply = (f: Finding): Finding => ({
+    ...f,
+    review_status: status,
+    review_note: comment,
+    reviewed_by: opts.actor,
+    reviewed_at: now(),
+  });
+
+  const findings = await readFindings(rootDir, specId);
+  const idx = findings.findIndex((f) => f.id === findingId);
+  if (idx < 0) throw new Error(`hallazgo no encontrado: ${findingId}`);
+  const updated = [...findings];
+  updated[idx] = apply(findings[idx]!);
+  await writeFindings(rootDir, specId, updated);
+
+  // espejar en la propuesta de Definición si existe (mismo estado por ítem)
+  try {
+    const proposed = await readProposedSpec(rootDir, specId);
+    const pidx = proposed.findings.findIndex((f) => f.id === findingId);
+    if (pidx >= 0) {
+      const pf = [...proposed.findings];
+      pf[pidx] = apply(proposed.findings[pidx]!);
+      await writeProposedSpec(rootDir, { ...proposed, findings: pf });
+    }
+  } catch {
+    // no hay propuesta todavía (triage de descubrimiento): ok
+  }
+
+  await appendAudit(rootDir, {
+    actor: opts.actor,
+    action: REVIEW_VERB[status],
+    spec_id: specId,
+    target: findingId,
+    reason: comment,
+  });
+  return updated[idx]!;
+}
+
+/**
+ * Rechazo (compat): ahora NO destruye — enruta por `reviewFinding(status=rechazado)`, así el
+ * hallazgo queda marcado, auditado y recuperable. Devuelve el set actualizado de hallazgos.
+ */
 export async function rejectFinding(
   rootDir: string,
   specId: string,
   findingId: string,
   opts: { reason: string; actor: string },
 ): Promise<Finding[]> {
-  const findings = await readFindings(rootDir, specId);
-  const remaining = findings.filter((f) => f.id !== findingId);
-  await writeFindings(rootDir, specId, remaining);
-
-  // si ya hay una propuesta de Definición, mantenerla consistente
-  try {
-    const proposed = await readProposedSpec(rootDir, specId);
-    const updated: Spec = {
-      ...proposed,
-      findings: proposed.findings.filter((f) => f.id !== findingId),
-    };
-    updated.verification = automatedVerification(updated.findings);
-    await writeProposedSpec(rootDir, updated);
-  } catch {
-    // no hay propuesta todavía (estamos en triage de descubrimiento): ok
-  }
-
-  await appendAudit(rootDir, {
+  await reviewFinding(rootDir, specId, findingId, {
+    status: "rechazado",
+    comment: opts.reason,
     actor: opts.actor,
-    action: "finding.reject",
-    spec_id: specId,
-    target: findingId,
-    reason: opts.reason,
   });
-  return remaining;
+  return readFindings(rootDir, specId);
 }
 
 /**

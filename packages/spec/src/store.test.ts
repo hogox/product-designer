@@ -126,6 +126,8 @@ const sampleFinding: Finding = {
   feeds: "outcomes",
   reviewed_by: "human",
   review_note: null,
+  review_status: "pendiente",
+  reviewed_at: null,
 };
 
 test("round-trip de spec.proposed.yaml", async () => {

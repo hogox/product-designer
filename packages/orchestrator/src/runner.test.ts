@@ -68,6 +68,8 @@ function findingsStub(): DiscoveryRunner {
     feeds: "outcomes",
     reviewed_by: null,
     review_note: null,
+    review_status: "pendiente",
+    reviewed_at: null,
   };
   return { async run(_c: Spec) { return { findings: [f] }; } };
 }
