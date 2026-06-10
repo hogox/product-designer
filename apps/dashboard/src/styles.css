@@ -1,6 +1,10 @@
 /* CSS LEGADO en retirada (sesión 7 → 8): las vars viejas se remapean a los tokens de
    globals.css para que todo el dashboard herede el tema claro. Cada componente que
-   migra a shadcn+Tailwind borra sus reglas de acá; el archivo muere en la sesión 8. */
+   migra a shadcn+Tailwind borra sus reglas de acá; el archivo muere en la sesión 8.
+   OJO: las vars legadas que colisionaban con tokens shadcn (--muted, --accent) se
+   renombraron a --legacy-muted / --legacy-accent. El :root de globals.css (sin @layer)
+   le gana a este @layer base, así que reusar esos nombres hacía que el texto secundario
+   y los links resolvieran al gris claro shadcn (ilegibles sobre fondo claro). */
 @layer base {
   :root {
     --bg: var(--background);
@@ -8,10 +12,10 @@
     --panel-2: var(--secondary);
     --line: var(--border);
     --text: var(--foreground);
-    --muted: var(--muted-foreground);
-    --accent: var(--primary);
-    --real: #059669; /* emerald-600 — semántico real (será variante de Badge en sesión 8) */
-    --mock: #d97706; /* amber-600 — semántico mock */
+    --legacy-muted: #475569; /* slate-600: AA en texto chico (11-12px) sobre fondo/secondary claro */
+    --legacy-accent: var(--primary);
+    --real: #047857; /* emerald-700 — semántico real, AA en texto chico (variante de Badge en sesión 8) */
+    --mock: #b45309; /* amber-700 — semántico mock, AA en texto chico */
     --danger: var(--destructive);
   }
 
@@ -32,10 +36,6 @@
     line-height: 1.45;
   }
 
-  a {
-    color: var(--accent);
-  }
-
   .app-header {
     padding: 16px 24px;
     border-bottom: 1px solid var(--line);
@@ -53,7 +53,7 @@
   }
 
   .app-header .sub {
-    color: var(--muted);
+    color: var(--legacy-muted);
     font-size: 12px;
   }
 
@@ -61,7 +61,7 @@
     display: flex;
     gap: 12px;
     font-size: 12px;
-    color: var(--muted);
+    color: var(--legacy-muted);
   }
 
   .panel {
@@ -76,7 +76,7 @@
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--muted);
+    color: var(--legacy-muted);
     margin: 0 0 12px;
   }
 
@@ -123,7 +123,7 @@
     border-radius: 6px;
     background: var(--panel-2);
     border: 1px solid var(--line);
-    color: var(--muted);
+    color: var(--legacy-muted);
   }
 
   .section {
@@ -138,7 +138,7 @@
     margin: 0 0 6px;
   }
   .empty {
-    color: var(--muted);
+    color: var(--legacy-muted);
     font-style: italic;
     font-size: 13px;
   }
@@ -150,8 +150,8 @@
   .gate-tag {
     margin-left: auto;
     font-size: 11px;
-    color: var(--accent);
-    border: 1px solid var(--accent);
+    color: var(--legacy-accent);
+    border: 1px solid var(--legacy-accent);
     border-radius: 6px;
     padding: 1px 6px;
   }
@@ -213,7 +213,7 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--muted);
+    color: var(--legacy-muted);
     padding: 12px 8px 4px;
   }
   .nav-item {
@@ -243,7 +243,7 @@
     display: grid;
     place-items: center;
     font-size: 11px;
-    color: var(--muted);
+    color: var(--legacy-muted);
     flex: none;
   }
   .nav-item .nm {
@@ -259,7 +259,7 @@
     margin: 0 0 2px;
   }
   .stage-head .meta {
-    color: var(--muted);
+    color: var(--legacy-muted);
     font-size: 13px;
   }
   /* ---------- home "Mis specs" (D2 · W0.4) ---------- */
@@ -280,7 +280,7 @@
     margin: 0 0 4px;
   }
   .specs-home-head .meta {
-    color: var(--muted);
+    color: var(--legacy-muted);
     font-size: 13px;
     max-width: 520px;
   }
@@ -291,7 +291,7 @@
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--muted);
+    color: var(--legacy-muted);
     margin: 0 0 10px;
   }
   .spec-cards {
@@ -309,7 +309,7 @@
     color: var(--text);
   }
   .spec-card:hover {
-    border-color: var(--accent);
+    border-color: var(--legacy-accent);
   }
   .spec-card.archived {
     opacity: 0.6;
@@ -340,7 +340,7 @@
   .link-button {
     background: none;
     border: none;
-    color: var(--accent);
+    color: var(--legacy-accent);
     font: inherit;
     cursor: pointer;
     padding: 4px 0;
@@ -351,8 +351,8 @@
     font: inherit;
     padding: 8px 14px;
     border-radius: 8px;
-    border: 1px solid var(--accent);
-    background: var(--accent);
+    border: 1px solid var(--legacy-accent);
+    background: var(--legacy-accent);
     color: var(--primary-foreground);
     font-weight: 600;
     cursor: pointer;
@@ -371,6 +371,11 @@
   }
   .switcher-all {
     font-size: 12px;
+    color: var(--legacy-accent);
+    text-decoration: none;
+  }
+  .switcher-all:hover {
+    text-decoration: underline;
   }
 
   /* ---------- modal (D2 · W0.4) ---------- */
@@ -398,7 +403,7 @@
   .modal label {
     display: block;
     font-size: 12px;
-    color: var(--muted);
+    color: var(--legacy-muted);
     margin: 10px 0 4px;
   }
   .modal input,
@@ -439,7 +444,7 @@
     border-radius: 12px;
     padding: 28px;
     text-align: center;
-    color: var(--muted);
+    color: var(--legacy-muted);
     cursor: pointer;
     margin-bottom: 16px;
     transition:
@@ -447,10 +452,10 @@
       background 0.15s;
   }
   .dropzone:hover {
-    border-color: var(--accent);
+    border-color: var(--legacy-accent);
   }
   .dropzone.over {
-    border-color: var(--accent);
+    border-color: var(--legacy-accent);
     background: rgba(110, 168, 254, 0.08);
     color: var(--text);
   }
@@ -495,12 +500,12 @@
     font-size: 12px;
   }
   .badge.kind {
-    color: var(--accent);
-    border-color: var(--accent);
+    color: var(--legacy-accent);
+    border-color: var(--legacy-accent);
     text-transform: capitalize;
   }
   .badge.status-subido {
-    color: var(--muted);
+    color: var(--legacy-muted);
   }
   .badge.status-ingerido {
     color: var(--real);

@@ -19,7 +19,9 @@
   --secondary: hsl(210 25% 94%);
   --secondary-foreground: hsl(222 47% 11%);
   --muted: hsl(210 25% 94%);
-  --muted-foreground: hsl(215 16% 47%);
+  /* slate-600 (no slate-500 stock): AA ≥4.5 también sobre fondos tintados
+     (--muted, --background), no solo sobre tarjetas blancas. */
+  --muted-foreground: hsl(215 19% 35%);
   --accent: hsl(210 25% 94%);
   --accent-foreground: hsl(222 47% 11%);
   --destructive: hsl(0 72% 51%);
