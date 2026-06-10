@@ -16,18 +16,14 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { z } from "zod";
 
 import { appendAudit } from "./audit.js";
-import { StageSchema } from "./schema.js";
+import { SourceKindSchema, StageSchema, type SourceKind } from "./schema.js";
 import { specPaths } from "./store.js";
 
 // ---------- esquema ----------
 
-export const SourceKindSchema = z.enum([
-  "documento",
-  "datos",
-  "entrevista",
-  "otro",
-]);
-export type SourceKind = z.infer<typeof SourceKindSchema>;
+// SourceKindSchema/SourceKind viven en schema.ts (vocabulario core compartido con el intake);
+// se re-exportan acá para no romper imports `from "@pda/spec"` existentes.
+export { SourceKindSchema, type SourceKind };
 
 export const SourceStatusSchema = z.enum(["subido", "ingerido", "descartado"]);
 export type SourceStatus = z.infer<typeof SourceStatusSchema>;

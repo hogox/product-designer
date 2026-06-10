@@ -22,7 +22,13 @@ import {
 import { SourceKindBadge } from "../components/badges";
 import { SectionIcon } from "../components/icons";
 
-const KINDS: SourceKind[] = ["documento", "datos", "entrevista", "otro"];
+const KINDS: SourceKind[] = [
+  "documento",
+  "datos",
+  "entrevista",
+  "persona",
+  "otro",
+];
 
 const STATUS_VARIANT: Record<
   string,

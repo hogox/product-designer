@@ -23,6 +23,7 @@ import {
   Table2,
   Target,
   UserPlus,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,6 +46,7 @@ export const SOURCE_KIND_ICON: Record<SourceKind, LucideIcon> = {
   documento: FileText,
   datos: Table2,
   entrevista: MessageSquareQuote,
+  persona: UserRound,
   otro: File,
 };
 

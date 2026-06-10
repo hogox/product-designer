@@ -5,6 +5,8 @@ import {
   SpecSchema,
   FindingSchema,
   EvidenceSchema,
+  IntakeSchema,
+  deriveExpectedSourceKinds,
   createSpecV0,
   parseSpec,
   safeParseSpec,
@@ -124,6 +126,7 @@ function fullValidSpec(): Spec {
         supported_by: ["F-001", "F-002"],
       },
     ],
+    intake: null,
     history: [
       {
         version: 1,
@@ -275,4 +278,85 @@ test("rechaza categoría HEART inválida", () => {
   // @ts-expect-error categoría fuera del enum
   spec.outcomes[0]!.heart = "felicidad";
   assert.equal(safeParseSpec(spec).success, false);
+});
+
+// ---------- intake (Fase D2 · W6): enmarcado del discovery ----------
+
+test("createSpecV0 arranca sin intake (null)", () => {
+  const spec = createSpecV0({ id: "x", title: "x" });
+  assert.equal(spec.intake, null);
+});
+
+test("una spec previa SIN campo intake carga (default null, sin migración)", () => {
+  const { intake: _omit, ...withoutIntake } = fullValidSpec();
+  const res = safeParseSpec(withoutIntake);
+  assert.equal(res.success, true);
+  assert.equal(res.success && res.data.intake, null);
+});
+
+test("acepta un intake completo y aplica defaults del discoveryPlan", () => {
+  const res = IntakeSchema.safeParse({
+    researchQuestion: "¿Por qué se abandona el OTP?",
+    hypotheses: ["el SMS tarda", "falta feedback"],
+    productContext: "Onboarding bancario regulado",
+    discoveryPlan: { methods: ["entrevistas", "analitica"], instruments: ["nps"] },
+  });
+  assert.equal(res.success, true);
+  // expectedSourceKinds tiene default [] aunque no se pase
+  assert.deepEqual(res.success && res.data.discoveryPlan.expectedSourceKinds, []);
+});
+
+test("intake exige researchQuestion (no vacía)", () => {
+  assert.equal(IntakeSchema.safeParse({ researchQuestion: "" }).success, false);
+  assert.equal(IntakeSchema.safeParse({}).success, false);
+});
+
+test("rechaza método e instrumento fuera del enum", () => {
+  assert.equal(
+    IntakeSchema.safeParse({
+      researchQuestion: "q",
+      discoveryPlan: { methods: ["focus_group"] },
+    }).success,
+    false,
+  );
+  assert.equal(
+    IntakeSchema.safeParse({
+      researchQuestion: "q",
+      discoveryPlan: { instruments: ["sus"] },
+    }).success,
+    false,
+  );
+});
+
+test("deriveExpectedSourceKinds: mapa determinista, unión deduplicada", () => {
+  assert.deepEqual(deriveExpectedSourceKinds(["entrevistas"]), ["entrevista"]);
+  assert.deepEqual(deriveExpectedSourceKinds(["encuestas", "analitica"]), [
+    "datos",
+  ]); // ambos → datos, deduplicado
+  assert.deepEqual(deriveExpectedSourceKinds(["benchmark", "soporte"]), [
+    "documento",
+  ]);
+  assert.deepEqual(deriveExpectedSourceKinds(["otros"]), []);
+  assert.deepEqual(
+    deriveExpectedSourceKinds(["entrevistas", "analitica", "benchmark"]),
+    ["entrevista", "datos", "documento"],
+  );
+});
+
+test("una spec con intake válido parsea de punta a punta", () => {
+  const spec = parseSpec({
+    ...fullValidSpec(),
+    intake: {
+      researchQuestion: "¿Por qué se abandona el OTP en onboarding?",
+      discoveryPlan: {
+        methods: ["entrevistas", "analitica"],
+        expectedSourceKinds: deriveExpectedSourceKinds(["entrevistas", "analitica"]),
+      },
+    },
+  });
+  assert.equal(spec.intake?.researchQuestion.length! > 0, true);
+  assert.deepEqual(spec.intake?.discoveryPlan.expectedSourceKinds, [
+    "entrevista",
+    "datos",
+  ]);
 });

@@ -129,7 +129,13 @@ const upload = multer({
   limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB por archivo
 });
 
-const SOURCE_KINDS: SourceKind[] = ["documento", "datos", "entrevista", "otro"];
+const SOURCE_KINDS: SourceKind[] = [
+  "documento",
+  "datos",
+  "entrevista",
+  "persona",
+  "otro",
+];
 const SOURCE_STATUSES: SourceStatus[] = ["subido", "ingerido", "descartado"];
 
 // --- gestión multi-spec (D2 · W0): índice agrupado por producto + CRUD ---

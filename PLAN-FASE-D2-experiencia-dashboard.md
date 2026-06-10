@@ -50,9 +50,10 @@ El motor (Agentes 1 y 2 + orquestador + compuertas) ya es real y demostrable. Es
 
 ## 3. Workstreams y orden
 
-Orden recomendado: **W0 → W1 → W2 → W3 → W4 → W5** (primero los cambios de esquema/store/routing,
-después la piel). Razón: W0–W2 tocan `packages/spec`, el server y el routing; conviene estabilizar
-modelo de datos y navegación antes de invertir en componentes visuales que los rendericen.
+Orden recomendado: **W0 → W1 → W2 → W3 → W4 → W5 → W6** (primero los cambios de
+esquema/store/routing, después la piel, y el intake al final — reusa el modal de fuentes de W1 y
+la disciplina visual de W3). W6 cierra la fase: **Fase 3 no arranca sin W6**, porque los agentes
+nuevos deben nacer leyendo el intake, no migrarlo después.
 
 ---
 
@@ -187,13 +188,50 @@ Todo etiquetado `mock` (invariante U-3), **excepto** la identidad del revisor, q
   próxima acción queda auditada con ese nombre. (Puente directo al RBAC real de Fase 5.)
   Hecho cuando: login → aprobar un hallazgo → la entrada de auditoría muestra al usuario de la sesión.
 
+### W6 — Intake de spec (wizard de creación con plan de discovery)
+
+**Resultado**: crear una spec deja de ser un formulario de metadatos y se convierte en el enmarcado
+inicial del discovery: un stepper guía al Product Designer y su output **alimenta al motor**.
+
+**Decisión rectora (cerrada)**: el wizard configura *dentro* del proceso, NO el proceso. Las 7
+etapas y sus compuertas son invariante del motor; no hay pipeline configurable por spec. Lo
+configurable es el **plan de discovery** (pregunta, métodos, fuentes esperadas).
+
+- **6.1 Esquema**: sección `intake` en la spec (zod): `researchQuestion` (string, obligatoria),
+  `hypotheses[]?`, `productContext?`, `discoveryPlan { methods[] (enum: entrevistas | encuestas |
+  analitica | benchmark | soporte | otros), expectedSourceKinds[] (deriva de methods, editable) }`.
+  Migración: specs existentes con `intake` opcional/ausente sin romper carga.
+  Hecho cuando: esquema + tests; `otp-onboarding` carga intacta.
+- **6.2 Motor**: (a) el Agente 1 recibe `researchQuestion` + `productContext` como grounding en su
+  prompt de derivación (hallazgos orientados a la pregunta, no genéricos); (b) el hub de Fuentes
+  muestra **completitud**: tipos esperados (del plan) vs. subidos, con chip "falta: entrevistas".
+  Hecho cuando: corrida real de discover con intake muestra hallazgos alineados a la pregunta;
+  el indicador de completitud refleja el manifest.
+- **6.3 Wizard UI** (5 pasos, componiendo stock — shadcn no trae Stepper: indicador propio simple
+  con números/checks, sin dependencias nuevas):
+  1. Identidad — producto, nombre, descripción (lo de W0.4).
+  2. Enmarcado inicial — pregunta de discovery (obligatoria), hipótesis, contexto.
+  3. Plan de discovery — checklist de métodos; deriva tipos de fuente esperados (editable).
+     **Plantillas deterministas por método; SIN llamadas al modelo** (el "Agente 0" de intake
+     queda explícitamente diferido a post-Fase 3).
+  4. Fuentes — subir ahora (reusa el modal del hub W1) o "agregar después".
+  5. Resumen → crear: commit v0 con intake dentro de la spec + entrada de auditoría
+     (`spec.create` enriquecida con el plan).
+  Navegación: atrás/adelante sin perder estado; cancelar no deja residuos.
+  Hecho cuando: crear spec por wizard → fuentes asociadas → discover E2E sin terminal, y el
+  overview "Spec viva" muestra la pregunta de discovery como encabezado de contexto.
+- **6.4 Retrofit mínimo**: pantalla "editar intake" (mismos pasos 2–3 como formulario) para
+  specs creadas antes del wizard, con auditoría `intake.update`.
+
 ---
 
 ## 4. Guión de demo para stakeholders (validación final de la fase)
 
-0. **Inicio sesión** como Lead PM y veo **"Mis specs"** agrupadas por producto; creo una spec nueva
-   para el problema del día — 30 seg.
-1. **Subo mis documentos** (PDF de entrevistas + CSV de funnel) en Fuentes — 30 seg.
+0. **Inicio sesión** como Lead PM, veo **"Mis specs"** y creo una nueva con el **wizard de
+   intake**: pregunta de discovery, plan de métodos, subo mis primeras fuentes — 90 seg que
+   muestran metodología, no solo software.
+1. **Completo las fuentes** (PDF de entrevistas + CSV de funnel); el hub me dice qué tipos
+   esperados faltan según mi plan — 30 seg.
 2. **Corro Descubrimiento**: el agente extrae evidencia y deriva hallazgos, cada uno con su fuente
    citada — "la IA no inventa: todo apunta a tus archivos".
 3. **Reviso como humano**: apruebo 7, rechazo 1 con motivo, pauso 1 "necesito validar con analítica" —
@@ -219,6 +257,8 @@ Criterio de éxito: la demo completa corre en <12 minutos sin tocar la terminal.
 | 8 | W3.3 + W3.4 + W4.1 (chips + drawer) | trazabilidad inversa en drawer |
 | 9 | W4.2 + W4.3 (modales + accesibilidad) | ciclo de compuerta con confirmación |
 | 10 | W5 completo + guión de demo | login→acción→auditoría con el usuario; ensayo <12 min |
+| 11 | W6.1 + W6.2 (esquema intake + grounding + completitud) | discover real con pregunta; specs viejas cargan |
+| 12 | W6.3 + W6.4 (wizard + retrofit) + re-ensayo de demo | crear por wizard E2E; demo <12 min con paso 0 nuevo |
 
 Actualizar CLAUDE.md y ESTADO.md al cierre de cada sesión (alcance, decisiones, gotchas nuevos).
 
@@ -238,3 +278,12 @@ Actualizar CLAUDE.md y ESTADO.md al cierre de cada sesión (alcance, decisiones,
 - **Login mock, identidad real** (W5): no implementar contraseñas ni sesiones de servidor — el
   riesgo es que parezca seguridad real sin serlo. El login es mock declarado; lo único real es que
   el nombre del usuario firma la auditoría. Confirmar que el equipo está cómodo con esa línea.
+- **Pipeline fijo** (W6, decisión CERRADA): el wizard no permite saltar, reordenar ni personalizar
+  etapas. Las 7 etapas con compuertas son invariante del motor; un pipeline configurable por spec
+  es cambio arquitectónico de bajo retorno para la PoC.
+- **Sin "Agente 0"** (W6, decisión CERRADA para esta fase): el paso 3 del wizard usa plantillas
+  deterministas por método, sin llamadas al modelo. Un agente que proponga el plan de discovery es
+  candidato legítimo post-Fase 3.
+- **Grounding del Agente 1** (6.2): inyectar la pregunta de discovery en el prompt de DERIVACIÓN,
+  no en la extracción de evidencia — la evidencia se extrae sin sesgo; la pregunta orienta qué
+  hallazgos derivar. Confirmar este punto con una corrida comparativa (con/sin intake).
