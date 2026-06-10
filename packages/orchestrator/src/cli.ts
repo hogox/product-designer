@@ -18,13 +18,12 @@ import {
 import { blockingPasses } from "./verify.js";
 import {
   getState,
-  runDiscovery,
   runDefinition,
   approveGate,
   iterateGate,
   rejectFinding,
 } from "./stage.js";
-import { createDiscoveryRunner, createDefinitionRunner } from "./runner.js";
+import { runDiscoveryWithSources, createDefinitionRunner } from "./runner.js";
 
 const ROOT = process.cwd();
 const TOPIC = "abandono en la verificación OTP del onboarding";
@@ -137,13 +136,20 @@ async function main() {
   }
 
   if (cmd === "discover") {
-    const runner = createDiscoveryRunner({
-      entrevistasDir: join(ROOT, "samples", "entrevistas"),
-      funnelCsv: join(ROOT, "samples", "analitica", "funnel-otp.csv"),
+    const r = await runDiscoveryWithSources(ROOT, specId, {
       topic: TOPIC,
+      fallback: {
+        entrevistasDir: join(ROOT, "samples", "entrevistas"),
+        funnelCsv: join(ROOT, "samples", "analitica", "funnel-otp.csv"),
+      },
+      author: AUTHOR,
     });
-    const r = await runDiscovery(ROOT, specId, { runner, author: AUTHOR });
-    console.log(`\n▸ Descubrimiento: ${r.findings.length} hallazgos anclados.`);
+    const origen = r.fromSamples
+      ? "samples/ (sin fuentes subidas)"
+      : `${r.sourceIds.length} fuente(s) subida(s) → marcadas ingerido`;
+    console.log(
+      `\n▸ Descubrimiento: ${r.findings.length} hallazgos anclados. Fuentes: ${origen}.`,
+    );
     printVerification(r.verification);
     console.log(`\n  Triá los hallazgos (dashboard / reject) y luego:`);
     console.log(`  orchestrator define ${specId}`);
