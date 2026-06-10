@@ -1,14 +1,17 @@
+/* CSS LEGADO en retirada (sesión 7 → 8): las vars viejas se remapean a los tokens de
+   globals.css para que todo el dashboard herede el tema claro. Cada componente que
+   migra a shadcn+Tailwind borra sus reglas de acá; el archivo muere en la sesión 8. */
 :root {
-  --bg: #0f1115;
-  --panel: #181b22;
-  --panel-2: #1f2430;
-  --line: #2a2f3a;
-  --text: #e7e9ee;
-  --muted: #9aa3b2;
-  --accent: #6ea8fe;
-  --real: #3fb950;
-  --mock: #d29922;
-  --danger: #f85149;
+  --bg: var(--background);
+  --panel: var(--card);
+  --panel-2: var(--secondary);
+  --line: var(--border);
+  --text: var(--foreground);
+  --muted: var(--muted-foreground);
+  --accent: var(--primary);
+  --real: #059669; /* emerald-600 — semántico real (será variante de Badge en sesión 8) */
+  --mock: #d97706; /* amber-600 — semántico mock */
+  --danger: var(--destructive);
 }
 
 * {
@@ -479,7 +482,7 @@ button.primary {
   border-radius: 8px;
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: #0b0d12;
+  color: var(--primary-foreground);
   font-weight: 600;
   cursor: pointer;
 }
