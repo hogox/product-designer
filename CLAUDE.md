@@ -30,7 +30,7 @@
     producto, badge de propuesta pendiente, "Nueva spec" por modal) y switcher de spec en el sidebar.
   - Sesión 3 hecha (W1.1+W1.2): hub de Fuentes — modelo `sources/manifest.yaml` + binarios en
     `sources/files/<id>/<filename>` por spec; API multipart (multer) `GET/POST/PATCH/DELETE(lógico)
-    /api/specs/:id/sources` con auditoría `source.upload|update|discard` (size/sha256 computados).
+/api/specs/:id/sources` con auditoría `source.upload|update|discard` (size/sha256 computados).
   - Sesión 4 hecha (W1.3+W1.4): ingestión — `discover` lee `sources/files/` (cae a `samples/` si no
     hay) y marca `ingerido`; ruteo por tipo ingerido (text→citas, tabular→métricas). UI página
     "Fuentes" (subir drag&drop/picker, listar con badges, reclasificar, descartar). Diferido: modal
@@ -39,13 +39,21 @@
     (pendiente|aprobado|rechazado|en_pausa) + `reviewed_at` (reusa `reviewed_by`/`review_note`).
     `reviewFinding` no-destructivo (rechazar/pausar exigen comentario, audita
     `finding.approve|reject|pause|resume`); `rejectFinding` ya NO borra. API `PATCH …/findings/:fid/review`
-    + CLI `review`. Migrado otp-onboarding (spec.findings → aprobado).
+    - CLI `review`. Migrado otp-onboarding (spec.findings → aprobado).
   - Sesión 6 hecha (W2.3+W2.4): el gate respeta los estados — criterio bloqueante "Sin hallazgos de
     impacto alto pendientes ni en pausa" (high bloquea; medium/low en pausa = advertencia); `reviewFinding`
     recomputa `proposed.verification` (bloquea/desbloquea en vivo). UI de triage plena (aprobar/pausar/
     rechazar con modal de comentario, badges semánticos, filtros, contadores). otp-onboarding: su gate
     arranca bloqueado (5 high pendientes) hasta revisar.
-  - Faltan W3 (rediseño visual modular), W4 (superficies: drawer + modales), W5 (capa de usuario).
+  - Sesión 7 hecha (W3.1+W3.2): bootstrap shadcn/ui + Tailwind v4 (no existía; 7 componentes stock
+    SIN editar: card/badge/breadcrumb/tabs/separator/tooltip/button) y tokens en `globals.css` como
+    ÚNICO punto de personalización (fondo gris-azulado claro, cards blancas, primary azul, radius
+    0.75rem; TEMA OSCURO ELIMINADO — claro único). Layout modular: breadcrumb persistente, max-w-5xl
+    centrado, overview y etapas Descubrimiento/Definición como pila de Cards con header propio
+    (icono+título+badge+contador); pipeline clickeable; jerarquía de la evidencia corregida (cita a
+    text-sm, locator chip outline mono). `styles.css` quedó como legado en retirada (@layer base);
+    chips semánticos provisorios en `badges.tsx` hasta las variantes cva de la sesión 8.
+  - Faltan W3.3+W3.4 (sistema de chips cva + microcorrecciones), W4 (drawer + modales), W5 (usuario).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 

@@ -7,6 +7,7 @@
 ---
 
 ## 1. Qué es
+
 Un **orquestador de agentes** para el proceso E2E de diseño de producto (7 etapas: Descubrimiento →
 Definición → Exploración → Diseño → Validación → Entrega → Aprendizaje), bajo **Spec-Driven
 Development**. La **spec** (contrato versionado de qué y por qué) es la fuente de verdad; el agente
@@ -14,6 +15,7 @@ Development**. La **spec** (contrato versionado de qué y por qué) es la fuente
 **centrado en la spec** (no un lanzador de agentes).
 
 ## 2. Invariantes (no negociables)
+
 1. La spec es la fuente de verdad; el dashboard gira en torno a ella.
 2. Las compuertas humanas (enmarcar/curar/responder) **nunca** se automatizan.
 3. Anti-alucinación: **extraer la evidencia ANTES** de derivar el hallazgo.
@@ -23,6 +25,7 @@ Development**. La **spec** (contrato versionado de qué y por qué) es la fuente
 7. Todo queda en el **log de auditoría** (quién/qué/cuándo y por qué se rechazó un hallazgo).
 
 ## 3. Stack y layout
+
 - **Monorepo TypeScript** (pnpm workspaces, Node 20+). Build/typecheck/test/format en la raíz.
 - **Modelo:** `claude-opus-4-8` vía `@anthropic-ai/sdk` con structured outputs (`output_config.format`
   json_schema) + adaptive thinking. `ANTHROPIC_API_KEY` en `.env` (gitignored). `PDA_MODEL` configurable.
@@ -41,31 +44,37 @@ scripts/gen-samples.mjs  generador determinista del set de muestra
 ## 4. Qué está hecho
 
 ### Fase 0 — Fundaciones ✅
+
 Esquema de spec (zod, §7) con `finding` como objeto de primera clase; store git + auditoría; shell del
 dashboard. Commits `521c2fd`·`a06f4a7`·`74d7bb8`·`cea37c5`.
 
 ### Fase 1 — Vertical slice: Agente 1 + orquestador + gate enmarcar ✅
+
 El **motor anti-alucinación completo y real** sobre archivos locales (txt/pdf/xlsx/csv):
 recolectar → extraer evidencia (cita verificada como substring real) → computar (determinista) →
 derivar hallazgos (solo desde la evidencia) → sintetizar → gate. Cableado al dashboard.
 Commits `a726e32`→`3830714` (1.1–1.8).
 
 ### Fase 2 — Definición completa: diamante Problema 100% real ✅
+
 - Esquema: `+ jtbd` (jobs anclados a findings), `outcomes` enriquecidos (`heart` HEART + `signals`).
 - **Agente 2 (Definición)**: problem statement + **JTBD** + **métricas HEART/GSM**, derivados SOLO de los
   hallazgos validados (cada job cita sus `F-xxx`; baselines del cómputo; targets al humano).
 - **Orquestador de dos etapas**: Descubrimiento (Agente 1 → hallazgos) → triage humano →
   Definición (Agente 2 → propuesta) → **gate enmarcar refinado** (6 criterios bloqueantes).
-Commits `1142261`→`816b0cd` (2.1–2.5).
+  Commits `1142261`→`816b0cd` (2.1–2.5).
 
 ### Dashboard — refactor a navegación por etapas ✅
+
 Sidebar persistente (7 etapas + Spec viva + Auditoría, con meta de spec siempre visible) + routing
 (`react-router-dom`) + tabs de sección por etapa. Overview "Spec viva" holístico; Descubrimiento
 (hallazgos/evidencia/verificación) y Definición (enmarcado/JTBD/métricas/compuerta) reales; etapas
 3–7 mockeadas con su plan (artefactos/gate del PRD). Commits `b930a61`→`293643d` (D.1–D.6).
 
 ### Fase D2 — experiencia del dashboard (EN CURSO) · Sesión 1 (W0.1+W0.2) ✅
+
 Gestión multi-spec: el dashboard deja de estar pegado a `otp-onboarding`.
+
 - **Esquema:** `SpecSchema += product` (string agrupador), `description?`, `archived` (soft-delete),
   todos con default para compat con specs previas. `createSpecV0` los acepta.
 - **Índice (`packages/spec/src/specs.ts`):** `specs/index.yaml` es **cache regenerable** (la verdad
@@ -83,7 +92,9 @@ Gestión multi-spec: el dashboard deja de estar pegado a `otp-onboarding`.
   (el Agente 2 preserva `product` vía `...current`, así sobrevive a la aprobación de la compuerta).
 
 ### Fase D2 · Sesión 2 (W0.3+W0.4) ✅ — routing spec-scoped + home "Mis specs"
+
 El dashboard deja de estar pegado a una spec en estado de React: el contexto vive en la URL.
+
 - **Routing:** toda spec cuelga de `/spec/:specId` (Overview, etapas, auditoría). `App` lee el
   `specId` de `useParams`; helper `nav.ts:specPath` centraliza el prefijo en sidebar/overview/tabs/
   redirects. **Aislamiento por URL:** refresh conserva dónde estabas y dos pestañas con specs
@@ -96,12 +107,14 @@ El dashboard deja de estar pegado a una spec en estado de React: el contexto viv
   en un solo fetch.
 
 ### Fase D2 · Sesión 3 (W1.1+W1.2) ✅ — hub de Fuentes (modelo + API)
+
 Documentación subida por el usuario, versionada junto a la spec, que alimentará al Agente 1.
+
 - **Modelo (`packages/spec/src/sources.ts`):** `specs/<id>/sources/manifest.yaml` (zod) + binarios en
   `sources/files/<sourceId>/<filename-original>`. El subdir por id evita colisiones y **preserva
   nombre+extensión** (clave: `ingestFile` despacha por extensión y la evidencia cita el archivo real).
   `SourceEntry { id(S-NNN), filename, mime, kind(documento|datos|entrevista|otro), size, sha256,
-  uploadedBy, uploadedAt, status(subido|ingerido|descartado), linkedStages[] }`. **size y sha256 se
+uploadedBy, uploadedAt, status(subido|ingerido|descartado), linkedStages[] }`. **size y sha256 se
   computan del binario** en el server (no se confían del cliente).
 - **Store:** `readSources`, `writeManifest` (valida), `addSource` (`source.upload`), `updateSource`
   (`source.update`), `discardSource` (soft delete — status `descartado`, **conserva el binario**,
@@ -110,6 +123,7 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
   400 en kind/status inválidos y 404 si no existe. Cada mutación audita actor/target/timestamp.
 
 ### Fase D2 · Sesión 4 (W1.3+W1.4) ✅ — ingestión desde fuentes + UI de Fuentes
+
 - **W1.3 (ingestión):** `createDiscoveryRunner` recibe `files[]` y rutea por **tipo ingerido**
   (`text` → citas, `tabular` → métricas), no por el label `kind`. `resolveDiscoverySources` usa
   `sources/files/` si el manifest tiene fuentes `subido|ingerido`; si no, cae a `samples/`.
@@ -122,6 +136,7 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
   se pospuso por decisión explícita). El selector no tiene consumidor hasta que exista ese botón.
 
 ### Fase D2 · Sesión 5 (W2.1+W2.2) ✅ — estados de revisión por hallazgo
+
 - **Esquema:** `finding` gana `review_status (pendiente|aprobado|rechazado|en_pausa`, default
   `pendiente`) y `reviewed_at`; **reusa** `reviewed_by` (quién) y `review_note` (comentario). Default
   → specs previas cargan sin romper; `derive.ts` usa `safeParse` (defaults aplican solos).
@@ -137,6 +152,7 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
   la propuesta/working set quedan `pendiente` por default.
 
 ### Fase D2 · Sesión 6 (W2.3+W2.4) ✅ — gate respeta estados + UI de triage plena
+
 - **W2.3 (gate):** `reviewVerification` agrega un criterio **bloqueante** "Sin hallazgos de impacto
   alto pendientes ni en pausa" (high en `pendiente|en_pausa` bloquea) + **advertencia no bloqueante**
   para `medium/low` en pausa (umbral confirmado). `reviewFinding` **recomputa `proposed.verification`**
@@ -147,6 +163,33 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
   (verde/rojo/ámbar/gris) + tooltip; filtros por estado (chips) y contadores. `VerificationPanel`
   pinta el fail no-bloqueante como advertencia (⚠ ámbar).
 
+### Fase D2 · Sesión 7 (W3.1+W3.2) ✅ — rediseño visual: tokens + layout modular
+
+- **Hallazgo de auditoría previo:** shadcn/Tailwind NO estaban instalados (el anexo lo asumía).
+  **W3.1 incluyó el bootstrap**: Tailwind v4 (`@tailwindcss/vite`) + `tw-animate-css` (dev) y
+  `class-variance-authority`/`clsx`/`tailwind-merge`/`lucide-react`/`radix-ui` (runtime), alias `@/`
+  (vite + tsconfig), `components.json`. **7 componentes stock SIN editar** (`components/ui/`):
+  card, badge, breadcrumb, tabs, separator, tooltip, button. Desde acá rige "cero deps nuevas de UI".
+- **Tokens (`globals.css` = ÚNICO punto de personalización, ANEXO §0/§1):** tema claro único —
+  `--background hsl(210 33% 97%)` (gris-azulado), `--card` blanco puro, `--primary hsl(217 80% 50%)`
+  (azul sobrio, confirmado sobre slate), `--border hsl(214 20% 90%)`, `--muted-foreground` slate-500
+  (piso de contraste), `--radius 0.75rem`. **El tema oscuro se ELIMINÓ** (decisión cerrada del plan;
+  no se generan vars `.dark`). Los colores semánticos NO son tokens: clases Tailwind — real=emerald,
+  mock=amber, aprobado/rechazado/en_pausa/pendiente=emerald/red/amber/slate, cita=sky, cálculo=violet.
+- **W3.2 (layout):** breadcrumb stock persistente (`SpecBreadcrumb`, deriva `<spec>/<etapa>/<sección>`
+  de la URL) + contenido centrado `max-w-5xl`. Overview = pila de Cards con header propio
+  (icono lucide + título + badge + contador) — Spec viva, Problem statement, Outcomes, JTBD, Alcance,
+  Tareas, Historial — + **Pipeline clickeable** (filas-link con hover) + Auditoría como Card.
+  Etapas reales migradas: triage (filtros pill, tooltip de revisión, acciones outline semánticas),
+  **evidencia con jerarquía corregida (§2: cita/cálculo a `text-sm` foreground, locator chip
+  `Badge outline font-mono`)** — también dentro de las tarjetas del triage —, verificación con
+  iconos (✓/✗/⚠/·), compuerta (caja dashed ámbar; Aprobar=primary, Iterar=outline), enmarcado/JTBD/
+  métricas como Cards. `SectionTabs` = Tabs stock sincronizadas con la URL.
+- **Provisorio (muere en sesión 8):** `badges.tsx` (RealMock/ReviewStatus/Confidence/EvidenceKind
+  como composición sobre Badge stock) → migran a variantes cva de `ui/badge.tsx`; `styles.css`
+  legado envuelto en `@layer base` con vars remapeadas a los tokens — solo le quedan sidebar,
+  home, fuentes, placeholder mock y modales.
+
 **Tests:** ~93 (spec 47 · agent1 21 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
@@ -154,6 +197,7 @@ routing, home, Fuentes y la triage plena (aprobar/pausar/rechazar/filtros) en el
 W1.3 se verificó **offline** (runner stub, sin tokens).
 
 ## 5. Estado actual del repo
+
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
   **propuesta de Definición pendiente** (8 hallazgos en la spec, 5 JTBD, propuesta `in_review`).
   **Ready-to-demo** en `http://localhost:5173/spec/otp-onboarding`.
@@ -166,11 +210,16 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
 - Revisión por hallazgo completa: por API/CLI **y por UI** (triage plena: aprobar/pausar/rechazar con
   modal de comentario, badges, filtros, contadores; no-destructivo, auditado). El **gate respeta los
   estados**: bloquea con high `pendiente|en_pausa`, advierte con medium/low en pausa.
-- **otp-onboarding**: su propuesta de Definición arranca con el **gate bloqueado** (5 hallazgos high
-  pendientes). El demo ahora es: revisar/aprobar los high en el triage → el gate se desbloquea → aprobar.
-- Working tree limpio. Home del dashboard: `http://localhost:5173`.
+- **otp-onboarding**: su propuesta de Definición arranca con el **gate bloqueado** mientras haya
+  hallazgos high `pendiente|en_pausa`. El demo es: revisar/aprobar los high en el triage → el gate
+  se desbloquea → aprobar. (Ojo: el triage en vivo muta `findings.yaml`/`spec.proposed.yaml`/
+  `audit.jsonl`; para resetear el demo, `git restore specs/`.)
+- **Piel nueva (sesión 7):** tema claro shadcn en todo el dashboard; overview y etapas reales en
+  Cards modulares con breadcrumb. Home, Fuentes, sidebar y modales aún con CSS legado re-tokenizado
+  (migran en sesiones 8–9). Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
+
 ```bash
 pnpm install && pnpm build          # compila todos los paquetes
 pnpm typecheck && pnpm -r test      # gates de calidad
@@ -187,10 +236,12 @@ node           packages/orchestrator/dist/cli.js status  otp-onboarding
 node --env-file=.env packages/agent1/dist/demo-derive.js     # documentos → hallazgos anclados
 node --env-file=.env packages/agent2/dist/demo-define.js     # hallazgos → JTBD + métricas
 ```
+
 Regenerar el set de muestra: `node scripts/gen-samples.mjs`. Reemplazar `samples/` por datos reales
 cuando los haya (el motor corre igual).
 
 ## 7. Decisiones clave / gotchas (para no repetir tropiezos)
+
 - **Tests:** `node --test "dist/**/*.test.js"` (glob a dist; bare `node --test` levanta los `.ts` de src en Node 25).
 - **PDF:** `pdfjs-dist` (no `pdf-parse`, que rompe con PDFs de pdfkit).
 - **Structured outputs:** enum nullable NO se expresa como `type:["string","null"]+enum`; usar enum string requerido.
@@ -248,11 +299,28 @@ cuando los haya (el motor corre igual).
 - **Umbral del gate:** high en `pendiente|en_pausa` bloquea; medium/low en pausa solo advierte
   (criterio `blocking:false`, status `fail`, se ve ámbar). Si cambia el umbral, tocar
   `reviewVerification` en `verify.ts`.
+- **shadcn (D2·W3.1):** el setup vive en `apps/dashboard` (`components.json`, alias `@/` en vite y
+  tsconfig). Agregar componentes: `pnpm dlx shadcn@latest add <comp> --yes` (instaló el paquete
+  umbrella `radix-ui`; NO agregar `@radix-ui/*` sueltos). `components/ui/*` no se edita — única
+  excepción futura: variantes cva de `badge.tsx` (sesión 8).
+- **CSS legado vs Tailwind v4 (D2·W3):** las reglas SIN `@layer` le ganan a TODAS las utilidades
+  (que viven en capas). Por eso `styles.css` está envuelto en `@layer base` — si se agrega CSS
+  suelto fuera de capa, pisará los `className` de Tailwind (un `a {color}` global rompió
+  `text-foreground` hasta ese fix).
+- **Radix escucha `pointerdown` (D2·W3):** `preview_click` y `el.click()` no disparan los triggers
+  de Radix (Tabs, etc.) en el preview; usar `PointerEvent` vía `preview_eval` para probarlos
+  (el click humano real funciona normal). El `Tooltip` stock exige `TooltipProvider` (está en
+  `main.tsx`).
+- **Semánticos sin token (D2·W3.1):** real/mock/revisión/evidencia van como clases Tailwind
+  (hoy centralizadas en `src/components/badges.tsx`), NO como CSS vars nuevas — mantener así
+  hasta que la sesión 8 las convierta en variantes cva de Badge.
 
 ## 8. Qué falta — próximos pasos
 
 ### Inmediato: Fase D2 (experiencia del dashboard) — bloquea la Fase 3
+
 Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md).
+
 - **Sesión 1 (W0.1+W0.2) — HECHA:** índice + CRUD multi-spec (API/CLI).
 - **Sesión 2 (W0.3+W0.4) — HECHA:** routing `/spec/:id` con aislamiento de contexto + home
   "Mis specs" + modal "Nueva spec" + switcher.
@@ -262,20 +330,24 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
 - **Sesión 6 (W2.3+W2.4) — HECHA:** gate respeta estados + UI de triage plena. **Diferido:** "Iterar"
   con comentarios por ítem (JTBD/métrica) en la compuerta de Definición (el iterate de texto libre ya
   funciona) — follow-up acotado de W2.3.
-- **PRÓXIMA = Sesión 7 (W3.1 tokens + W3.2 layout — rediseño visual modular):**
-  - **Antes de tocar componentes:** si se trabaja con Claude, **leer la skill `frontend-design` del
-    entorno** (define tokens y restricciones de estilo); ver también la sección W3 del plan.
-  - **W3.1 (tokens):** tema claro como default (oscuro como toggle solo si es barato, si no, eliminarlo);
-    tokens en un solo archivo (CSS vars): superficie gris-azulada muy clara, tarjetas blancas con radio
-    generoso y sombra suave, 1 familia tipográfica, escala 4–5 tamaños, acentos semánticos. **La
-    evidencia anclada sube de jerarquía** (hoy es lo más chico de la pantalla).
-  - **W3.2 (layout):** cada etapa = tarjetas modulares con header propio (icono + título + badge de
-    tipo + contador), no un lienzo continuo. **Breadcrumb persistente** (`otp-onboarding / Definición /
-    Compuerta`). El panel "Pipeline" del overview ya es clickeable (W0.3).
-- **Luego:** W3.3–W3.4 + W4.1 (chips + drawer de hallazgo), W4.2–W4.3 (modales + accesibilidad),
-  W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
+- **Sesión 7 (W3.1+W3.2) — HECHA:** bootstrap shadcn/Tailwind v4 + tokens claros (oscuro eliminado)
+  - layout modular (Cards con header, breadcrumb, pipeline clickeable, jerarquía de evidencia §2).
+    La skill `frontend-design` que menciona el plan NO existe en el entorno; la dirección la cubrió
+    el ANEXO-D2 §1.
+- **PRÓXIMA = Sesión 8 (W3.3 + W3.4 + W4.1):**
+  - **W3.3 (chips):** variantes cva en `ui/badge.tsx` (ÚNICA edición permitida de `components/ui/`):
+    `real|mock|aprobado|rechazado|enPausa|pendiente|calculo|cita|quantitative|qualitative|heart`.
+    Migrar `badges.tsx` y los `.badge/.pill/.gate-tag/.proposal-tag` legados; idealmente matar
+    `styles.css` (quedan sidebar, home, fuentes, placeholder, modales).
+  - **W3.4 (microcorrecciones):** resumen de auditoría del overview solo con la última propuesta +
+    "ver todo"; leyenda real/mock en todas las vistas; numeración/subtítulo de etapa se mantienen.
+  - **W4.1 (drawer):** detalle de hallazgo en `Sheet` stock (cadena evidencia→fuente, historial de
+    revisión, trazabilidad inversa JTBD/métricas); la tarjeta del triage queda compacta.
+- **Luego:** W4.2–W4.3 (modales + accesibilidad), W5 (capa de usuario mock) + ensayo del guión
+  de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
+
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración
   real del **design system** (los 3 roles §D10: restricción/fuente/validador) y chequeos automatizables
   (contraste, tokens). Las páginas mockeadas 3–5 del dashboard ya anticipan estas etapas.
@@ -287,6 +359,7 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   calibrar el umbral de aprobación en lote de hallazgos.
 
 ## 9. Mapa rápido (dónde tocar qué)
+
 - Esquema de la spec → `packages/spec/src/schema.ts`. Store/auditoría → `store.ts`/`audit.ts`.
 - Loop del Agente 1 → `packages/agent1/src/{ingest,compute,extract,derive}.ts`.
 - Agente 2 (Definición) → `packages/agent2/src/define.ts`.
