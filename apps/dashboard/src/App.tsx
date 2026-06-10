@@ -2,47 +2,41 @@
 // El dashboard es CENTRADO EN LA SPEC: la spec se carga acá y se comparte a todas las páginas.
 
 import { useEffect, useState } from "react";
-import { Outlet, useOutletContext } from "react-router-dom";
+import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
 
-import { getJson, useSpecData, type SpecData } from "./api";
+import { getSpecGroups, useSpecData, type SpecData, type SpecGroup } from "./api";
 import { StageSidebar } from "./components/StageSidebar";
 
 export function App() {
-  const [specs, setSpecs] = useState<string[]>([]);
-  const [specId, setSpecId] = useState<string | null>(null);
+  // El specId vive en la URL (D2 · W0.3): refresh lo conserva y dos pestañas son
+  // independientes. Nada de estado compartido entre specs salvo el índice.
+  const { specId } = useParams();
+  const [groups, setGroups] = useState<SpecGroup[]>([]);
 
   useEffect(() => {
-    // /api/specs ahora devuelve grupos por producto (D2 · W0). Shim temporal:
-    // aplanamos a ids de specs activas hasta que la Sesión 2 rediseñe el home.
-    type SpecGroup = {
-      product: string;
-      specs: { id: string; status: "activa" | "archivada" }[];
-    };
-    getJson<SpecGroup[]>("/api/specs")
-      .then((groups) => {
-        const ids = groups
-          .flatMap((g) => g.specs)
-          .filter((s) => s.status === "activa")
-          .map((s) => s.id);
-        setSpecs(ids);
-        setSpecId((cur) => cur ?? ids[0] ?? null);
-      })
-      .catch(() => {});
+    // grupos para el switcher del sidebar (specs del mismo producto + "ver todas")
+    getSpecGroups().then(setGroups).catch(() => {});
   }, []);
 
-  const data = useSpecData(specId);
+  const data = useSpecData(specId ?? null);
 
   return (
     <div className="shell">
       <StageSidebar
-        specs={specs}
-        specId={specId}
-        onSelect={setSpecId}
+        specId={specId ?? null}
+        groups={groups}
         spec={data.spec}
         state={data.state}
       />
       <main className="content">
-        {data.error && <div className="panel error">Error: {data.error}</div>}
+        {data.error && (
+          <div className="panel error">
+            Error: {data.error}
+            <div style={{ marginTop: 8 }}>
+              <Link to="/">← Mis specs</Link>
+            </div>
+          </div>
+        )}
         <Outlet context={data} />
       </main>
     </div>

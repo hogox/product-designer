@@ -27,6 +27,27 @@ export interface StageState {
   hasProposal: boolean;
 }
 
+// Entrada del índice de specs (D2 · W0) — la forma que devuelve GET /api/specs.
+export interface SpecIndexEntry {
+  id: string;
+  name: string;
+  product: string;
+  stage: string;
+  status: "activa" | "archivada";
+  updatedAt: string | null;
+  hasProposal?: boolean; // enriquecido en W0.4 (¿hay spec.proposed.yaml?)
+}
+
+export interface SpecGroup {
+  product: string;
+  specs: SpecIndexEntry[];
+}
+
+/** Lista de specs agrupadas por producto (índice cache regenerable). */
+export function getSpecGroups(): Promise<SpecGroup[]> {
+  return getJson<SpecGroup[]>("/api/specs");
+}
+
 export interface SpecData {
   specId: string | null;
   spec: Spec | null;

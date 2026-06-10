@@ -1,6 +1,7 @@
 import { Navigate, useParams } from "react-router-dom";
 
 import { findStage, type StageDef } from "../stages";
+import { specPath } from "../nav";
 import { SectionTabs } from "../components/SectionTabs";
 import { FindingsTriage } from "../components/FindingsTriage";
 import { EvidenceList } from "../components/EvidenceList";
@@ -13,21 +14,24 @@ import { StagePlaceholder } from "../components/StagePlaceholder";
 import { useShell } from "../App";
 import { discoveryVerification, type SpecData } from "../api";
 
-/** /etapa/:stageId → redirige a la primera sección. */
+/** /spec/:specId/etapa/:stageId → redirige a la primera sección. */
 export function StageIndexRedirect() {
-  const { stageId } = useParams();
+  const { specId, stageId } = useParams();
   const stage = findStage(stageId);
-  if (!stage) return <Navigate to="/" replace />;
+  if (!stage) return <Navigate to={specPath(specId)} replace />;
   return (
-    <Navigate to={`/etapa/${stage.id}/${stage.sections[0]!.id}`} replace />
+    <Navigate
+      to={specPath(specId, `/etapa/${stage.id}/${stage.sections[0]!.id}`)}
+      replace
+    />
   );
 }
 
 export function StagePage() {
-  const { stageId, sectionId } = useParams();
+  const { specId, stageId, sectionId } = useParams();
   const stage = findStage(stageId);
   const shell = useShell();
-  if (!stage) return <Navigate to="/" replace />;
+  if (!stage) return <Navigate to={specPath(specId)} replace />;
 
   return (
     <div>

@@ -4,9 +4,10 @@ import { useShell } from "../App";
 import { SpecOverview } from "../components/SpecOverview";
 import { AuditPanel } from "../components/AuditPanel";
 import { STAGES } from "../stages";
+import { specPath } from "../nav";
 
 export function OverviewPage() {
-  const { spec, audit, state } = useShell();
+  const { specId, spec, audit, state } = useShell();
 
   if (!spec) {
     return (
@@ -24,12 +25,19 @@ export function OverviewPage() {
           <h2>Pipeline</h2>
           {state?.hasProposal && (
             <div className="meta" style={{ marginBottom: 8 }}>
-              Hay una <strong>propuesta pendiente</strong> de compuerta — entrá
-              a la etapa de Definición.
+              Hay una <strong>propuesta pendiente</strong> de compuerta —{" "}
+              <Link to={specPath(specId, "/etapa/definicion/compuerta")}>
+                entrá a la etapa de Definición
+              </Link>
+              .
             </div>
           )}
           {STAGES.map((s) => (
-            <Link key={s.id} to={`/etapa/${s.id}`} className="stage">
+            <Link
+              key={s.id}
+              to={specPath(specId, `/etapa/${s.id}`)}
+              className="stage"
+            >
               <span className="num">{s.n}</span>
               <div>
                 <div className="name">

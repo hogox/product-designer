@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { App } from "./App";
+import { SpecsHomePage } from "./pages/SpecsHomePage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { StagePage, StageIndexRedirect } from "./pages/StagePage";
 import { AuditPage } from "./pages/AuditPage";
@@ -12,13 +13,16 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route element={<App />}>
+        {/* Home: "Mis specs" (sin spec activa → sin sidebar de etapas) */}
+        <Route path="/" element={<SpecsHomePage />} />
+        {/* Toda spec cuelga de /spec/:specId (D2 · W0.3): la URL aísla el contexto */}
+        <Route path="/spec/:specId" element={<App />}>
           <Route index element={<OverviewPage />} />
           <Route path="etapa/:stageId" element={<StageIndexRedirect />} />
           <Route path="etapa/:stageId/:sectionId" element={<StagePage />} />
           <Route path="auditoria" element={<AuditPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

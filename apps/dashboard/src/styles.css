@@ -387,3 +387,174 @@ a.stage {
   color: var(--text);
   border-bottom-color: var(--accent);
 }
+
+/* ---------- home "Mis specs" (D2 · W0.4) ---------- */
+.specs-home {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+.specs-home-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.specs-home-head h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.specs-home-head .meta {
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 520px;
+}
+.product-group {
+  margin-bottom: 24px;
+}
+.product-name {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.spec-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.spec-card {
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  text-decoration: none;
+  color: var(--text);
+}
+.spec-card:hover {
+  border-color: var(--accent);
+}
+.spec-card.archived {
+  opacity: 0.6;
+}
+.spec-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.spec-card-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.spec-card-foot {
+  margin-top: 10px;
+}
+.proposal-tag {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--mock);
+  border: 1px solid var(--mock);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.link-button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+/* CTA primaria (Nueva spec) */
+button.primary {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #0b0d12;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- switcher de spec en el sidebar ---------- */
+.brand-link {
+  color: var(--text);
+  text-decoration: none;
+}
+.spec-switcher {
+  padding: 0 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.switcher-all {
+  font-size: 12px;
+}
+
+/* ---------- modal (D2 · W0.4) ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 50;
+}
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 440px;
+}
+.modal h2 {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+.modal label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+.modal input,
+.modal textarea,
+.modal select {
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  font: inherit;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.modal-actions button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.modal-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 10px;
+}
