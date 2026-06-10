@@ -136,10 +136,22 @@ Documentación subida por el usuario, versionada junto a la spec, que alimentar�
 - **Migración (decisión confirmada):** los 8 findings de `otp-onboarding/spec.yaml` → `aprobado`;
   la propuesta/working set quedan `pendiente` por default.
 
-**Tests:** ~89 (spec 47 · agent1 21 · agent2 3 · orchestrator 18). Lógica anti-alucinación testeada
-offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes
-y los estados de revisión se verificaron además live por curl/CLI; routing, home, página Fuentes y el
-filtro de triage, en el preview. La ingestión W1.3 se verificó **offline** (runner stub, sin tokens).
+### Fase D2 · Sesión 6 (W2.3+W2.4) ✅ — gate respeta estados + UI de triage plena
+- **W2.3 (gate):** `reviewVerification` agrega un criterio **bloqueante** "Sin hallazgos de impacto
+  alto pendientes ni en pausa" (high en `pendiente|en_pausa` bloquea) + **advertencia no bloqueante**
+  para `medium/low` en pausa (umbral confirmado). `reviewFinding` **recomputa `proposed.verification`**
+  al espejar → el gate (que lee el stored) bloquea/desbloquea en vivo. Migración: recomputada la
+  verificación de la propuesta de otp-onboarding → su compuerta arranca **bloqueada** (5 high pendientes).
+- **W2.4 (UI):** `FindingsTriage` plena — Aprobar / Pausar / Rechazar por tarjeta (las dos últimas
+  abren `ReviewCommentModal` de comentario obligatorio), Reabrir → pendiente; badge semántico
+  (verde/rojo/ámbar/gris) + tooltip; filtros por estado (chips) y contadores. `VerificationPanel`
+  pinta el fail no-bloqueante como advertencia (⚠ ámbar).
+
+**Tests:** ~93 (spec 47 · agent1 21 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
+offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
+los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
+routing, home, Fuentes y la triage plena (aprobar/pausar/rechazar/filtros) en el preview. La ingestión
+W1.3 se verificó **offline** (runner stub, sin tokens).
 
 ## 5. Estado actual del repo
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
@@ -151,10 +163,11 @@ filtro de triage, en el preview. La ingestión W1.3 se verificó **offline** (ru
 - Hub de Fuentes operativo de punta a punta por UI: subir (drag&drop), listar, reclasificar,
   descartar; y `discover` (CLI) ya lee las fuentes subidas (cae a `samples/` si no hay) y marca
   `ingerido`. Falta el botón "Correr Descubrimiento desde la UI" (diferido).
-- Revisión por hallazgo operativa por API/CLI (aprobar/rechazar/pausar/pendiente, no-destructivo,
-  auditado). En la UI: por ahora solo se ocultan los rechazados; la triage plena (badges, filtros,
-  botones aprobar/pausar, modal de comentario) es W2.4 (Sesión 6). El gate todavía NO mira los estados
-  (W2.3, Sesión 6).
+- Revisión por hallazgo completa: por API/CLI **y por UI** (triage plena: aprobar/pausar/rechazar con
+  modal de comentario, badges, filtros, contadores; no-destructivo, auditado). El **gate respeta los
+  estados**: bloquea con high `pendiente|en_pausa`, advierte con medium/low en pausa.
+- **otp-onboarding**: su propuesta de Definición arranca con el **gate bloqueado** (5 hallazgos high
+  pendientes). El demo ahora es: revisar/aprobar los high en el triage → el gate se desbloquea → aprobar.
 - Working tree limpio. Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
@@ -227,6 +240,14 @@ cuando los haya (el motor corre igual).
 - **Agregar campos a `finding`/`Spec` rompe los fixtures tipados:** los literales `: Finding`/`: Spec`
   de los tests exigen los campos nuevos (el tipo `infer` los pide aunque tengan `.default()`).
   Al extender el esquema, actualizar los fixtures (hay varios en spec/agent2/orchestrator tests).
+- **Gate y verificación (D2·W2.3):** la compuerta lee `proposed.verification` **almacenada**, no la
+  recomputa para mostrarse (sí la recomputa `approveGate` al aprobar). Por eso `reviewFinding` recomputa
+  y reescribe `proposed.verification` al cambiar un estado — si agregás otra acción que afecte la
+  verificación, recordá recomputarla o la UI quedará desincronizada. Al cambiar `verifyProposal`,
+  recomputar la verificación de las propuestas vivas existentes (hay un one-off para otp-onboarding).
+- **Umbral del gate:** high en `pendiente|en_pausa` bloquea; medium/low en pausa solo advierte
+  (criterio `blocking:false`, status `fail`, se ve ámbar). Si cambia el umbral, tocar
+  `reviewVerification` en `verify.ts`.
 
 ## 8. Qué falta — próximos pasos
 
@@ -238,19 +259,21 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
 - **Sesión 3 (W1.1+W1.2) — HECHA:** modelo + API del hub de Fuentes (multipart, auditado).
 - **Sesión 4 (W1.3+W1.4) — HECHA:** ingestión desde fuentes (cae a samples) + UI página "Fuentes".
 - **Sesión 5 (W2.1+W2.2) — HECHA:** estados de revisión por hallazgo + API/CLI (no-destructivo).
-- **PRÓXIMA = Sesión 6 (W2.3 gate respeta estados + W2.4 UI triage plena):**
-  - **W2.3:** criterio bloqueante nuevo del gate — "Sin hallazgos `pendiente` ni `en_pausa` de
-    **impacto alto** (`confidence: high`)"; `medium/low` en pausa → advertencia no bloqueante
-    (documentar el umbral; es el riesgo abierto "umbral de bloqueo" de la sección 6 del plan, a
-    confirmar). "Iterar" en Definición acepta comentarios por ítem (JTBD/métrica) concatenados al
-    feedback del agente. Tocar `packages/orchestrator/src/verify.ts` (verifyProposal) y el gate.
-    Hecho cuando: test del gate que bloquea con un high `en_pausa` y desbloquea al resolverlo.
-  - **W2.4:** triage plena en la UI — por tarjeta: Aprobar / Rechazar / Pausar (las dos últimas abren
-    **modal de comentario obligatorio**); badge de estado con color semántico + tooltip (comentario/
-    revisor/fecha); filtros por estado; contadores en el header ("10 · 6 aprobados · 1 en pausa").
-    Reemplaza el tweak actual de FindingsTriage. Usa `PATCH …/findings/:fid/review` (ya existe).
-- **Luego:** W3 (rediseño visual modular), W4 (drawer + modales), W5 (capa de usuario mock) + ensayo
-  del guión de demo (<12 min).
+- **Sesión 6 (W2.3+W2.4) — HECHA:** gate respeta estados + UI de triage plena. **Diferido:** "Iterar"
+  con comentarios por ítem (JTBD/métrica) en la compuerta de Definición (el iterate de texto libre ya
+  funciona) — follow-up acotado de W2.3.
+- **PRÓXIMA = Sesión 7 (W3.1 tokens + W3.2 layout — rediseño visual modular):**
+  - **Antes de tocar componentes:** si se trabaja con Claude, **leer la skill `frontend-design` del
+    entorno** (define tokens y restricciones de estilo); ver también la sección W3 del plan.
+  - **W3.1 (tokens):** tema claro como default (oscuro como toggle solo si es barato, si no, eliminarlo);
+    tokens en un solo archivo (CSS vars): superficie gris-azulada muy clara, tarjetas blancas con radio
+    generoso y sombra suave, 1 familia tipográfica, escala 4–5 tamaños, acentos semánticos. **La
+    evidencia anclada sube de jerarquía** (hoy es lo más chico de la pantalla).
+  - **W3.2 (layout):** cada etapa = tarjetas modulares con header propio (icono + título + badge de
+    tipo + contador), no un lienzo continuo. **Breadcrumb persistente** (`otp-onboarding / Definición /
+    Compuerta`). El panel "Pipeline" del overview ya es clickeable (W0.3).
+- **Luego:** W3.3–W3.4 + W4.1 (chips + drawer de hallazgo), W4.2–W4.3 (modales + accesibilidad),
+  W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración

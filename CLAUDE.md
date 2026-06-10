@@ -39,9 +39,13 @@
     (pendiente|aprobado|rechazado|en_pausa) + `reviewed_at` (reusa `reviewed_by`/`review_note`).
     `reviewFinding` no-destructivo (rechazar/pausar exigen comentario, audita
     `finding.approve|reject|pause|resume`); `rejectFinding` ya NO borra. API `PATCH …/findings/:fid/review`
-    + CLI `review`. Migrado otp-onboarding (spec.findings → aprobado). UI triage oculta rechazados (tweak).
-  - Faltan W2.3 (gate respeta estados) + W2.4 (UI triage plena), W3–W4 (rediseño visual + superficies),
-    W5 (usuario).
+    + CLI `review`. Migrado otp-onboarding (spec.findings → aprobado).
+  - Sesión 6 hecha (W2.3+W2.4): el gate respeta los estados — criterio bloqueante "Sin hallazgos de
+    impacto alto pendientes ni en pausa" (high bloquea; medium/low en pausa = advertencia); `reviewFinding`
+    recomputa `proposed.verification` (bloquea/desbloquea en vivo). UI de triage plena (aprobar/pausar/
+    rechazar con modal de comentario, badges semánticos, filtros, contadores). otp-onboarding: su gate
+    arranca bloqueado (5 high pendientes) hasta revisar.
+  - Faltan W3 (rediseño visual modular), W4 (superficies: drawer + modales), W5 (capa de usuario).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
