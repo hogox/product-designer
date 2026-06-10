@@ -95,10 +95,23 @@ El dashboard deja de estar pegado a una spec en estado de React: el contexto viv
 - **Índice:** la entrada gana `hasProposal` (¿existe `spec.proposed.yaml`?) para el badge del home
   en un solo fetch.
 
-**Tests:** ~71 (spec 37 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
-offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec se verificó
-además live por curl y por CLI (crear/listar/editar/archivar + regeneración del índice); el routing
-y el home se verificaron en el preview (deep-link + refresh; crear spec desde la UI).
+### Fase D2 · Sesión 3 (W1.1+W1.2) ✅ — hub de Fuentes (modelo + API)
+Documentación subida por el usuario, versionada junto a la spec, que alimentará al Agente 1.
+- **Modelo (`packages/spec/src/sources.ts`):** `specs/<id>/sources/manifest.yaml` (zod) + binarios en
+  `sources/files/<sourceId>/<filename-original>`. El subdir por id evita colisiones y **preserva
+  nombre+extensión** (clave: `ingestFile` despacha por extensión y la evidencia cita el archivo real).
+  `SourceEntry { id(S-NNN), filename, mime, kind(documento|datos|entrevista|otro), size, sha256,
+  uploadedBy, uploadedAt, status(subido|ingerido|descartado), linkedStages[] }`. **size y sha256 se
+  computan del binario** en el server (no se confían del cliente).
+- **Store:** `readSources`, `writeManifest` (valida), `addSource` (`source.upload`), `updateSource`
+  (`source.update`), `discardSource` (soft delete — status `descartado`, **conserva el binario**,
+  `source.discard`). `inferKind` por mime/extensión.
+- **API (server):** `GET/POST(multipart, multer)/PATCH/DELETE(lógico) /api/specs/:id/sources`, con
+  400 en kind/status inválidos y 404 si no existe. Cada mutación audita actor/target/timestamp.
+
+**Tests:** ~81 (spec 47 · agent1 21 · agent2 3 · orchestrator 10). Lógica anti-alucinación testeada
+offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec y el hub de
+Fuentes se verificaron además live por curl/CLI; el routing y el home, en el preview.
 
 ## 5. Estado actual del repo
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
@@ -107,6 +120,8 @@ y el home se verificaron en el preview (deep-link + refresh; crear spec desde la
 - Multi-spec operativo por API/CLI **y por UI**: home "Mis specs" en `/`, crear/cambiar de spec sin
   terminal, contexto aislado por URL (`/spec/:id/...`). El índice `specs/index.yaml` es cache
   regenerable y está **gitignored**.
+- Hub de Fuentes operativo por API (multipart): subir/listar/editar/descartar; falta la **ingestión
+  real** (W1.3: que `discover` lea `sources/files/` en vez de `samples/`) y la **UI** (W1.4).
 - Working tree limpio. Home del dashboard: `http://localhost:5173`.
 
 ## 6. Cómo correr / demostrar / iterar
@@ -156,6 +171,12 @@ cuando los haya (el motor corre igual).
 - **preview_click + navegación:** un `preview_click` disparado justo tras `location.href=...` puede
   perderse (la página aún recarga). Si el modal/elemento "no abre", reintentar tras estabilizar, o
   clickear vía `preview_eval` (`el.click()`).
+- **Fuentes (D2·W1):** los binarios se guardan en `sources/files/<sourceId>/<filename-original>` —
+  NO renombrar ni aplanar: `ingestFile` despacha por extensión y la evidencia usa `basename`. size y
+  sha256 los computa el store desde los bytes (no confiar en el cliente). El mime del cliente puede
+  venir `application/octet-stream` (p. ej. curl con .csv); por eso `inferKind` mira también la
+  extensión. Subida = `multer` memoryStorage (límite 25 MB) en el server del dashboard. Descartar es
+  soft delete (status `descartado`); el binario queda. Estos binarios SÍ se versionan (no gitignored).
 
 ## 8. Qué falta — próximos pasos
 
@@ -164,14 +185,17 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
 - **Sesión 1 (W0.1+W0.2) — HECHA:** índice + CRUD multi-spec (API/CLI).
 - **Sesión 2 (W0.3+W0.4) — HECHA:** routing `/spec/:id` con aislamiento de contexto + home
   "Mis specs" + modal "Nueva spec" + switcher.
-- **PRÓXIMA = Sesión 3 (W1.1+W1.2 — hub de Fuentes, modelo + API):** `sources.yaml` por spec
-  (`specs/<id>/sources/manifest.yaml` + binarios en `sources/files/`); esquema zod `id, filename,
-  mime, kind, size, sha256, uploadedBy, uploadedAt, status, linkedStages[]`; endpoints
-  `POST/GET/PATCH/DELETE(lógico) /api/specs/:id/sources` con auditoría `source.upload|update|discard`.
-  Hecho cuando: tests de store + curl de cada endpoint + auditoría con actor/acción/timestamp.
-- **Luego:** W1.3–W1.4 (ingestión real + UI de fuentes), W2 (revisión granular por hallazgo),
-  W3 (rediseño visual modular), W4 (drawer + modales), W5 (capa de usuario mock) + ensayo del
-  guión de demo (<12 min).
+- **Sesión 3 (W1.1+W1.2) — HECHA:** modelo + API del hub de Fuentes (multipart, auditado).
+- **PRÓXIMA = Sesión 4 (W1.3 ingestión + W1.4 UI de fuentes):**
+  - **W1.3:** el runner de Descubrimiento usa `sources/files/` cuando el manifest tiene fuentes
+    `subido|ingerido`; si no, cae a `samples/` (transición suave). Al correr, marca `ingerido`.
+    Hecho cuando: `discover` corre E2E con un PDF y un CSV subidos por la UI y la evidencia cita esos
+    archivos. (Tocar `packages/orchestrator/src/runner.ts` y el cableado del CLI/`discover`.)
+  - **W1.4:** página "Fuentes" en el sidebar (lista con badge de tipo/tamaño/estado/etapas) + modal
+    selector reutilizable ("Seleccionar fuentes") con buscador y chips por tipo + "Subir fuentes"
+    (drag&drop). Hecho cuando: subir → ver en lista → seleccionar → correr Descubrimiento desde la UI.
+- **Luego:** W2 (revisión granular por hallazgo), W3 (rediseño visual modular), W4 (drawer +
+  modales), W5 (capa de usuario mock) + ensayo del guión de demo (<12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración

@@ -28,7 +28,11 @@
   - Sesión 2 hecha (W0.3+W0.4): routing spec-scoped `/spec/:id` (el specId vive en la URL → refresh
     conserva, pestañas independientes; aislamiento de contexto), home "Mis specs" (tarjetas por
     producto, badge de propuesta pendiente, "Nueva spec" por modal) y switcher de spec en el sidebar.
-  - Faltan W1 (fuentes), W2 (revisión granular), W3–W4 (rediseño visual + superficies), W5 (usuario).
+  - Sesión 3 hecha (W1.1+W1.2): hub de Fuentes — modelo `sources/manifest.yaml` + binarios en
+    `sources/files/<id>/<filename>` por spec; API multipart (multer) `GET/POST/PATCH/DELETE(lógico)
+    /api/specs/:id/sources` con auditoría `source.upload|update|discard` (size/sha256 computados).
+  - Faltan W1.3–W1.4 (ingestión real + UI de fuentes), W2 (revisión granular), W3–W4 (rediseño
+    visual + superficies), W5 (usuario).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
