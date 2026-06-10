@@ -41,10 +41,12 @@ export function createDiscoveryRunner(
   opts: DiscoveryRunnerOptions,
 ): DiscoveryRunner {
   return {
-    async run(_current: Spec) {
+    async run(current: Spec) {
       const evidence: Evidence[] = [];
       const proposer = createAnthropicProposer();
 
+      // La EXTRACCIÓN se hace sin sesgo (invariante 3): solo el topic neutral, nunca el
+      // intake. El grounding del intake entra recién en la DERIVACIÓN (abajo).
       for (const path of opts.files) {
         for (const doc of await ingestFile(path)) {
           if (doc.kind === "text") {
@@ -61,10 +63,21 @@ export function createDiscoveryRunner(
         }
       }
 
+      // Grounding derivado del intake de la spec (W6.2): orienta QUÉ derivar del pool ya
+      // fijo. Sin intake → undefined → derivación idéntica a la de antes (sin regresión).
+      const grounding = current.intake
+        ? {
+            researchQuestion: current.intake.researchQuestion,
+            productContext: current.intake.productContext,
+            hypotheses: current.intake.hypotheses,
+          }
+        : undefined;
+
       const pool = buildEvidencePool(evidence);
       const { accepted: findings } = await deriveFindings(pool, {
         topic: opts.topic,
         proposer: createAnthropicFindingsProposer(),
+        grounding,
       });
       return { findings };
     },

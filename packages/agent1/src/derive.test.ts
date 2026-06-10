@@ -108,3 +108,35 @@ test("deriveFindings usa el proposer (stub) y ensambla", async () => {
   assert.equal(accepted.length, 1);
   assert.equal(accepted[0]!.feeds, "scope");
 });
+
+test("deriveFindings pasa el grounding del intake al proposer (W6.2)", async () => {
+  const calls: Parameters<FindingsProposer["propose"]>[0][] = [];
+  const spy: FindingsProposer = {
+    propose: async (input) => {
+      calls.push(input);
+      return [];
+    },
+  };
+  const grounding = {
+    researchQuestion: "¿Por qué se abandona el OTP en onboarding?",
+    productContext: "Onboarding bancario regulado",
+    hypotheses: ["el SMS tarda", "falta feedback en pantalla"],
+  };
+  await deriveFindings(pool, { topic: "abandono OTP", proposer: spy, grounding });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0]!.grounding, grounding);
+  // la evidencia (pool) llega igual: el grounding orienta, no reemplaza el pool
+  assert.equal(calls[0]!.evidence.length, 2);
+});
+
+test("sin grounding, el proposer lo recibe undefined (sin regresión)", async () => {
+  const calls: Parameters<FindingsProposer["propose"]>[0][] = [];
+  const spy: FindingsProposer = {
+    propose: async (input) => {
+      calls.push(input);
+      return [];
+    },
+  };
+  await deriveFindings(pool, { topic: "abandono OTP", proposer: spy });
+  assert.equal(calls[0]!.grounding, undefined);
+});
