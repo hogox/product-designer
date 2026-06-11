@@ -96,8 +96,9 @@ export function FindingsTriage({
       <Card>
         <CardContent>
           <p className="text-sm text-muted-foreground italic">
-            No hay hallazgos en el store. Corré Descubrimiento (
-            <code>orchestrator discover</code>).
+            Sin hallazgos todavía. Usá el botón{" "}
+            <strong>Correr Descubrimiento</strong> de arriba para que el Agente 1
+            los proponga desde las fuentes.
           </p>
         </CardContent>
       </Card>

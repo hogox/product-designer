@@ -12,6 +12,7 @@ import { Jtbd } from "../components/Jtbd";
 import { Metrics } from "../components/Metrics";
 import { StagePlaceholder } from "../components/StagePlaceholder";
 import { ConceptsTriage } from "../components/ConceptsTriage";
+import { RunAgentButton } from "../components/RunAgentButton";
 import { RealMockBadge } from "../components/badges";
 import { STAGE_ICON } from "../components/icons";
 import { useShell } from "../App";
@@ -88,12 +89,26 @@ function StageContent({
   if (stage.id === "descubrimiento") {
     if (section === "hallazgos")
       return (
-        <FindingsTriage
-          specId={shell.specId}
-          findings={shell.findings}
-          jtbd={(shell.proposed ?? shell.spec)?.jtbd ?? []}
-          onChange={shell.refetch}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3">
+            <div className="text-sm text-muted-foreground">
+              El Agente 1 lee las fuentes y propone hallazgos anclados para el
+              triage humano.
+            </div>
+            <RunAgentButton
+              specId={shell.specId}
+              agent="discover"
+              label="Correr Descubrimiento"
+              onDone={shell.refetch}
+            />
+          </div>
+          <FindingsTriage
+            specId={shell.specId}
+            findings={shell.findings}
+            jtbd={(shell.proposed ?? shell.spec)?.jtbd ?? []}
+            onChange={shell.refetch}
+          />
+        </div>
       );
     if (section === "evidencia")
       return <EvidenceList findings={shell.findings} />;
