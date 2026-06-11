@@ -78,6 +78,16 @@ test("assembleConcepts asigna ids consecutivos a los aceptados", () => {
   assert.equal(accepted[2]!.id, "C-003");
 });
 
+test("assembleConcepts arranca los ids en firstId (re-explore no recicla, P3)", () => {
+  const { accepted } = assembleConcepts(jobs, [rawValid, rawValid], {
+    firstId: 4,
+  });
+
+  assert.equal(accepted.length, 2);
+  assert.equal(accepted[0]!.id, "C-004");
+  assert.equal(accepted[1]!.id, "C-005");
+});
+
 test("assembleConcepts mezcla: aceptados y rechazados en el mismo lote", () => {
   const { accepted, rejected } = assembleConcepts(jobs, [
     rawValid,
@@ -126,4 +136,31 @@ test("exploreConceptsFromJobs con feedback de descartados — se pasa al propose
   });
 
   assert.equal(capturedFeedback, "[C-001] Concepto previo: muy complejo");
+});
+
+test("exploreConceptsFromJobs pasa el contexto de producto al proposer (P5)", async () => {
+  let captured: unknown;
+  const stub: ConceptProposer = {
+    propose: async ({ context }) => {
+      captured = context;
+      return [rawValid];
+    },
+  };
+
+  await exploreConceptsFromJobs(jobs, {
+    topic: "abandono OTP",
+    problemStatement: "PS",
+    proposer: stub,
+    context: {
+      productContext: "App de banca móvil",
+      constraints: ["WCAG 2.2 AA"],
+      nonGoals: ["No rediseñar el login"],
+    },
+  });
+
+  assert.deepEqual(captured, {
+    productContext: "App de banca móvil",
+    constraints: ["WCAG 2.2 AA"],
+    nonGoals: ["No rediseñar el login"],
+  });
 });

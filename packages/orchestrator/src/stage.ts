@@ -19,6 +19,7 @@ import {
   readAudit,
   specPaths,
   type Concept,
+  type Decision,
   type Finding,
   type GitAuthor,
   type ReviewStatus,
@@ -29,6 +30,7 @@ import {
 import {
   automatedVerification,
   verifyProposal,
+  explorationVerification,
   blockingPasses,
 } from "./verify.js";
 
@@ -46,7 +48,7 @@ export interface DefinitionRunner {
 export interface ExplorationRunner {
   run(
     current: Spec,
-    discardedFeedback?: string,
+    opts?: { discardedFeedback?: string; firstId?: number },
   ): Promise<{ concepts: Concept[] }>;
 }
 
@@ -61,6 +63,13 @@ export interface ExplorationResult {
   specId: string;
   stage: "exploracion";
   concepts: Concept[];
+}
+
+export interface ExplorationCloseResult {
+  specId: string;
+  spec: Spec;
+  promoted: Concept[];
+  decision: Decision;
 }
 
 export interface PendingGate {
@@ -79,6 +88,8 @@ export interface StageState {
   stage: Spec["current_stage"];
   findings: number;
   hasProposal: boolean;
+  concepts: number;
+  conceptsSelected: number;
 }
 
 const now = (): string => new Date().toISOString();
@@ -97,6 +108,12 @@ export async function getState(
     hasProposal = false;
   }
   const findings = await readFindings(rootDir, specId);
+  // Conceptos en triage (concepts.yaml) o ya promovidos a la spec (post-cierre).
+  const working = await readConcepts(rootDir, specId).catch(() => [] as Concept[]);
+  const concepts = working.length > 0 ? working : spec.concepts;
+  const conceptsSelected = concepts.filter(
+    (c) => c.review_status === "seleccionado",
+  ).length;
   return {
     specId,
     version: spec.version,
@@ -104,6 +121,8 @@ export async function getState(
     stage: spec.current_stage,
     findings: findings.length,
     hasProposal,
+    concepts: concepts.length,
+    conceptsSelected,
   };
 }
 
@@ -162,11 +181,16 @@ export async function runDefinition(
     );
   }
 
-  // Feedback de iteración: el último gate.iterate posterior al último agent.proposed.
+  // Feedback de iteración: el último gate.iterate posterior a la última propuesta de Definición.
+  // Se filtra por actor `agent2`: Descubrimiento (agent1) y Exploración (agent3) también emiten
+  // `agent.proposed`, y sin el filtro un explore intercalado taparía el feedback de la compuerta.
   const auditLog = await readAudit(rootDir, specId);
   let lastProposedIdx = -1;
   for (let i = auditLog.length - 1; i >= 0; i--) {
-    if (auditLog[i]!.action === "agent.proposed") {
+    if (
+      auditLog[i]!.action === "agent.proposed" &&
+      auditLog[i]!.actor === "agent2"
+    ) {
       lastProposedIdx = i;
       break;
     }
@@ -331,17 +355,20 @@ export async function approveGate(
   }
 
   const version = proposed.version + 1;
+  // La etapa de la propuesta la fijó el agente que la generó (no se hardcodea, P2): así esta
+  // compuerta sirve para cualquier etapa con gate, no solo Definición.
+  const stage = proposed.current_stage;
   const next: Spec = {
     ...proposed,
     version,
     status: "approved",
-    current_stage: "definicion",
+    current_stage: stage,
     verification,
     history: [
       ...proposed.history,
       {
         version,
-        stage: "definicion",
+        stage,
         proposed_by: "agent2",
         change_summary: `Compuerta '${gate}' aprobada: problem statement + JTBD + métricas`,
         approved_by: opts.approver,
@@ -387,9 +414,58 @@ export async function iterateGate(
 }
 
 /**
- * Etapa 3 — EXPLORACIÓN (Agente 3): precondición spec `approved` con al menos 1 JTBD.
- * Genera conceptos de solución divergentes anclados a los jobs, los persiste en
- * `concepts.yaml` (archivo de trabajo; no es spec.proposed). Audita y commitea.
+ * Descarta una propuesta de Definición pendiente sin aprobarla (P1/D5): borra
+ * `spec.proposed.yaml` (y los findings de trabajo que la acompañaban), audita y commitea.
+ * Exige motivo (invariante 7). No toca la spec vigente ni su versión.
+ */
+export async function discardProposal(
+  rootDir: string,
+  specId: string,
+  opts: { reason: string; actor: string; author?: GitAuthor },
+): Promise<void> {
+  const reason = opts.reason?.trim();
+  if (!reason) {
+    throw new Error("descartar una propuesta exige un motivo (invariante 7)");
+  }
+  // Falla si no hay propuesta: no hay nada que descartar.
+  await readProposedSpec(rootDir, specId);
+
+  await rm(specPaths(rootDir, specId).proposed, { force: true });
+  await rm(specPaths(rootDir, specId).findings, { force: true });
+
+  await appendAudit(rootDir, {
+    actor: opts.actor,
+    action: "proposal.discard",
+    spec_id: specId,
+    reason,
+  });
+
+  await commitSpec(
+    rootDir,
+    specId,
+    `Propuesta de '${specId}' descartada por ${opts.actor}: ${reason}`,
+    opts.author,
+  );
+}
+
+/** Mayor número de id `C-NNN` entre los conceptos dados (0 si no hay ninguno). */
+function maxConceptNum(concepts: Concept[]): number {
+  let max = 0;
+  for (const c of concepts) {
+    const m = /^C-(\d+)$/.exec(c.id);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return max;
+}
+
+/**
+ * Etapa 3 — EXPLORACIÓN (Agente 3): precondición spec `approved` con al menos 1 JTBD y SIN
+ * propuesta de Definición pendiente (estado coherente, P1). Genera conceptos divergentes
+ * anclados a los jobs y los persiste en `concepts.yaml` (archivo de trabajo; no es
+ * spec.proposed). Es NO destructivo (P3): conserva intactos los conceptos ya triados
+ * (`seleccionado`/`descartado`) y solo reemplaza los `propuesto`; los ids nuevos continúan
+ * desde el máximo emitido (nunca se recicla un id). Sella `spec_version` de origen (P1) y
+ * marca `current_stage: exploracion` en su primer run (P2). Audita y commitea.
  */
 export async function runExploration(
   rootDir: string,
@@ -408,11 +484,30 @@ export async function runExploration(
       `la spec '${specId}' no tiene JTBD; ejecuta Definición y apruébala antes de explorar`,
     );
   }
+  // Estado coherente (P1): no explorar con una propuesta de Definición colgada — al aprobarla
+  // los JTBD podrían cambiar y dejar los conceptos (que citan los J-xxx vigentes) huérfanos.
+  let hasProposal = false;
+  try {
+    await readProposedSpec(rootDir, specId);
+    hasProposal = true;
+  } catch {
+    hasProposal = false;
+  }
+  if (hasProposal) {
+    throw new Error(
+      `la spec '${specId}' tiene una propuesta de Definición pendiente; apróbala o descártala (discard-proposal) antes de explorar`,
+    );
+  }
+
+  // Merge no destructivo (P3): conservar los conceptos ya triados; reemplazar solo propuestos.
+  const existing = await readConcepts(rootDir, specId).catch(() => [] as Concept[]);
+  const kept = existing.filter((c) => c.review_status !== "propuesto");
+  const firstId = maxConceptNum(existing) + 1;
 
   // Feedback de conceptos descartados: notas de los conceptos con status `descartado`.
-  const existing = await readConcepts(rootDir, specId).catch(() => [] as Concept[]);
-  const discardedNotes = existing
-    .filter((c) => c.review_status === "descartado" && c.review_note)
+  const discarded = kept.filter((c) => c.review_status === "descartado");
+  const discardedNotes = discarded
+    .filter((c) => c.review_note)
     .map((c) => `[${c.id}] ${c.title}: ${c.review_note}`)
     .join("\n");
 
@@ -421,27 +516,35 @@ export async function runExploration(
     action: "stage.start",
     spec_id: specId,
     reason: discardedNotes
-      ? `etapa exploracion (con ${existing.filter((c) => c.review_status === "descartado").length} conceptos descartados previos)`
+      ? `etapa exploracion (con ${discarded.length} conceptos descartados previos)`
       : "etapa exploracion",
   });
 
-  const { concepts } = await opts.runner.run(
-    current,
-    discardedNotes || undefined,
-  );
+  const { concepts: proposed } = await opts.runner.run(current, {
+    discardedFeedback: discardedNotes || undefined,
+    firstId,
+  });
+  // Sellar la versión de origen (P1): cada concepto nuevo nace contra los JTBD de esta versión.
+  const stamped = proposed.map((c) => ({ ...c, spec_version: current.version }));
+  const concepts = [...kept, ...stamped];
   await writeConcepts(rootDir, specId, concepts);
+
+  // Transición de etapa (P2): el primer run de Exploración avanza la spec a `exploracion`.
+  if (current.current_stage !== "exploracion") {
+    await writeSpec(rootDir, { ...current, current_stage: "exploracion" });
+  }
 
   await appendAudit(rootDir, {
     actor: "agent3",
     action: "agent.proposed",
     spec_id: specId,
-    reason: `${concepts.length} conceptos propuestos (exploracion)`,
+    reason: `${stamped.length} conceptos propuestos (exploracion)`,
   });
 
   await commitSpec(
     rootDir,
     specId,
-    `Agente 3 (Exploración) propone ${concepts.length} conceptos para '${specId}'`,
+    `Agente 3 (Exploración) propone ${stamped.length} conceptos para '${specId}'`,
     opts.author,
   );
 
@@ -500,4 +603,85 @@ export async function reviewConcept(
   });
 
   return updated;
+}
+
+/** Próximo id de decisión (`DEC-NNN`) a partir de las decisiones existentes. */
+function nextDecisionId(spec: Spec): string {
+  let max = 0;
+  for (const d of spec.decisions) {
+    const m = /^DEC-(\d+)$/.exec(d.id);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return `DEC-${String(max + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Cierre de EXPLORACIÓN (P4/D2): NO es una compuerta (las 3 compuertas son enmarcar/curar/
+ * responder) y NO sube versión. Es la acción humana que cierra la etapa: verifica el triage
+ * (≥1 seleccionado, 0 propuestos, procedencia JTBD), promueve los `seleccionado` a
+ * `spec.concepts`, registra UNA `Decision` con el rationale del humano, avanza la spec a
+ * `current_stage: diseno`, limpia `concepts.yaml` (consumido) y audita + commitea.
+ * Es la entrada estable y versionada del Agente 4.
+ */
+export async function closeExploration(
+  rootDir: string,
+  specId: string,
+  opts: { by: string; rationale: string; author?: GitAuthor },
+): Promise<ExplorationCloseResult> {
+  const rationale = opts.rationale?.trim();
+  if (!rationale) {
+    throw new Error("cerrar Exploración exige un rationale (invariante 7)");
+  }
+
+  const current = await readSpec(rootDir, specId);
+  const concepts = await readConcepts(rootDir, specId);
+  const verification = explorationVerification(concepts, current.jtbd);
+
+  if (!blockingPasses(verification)) {
+    await appendAudit(rootDir, {
+      actor: opts.by,
+      action: "gate.blocked",
+      spec_id: specId,
+      reason: "cierre de Exploración bloqueado: triage incompleto o sin selección",
+    });
+    throw new Error(
+      "No se puede cerrar Exploración: hay criterios de verificación sin pasar (¿triage incompleto o sin conceptos seleccionados?)",
+    );
+  }
+
+  const promoted = concepts.filter((c) => c.review_status === "seleccionado");
+  const decision: Decision = {
+    id: nextDecisionId(current),
+    date: now().slice(0, 10),
+    decision: `Selección de conceptos de solución: ${promoted.map((c) => c.id).join(", ")}`,
+    rationale,
+    author: opts.by,
+    supersedes: null,
+  };
+
+  const next: Spec = {
+    ...current,
+    current_stage: "diseno",
+    concepts: promoted,
+    decisions: [...current.decisions, decision],
+  };
+  await writeSpec(rootDir, next);
+  // concepts.yaml queda consumido (los seleccionados viven ahora en la spec).
+  await rm(specPaths(rootDir, specId).concepts, { force: true });
+
+  await appendAudit(rootDir, {
+    actor: opts.by,
+    action: "exploration.close",
+    spec_id: specId,
+    reason: `${promoted.length} conceptos promovidos a la spec → etapa diseno`,
+  });
+
+  await commitSpec(
+    rootDir,
+    specId,
+    `Exploración cerrada por ${opts.by}: ${promoted.length} conceptos promovidos a '${specId}'`,
+    opts.author,
+  );
+
+  return { specId, spec: next, promoted, decision };
 }

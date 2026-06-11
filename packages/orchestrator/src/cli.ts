@@ -13,6 +13,7 @@ import {
   updateSpecMeta,
   archiveSpec,
   readSpecGroups,
+  readSpec,
 } from "@pda/spec";
 
 import { blockingPasses } from "./verify.js";
@@ -21,19 +22,21 @@ import {
   runDefinition,
   approveGate,
   iterateGate,
+  discardProposal,
   rejectFinding,
   reviewFinding,
   runExploration,
   reviewConcept,
+  closeExploration,
 } from "./stage.js";
 import {
   runDiscoveryWithSources,
   createDefinitionRunner,
   createExplorationRunner,
+  resolveTopic,
 } from "./runner.js";
 
 const ROOT = process.cwd();
-const TOPIC = "abandono en la verificación OTP del onboarding";
 const AUTHOR = {
   name: process.env["PDA_AUTHOR_NAME"] ?? "orchestrator",
   email: process.env["PDA_AUTHOR_EMAIL"] ?? "orchestrator@pda.local",
@@ -96,7 +99,7 @@ async function main() {
 
   if (!cmd || !specId) {
     console.log(
-      "Uso: orchestrator <discover|define|explore|select-concept|discard-concept|status|approve|iterate|list-specs|create-spec|update-spec|archive-spec> <specId> [flags]",
+      "Uso: orchestrator <discover|define|explore|select-concept|discard-concept|close-exploration|status|approve|iterate|discard-proposal|list-specs|create-spec|update-spec|archive-spec> <specId> [flags]",
     );
     process.exit(cmd ? 1 : 0);
   }
@@ -143,8 +146,9 @@ async function main() {
   }
 
   if (cmd === "discover") {
+    const topic = resolveTopic(await readSpec(ROOT, specId));
     const r = await runDiscoveryWithSources(ROOT, specId, {
-      topic: TOPIC,
+      topic,
       fallback: {
         entrevistasDir: join(ROOT, "samples", "entrevistas"),
         funnelCsv: join(ROOT, "samples", "analitica", "funnel-otp.csv"),
@@ -164,7 +168,8 @@ async function main() {
   }
 
   if (cmd === "define") {
-    const runner = createDefinitionRunner({ topic: TOPIC });
+    const topic = resolveTopic(await readSpec(ROOT, specId));
+    const runner = createDefinitionRunner({ topic });
     const gate = await runDefinition(ROOT, specId, { runner, author: AUTHOR });
     console.log(
       `\n▸ Definición. BLOQUEADO en compuerta '${gate.gate}' (sin subir versión).`,
@@ -240,8 +245,24 @@ async function main() {
     return;
   }
 
+  if (cmd === "discard-proposal") {
+    const reason = flag("reason");
+    if (!reason) {
+      console.error('Uso: discard-proposal <specId> --reason "motivo" [--by "..."]');
+      process.exit(1);
+    }
+    await discardProposal(ROOT, specId, {
+      reason,
+      actor: flag("by") ?? AUTHOR.name,
+      author: AUTHOR,
+    });
+    console.log(`✗ Propuesta de '${specId}' descartada: ${reason}`);
+    return;
+  }
+
   if (cmd === "explore") {
-    const runner = createExplorationRunner({ topic: TOPIC });
+    const topic = resolveTopic(await readSpec(ROOT, specId));
+    const runner = createExplorationRunner({ topic });
     const r = await runExploration(ROOT, specId, { runner, author: AUTHOR });
     console.log(`\n▸ Exploración: ${r.concepts.length} conceptos propuestos.`);
     for (const c of r.concepts) {
@@ -284,6 +305,28 @@ async function main() {
       actor: flag("by") ?? "Lead de diseño",
     });
     console.log(`✗ Concepto ${c.id} descartado: ${c.title}`);
+    return;
+  }
+
+  if (cmd === "close-exploration") {
+    const rationale = flag("rationale");
+    if (!rationale) {
+      console.error(
+        'Uso: close-exploration <specId> --rationale "por qué estos conceptos" [--by "..."]',
+      );
+      process.exit(1);
+    }
+    const r = await closeExploration(ROOT, specId, {
+      rationale,
+      by: flag("by") ?? AUTHOR.name,
+      author: AUTHOR,
+    });
+    console.log(
+      `✓ Exploración cerrada: ${r.promoted.length} conceptos promovidos a la spec (${r.promoted
+        .map((c) => c.id)
+        .join(", ")}) → etapa ${r.spec.current_stage}.`,
+    );
+    console.log(`  Decisión registrada: ${r.decision.id} — ${r.decision.decision}`);
     return;
   }
 

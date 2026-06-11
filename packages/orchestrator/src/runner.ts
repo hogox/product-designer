@@ -273,21 +273,49 @@ export function createDefinitionRunner(opts: {
   };
 }
 
+/**
+ * Topic de la etapa derivado de la spec (no una constante hardcodeada): la pregunta de
+ * investigación del intake si existe, si no el título de la spec. Lo usan los tres agentes
+ * para no quedar pegados a un producto concreto.
+ */
+export function resolveTopic(spec: Spec): string {
+  return spec.intake?.researchQuestion ?? spec.title;
+}
+
 export function createExplorationRunner(opts: {
   topic: string;
 }): ExplorationRunner {
   return {
-    async run(current: Spec, discardedFeedback?: string) {
+    async run(current: Spec, runOpts) {
       const { accepted: concepts } = await exploreConceptsFromJobs(
         current.jtbd,
         {
           topic: opts.topic,
           problemStatement: current.problem_statement ?? opts.topic,
           proposer: createAnthropicExplorer(),
-          discardedFeedback,
+          discardedFeedback: runOpts?.discardedFeedback,
+          firstId: runOpts?.firstId,
+          context: {
+            productContext: current.intake?.productContext ?? undefined,
+            hypotheses: current.intake?.hypotheses,
+            constraints: explorationConstraints(current),
+            nonGoals: current.scope.non_goals,
+          },
         },
       );
       return { concepts };
     },
   };
+}
+
+/** Restricciones legibles para el explorador (P5): regulatorias + a11y + técnicas + DS. */
+function explorationConstraints(spec: Spec): string[] {
+  const c = spec.constraints;
+  const out: string[] = [...c.regulatory, ...c.technical];
+  if (c.accessibility) out.push(`Accesibilidad: ${c.accessibility}`);
+  if (c.design_system.name)
+    out.push(
+      `Design system: ${c.design_system.name} ${c.design_system.version}`.trim(),
+    );
+  return out;
 }

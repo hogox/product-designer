@@ -237,6 +237,9 @@ export const ConceptSchema = z.object({
   addresses_jtbd: z
     .array(z.string().min(1))
     .min(1, "un concepto debe citar al menos un JTBD"),
+  // Procedencia (P1): versión de la spec contra cuyos JTBD nació el concepto. Nullable +
+  // default null → los concepts.yaml previos cargan sin migrar; el orquestador lo estampa.
+  spec_version: z.number().int().nonnegative().nullable().default(null),
   review_status: ConceptReviewStatusSchema.default("propuesto"),
   review_note: z.string().min(1).nullable().default(null),
   reviewed_by: z.string().min(1).nullable().default(null),

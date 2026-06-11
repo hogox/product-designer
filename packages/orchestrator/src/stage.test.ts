@@ -9,8 +9,12 @@ import { promisify } from "node:util";
 import {
   createSpecV0,
   writeSpec,
+  writeProposedSpec,
+  writeFindings,
+  writeConcepts,
   readSpec,
   readAudit,
+  appendAudit,
   readFindings,
   readProposedSpec,
   readConcepts,
@@ -24,13 +28,17 @@ import {
   runDefinition,
   runExploration,
   reviewConcept,
+  closeExploration,
   approveGate,
   iterateGate,
+  discardProposal,
   rejectFinding,
   reviewFinding,
   getState,
   automatedVerification,
+  explorationVerification,
   blockingPasses,
+  resolveTopic,
   type DiscoveryRunner,
   type DefinitionRunner,
   type ExplorationRunner,
@@ -401,6 +409,20 @@ function explorationStub(concepts: Concept[]): ExplorationRunner {
   };
 }
 
+/** Stub realista: genera `count` conceptos con ids continuos desde firstId (como el agente real). */
+function explorationStubN(count: number): ExplorationRunner {
+  return {
+    async run(_current, opts) {
+      const start = opts?.firstId ?? 1;
+      const concepts: Concept[] = [];
+      for (let i = 0; i < count; i++) {
+        concepts.push(concept(`C-${String(start + i).padStart(3, "0")}`));
+      }
+      return { concepts };
+    },
+  };
+}
+
 function concept(id: string): Concept {
   return {
     id,
@@ -408,6 +430,7 @@ function concept(id: string): Concept {
     description: "Descripción breve.",
     rationale: "Rationale.",
     addresses_jtbd: ["J-001"],
+    spec_version: null,
     review_status: "propuesto",
     review_note: null,
     reviewed_by: null,
@@ -585,6 +608,298 @@ test("reviewConcept: reabrir audita concept.reopen", async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+// ─── P1: coherencia de estado + sellado de versión ──────────────────────────────
+
+test("runExploration sella spec_version en cada concepto", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, { ...approvedSpecWithJtbd(id), version: 3 });
+    await runExploration(root, id, {
+      runner: explorationStubN(2),
+      author: AUTHOR,
+    });
+    const persisted = await readConcepts(root, id);
+    assert.equal(persisted.length, 2);
+    assert.ok(persisted.every((c) => c.spec_version === 3));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("runExploration falla si hay una propuesta de Definición pendiente", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    // dejar una propuesta colgada
+    await writeProposedSpec(root, {
+      ...approvedSpecWithJtbd(id),
+      status: "in_review",
+    });
+    await assert.rejects(
+      () =>
+        runExploration(root, id, {
+          runner: explorationStubN(2),
+          author: AUTHOR,
+        }),
+      /propuesta de Definición pendiente|discard-proposal/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("discardProposal borra la propuesta, audita proposal.discard y exige motivo", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await writeProposedSpec(root, {
+      ...approvedSpecWithJtbd(id),
+      status: "in_review",
+    });
+
+    await assert.rejects(
+      () => discardProposal(root, id, { reason: "  ", actor: "Hugo" }),
+      /motivo|invariante 7/i,
+    );
+
+    await discardProposal(root, id, {
+      reason: "artefacto de demo previo",
+      actor: "Hugo",
+      author: AUTHOR,
+    });
+    await assert.rejects(() => readProposedSpec(root, id)); // ya no existe
+
+    const audit = await readAudit(root, id);
+    assert.ok(audit.some((a) => a.action === "proposal.discard"));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// ─── P3: re-explore no destructivo ───────────────────────────────────────────────
+
+test("re-explore conserva seleccionados/descartados y no recicla ids", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    // primer run: C-001, C-002, C-003
+    await runExploration(root, id, {
+      runner: explorationStubN(3),
+      author: AUTHOR,
+    });
+    // el humano selecciona C-001, descarta C-002 (C-003 queda propuesto)
+    await reviewConcept(root, id, "C-001", {
+      status: "seleccionado",
+      actor: "Hugo",
+    });
+    await reviewConcept(root, id, "C-002", {
+      status: "descartado",
+      note: "muy costoso",
+      actor: "Hugo",
+    });
+
+    // segundo run: 2 conceptos nuevos
+    await runExploration(root, id, {
+      runner: explorationStubN(2),
+      author: AUTHOR,
+    });
+
+    const after = await readConcepts(root, id);
+    const byId = new Map(after.map((c) => [c.id, c]));
+    // se conservan los triados intactos
+    assert.equal(byId.get("C-001")?.review_status, "seleccionado");
+    assert.equal(byId.get("C-002")?.review_status, "descartado");
+    // C-003 (propuesto) fue reemplazado
+    assert.equal(byId.has("C-003"), false);
+    // ids nuevos continúan desde el máximo emitido (no se recicla C-001/C-002/C-003)
+    assert.ok(byId.has("C-004"));
+    assert.ok(byId.has("C-005"));
+    assert.equal(after.length, 4); // C-001, C-002, C-004, C-005
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// ─── P4: cierre de Exploración ───────────────────────────────────────────────────
+
+test("explorationVerification: exige ≥1 seleccionado y 0 propuestos", () => {
+  const jobs = approvedSpecWithJtbd("x").jtbd;
+  // sin selección + con propuestos → bloquea
+  const a = explorationVerification(
+    [concept("C-001"), { ...concept("C-002"), review_status: "seleccionado" }],
+    jobs,
+  );
+  assert.equal(blockingPasses(a), false); // C-001 sigue propuesto
+
+  // 1 seleccionado, resto descartado → pasa
+  const b = explorationVerification(
+    [
+      { ...concept("C-001"), review_status: "seleccionado" },
+      { ...concept("C-002"), review_status: "descartado", review_note: "no" },
+    ],
+    jobs,
+  );
+  assert.equal(blockingPasses(b), true);
+});
+
+test("closeExploration promueve seleccionados, registra Decision, avanza a diseno y limpia", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, { ...approvedSpecWithJtbd(id), version: 3 });
+    await runExploration(root, id, {
+      runner: explorationStubN(2),
+      author: AUTHOR,
+    });
+    await reviewConcept(root, id, "C-001", {
+      status: "seleccionado",
+      actor: "Hugo",
+    });
+    await reviewConcept(root, id, "C-002", {
+      status: "descartado",
+      note: "fuera de alcance",
+      actor: "Hugo",
+    });
+
+    const r = await closeExploration(root, id, {
+      by: "Hugo Muñoz (Lead PM)",
+      rationale: "C-001 ataca el job principal con menor costo",
+      author: AUTHOR,
+    });
+
+    assert.equal(r.promoted.length, 1);
+    assert.equal(r.promoted[0]!.id, "C-001");
+    assert.equal(r.decision.id, "DEC-001");
+    assert.match(r.decision.rationale, /menor costo/);
+
+    const spec = await readSpec(root, id);
+    assert.equal(spec.current_stage, "diseno");
+    assert.equal(spec.concepts.length, 1);
+    assert.equal(spec.decisions.length, 1);
+    assert.equal(spec.version, 3); // NO sube versión
+
+    // concepts.yaml consumido
+    assert.deepEqual(await readConcepts(root, id), []);
+
+    const audit = await readAudit(root, id);
+    assert.ok(audit.some((a) => a.action === "exploration.close"));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("closeExploration bloquea si quedan conceptos propuestos sin resolver", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await runExploration(root, id, {
+      runner: explorationStubN(2),
+      author: AUTHOR,
+    });
+    await reviewConcept(root, id, "C-001", {
+      status: "seleccionado",
+      actor: "Hugo",
+    });
+    // C-002 sigue propuesto → bloquea
+    await assert.rejects(
+      () =>
+        closeExploration(root, id, {
+          by: "Hugo",
+          rationale: "x",
+          author: AUTHOR,
+        }),
+      /no se puede cerrar|triage incompleto/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("closeExploration exige rationale (invariante 7)", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await runExploration(root, id, {
+      runner: explorationStubN(1),
+      author: AUTHOR,
+    });
+    await reviewConcept(root, id, "C-001", {
+      status: "seleccionado",
+      actor: "Hugo",
+    });
+    await assert.rejects(
+      () =>
+        closeExploration(root, id, { by: "Hugo", rationale: "  ", author: AUTHOR }),
+      /rationale|invariante 7/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// ─── P5: el feedback de la compuerta no se contamina con agent.proposed de otras etapas ──
+
+test("runDefinition toma el feedback aunque haya un agent.proposed de agent3 intercalado", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await writeFindings(root, id, [finding("F-001", "t")]);
+
+    // Secuencia que confundía al buscador: agent2 propuso → humano pidió iterar (feedback) →
+    // agent3 propuso conceptos (otra etapa). El feedback debe sobrevivir al agent.proposed de agent3.
+    await appendAudit(root, {
+      actor: "agent2",
+      action: "agent.proposed",
+      spec_id: id,
+      reason: "definición previa",
+    });
+    await appendAudit(root, {
+      actor: "Hugo",
+      action: "gate.iterate",
+      spec_id: id,
+      reason: "FEEDBACK-XYZ: agregar métrica de tiempo",
+    });
+    await appendAudit(root, {
+      actor: "agent3",
+      action: "agent.proposed",
+      spec_id: id,
+      reason: "conceptos de exploración",
+    });
+
+    let captured: string | undefined;
+    const capturingRunner: DefinitionRunner = {
+      async run(current, findings, feedback) {
+        captured = feedback;
+        return definitionStub().run(current, findings, feedback);
+      },
+    };
+
+    await runDefinition(root, id, { runner: capturingRunner, author: AUTHOR });
+    assert.match(captured ?? "", /FEEDBACK-XYZ/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// ─── resolveTopic (P0): el topic se deriva de la spec, no de una constante ───────
+
+test("resolveTopic usa la researchQuestion del intake cuando existe", () => {
+  const spec: Spec = {
+    ...createSpecV0({ id: "x", title: "Título de la spec" }),
+    intake: {
+      researchQuestion: "¿Por qué abandonan en el paso de pago?",
+      hypotheses: [],
+      productContext: null,
+      discoveryPlan: { methods: [], instruments: [], expectedSourceKinds: [] },
+    },
+  };
+  assert.equal(resolveTopic(spec), "¿Por qué abandonan en el paso de pago?");
+});
+
+test("resolveTopic cae al título de la spec sin intake", () => {
+  const spec = createSpecV0({ id: "x", title: "Reducir abandono OTP" });
+  assert.equal(resolveTopic(spec), "Reducir abandono OTP");
 });
 
 test("automatedVerification + iterateGate", async () => {

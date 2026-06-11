@@ -13,12 +13,25 @@ export interface RawConcept {
   addresses_jtbd: string[];
 }
 
+/**
+ * Contexto de producto para orientar la divergencia (P5). NO viola la invariante 3: esa regla
+ * prohíbe sesgar la EXTRACCIÓN de evidencia; en Exploración no hay extracción — los conceptos
+ * son síntesis creativa sobre JTBD ya validados, y este contexto evita conceptos fuera de alcance.
+ */
+export interface ConceptContext {
+  productContext?: string;
+  hypotheses?: string[];
+  constraints?: string[];
+  nonGoals?: string[];
+}
+
 export interface ConceptProposer {
   propose(input: {
     topic: string;
     problemStatement: string;
     jobs: Job[];
     discardedFeedback?: string;
+    context?: ConceptContext;
   }): Promise<RawConcept[]>;
 }
 
@@ -35,11 +48,13 @@ export interface ExplorationResult {
 export function assembleConcepts(
   jobs: Job[],
   raws: RawConcept[],
+  opts: { firstId?: number } = {},
 ): ExplorationResult {
   const jobIds = new Set(jobs.map((j) => j.id));
   const accepted: Concept[] = [];
   const rejected: Array<{ raw: RawConcept; reason: string }> = [];
-  let counter = 0;
+  // Los ids arrancan en firstId (default 1) para no reciclar ids ya emitidos al re-explorar.
+  let counter = (opts.firstId ?? 1) - 1;
 
   for (const raw of raws) {
     const validJtbd = [...new Set(raw.addresses_jtbd)].filter((id) =>
@@ -88,6 +103,10 @@ export async function exploreConceptsFromJobs(
     problemStatement: string;
     proposer: ConceptProposer;
     discardedFeedback?: string;
+    /** Primer id a asignar (P3: continúa la numeración al re-explorar). */
+    firstId?: number;
+    /** Contexto de producto para orientar la divergencia (P5). */
+    context?: ConceptContext;
   },
 ): Promise<ExplorationResult> {
   const raws = await opts.proposer.propose({
@@ -95,8 +114,9 @@ export async function exploreConceptsFromJobs(
     problemStatement: opts.problemStatement,
     jobs,
     discardedFeedback: opts.discardedFeedback,
+    context: opts.context,
   });
-  return assembleConcepts(jobs, raws);
+  return assembleConcepts(jobs, raws, { firstId: opts.firstId });
 }
 
 // ---------- proposer real: Claude API ----------
@@ -139,6 +159,25 @@ function formatJobs(jobs: Job[]): string {
   return jobs.map((j) => `[${j.id}] ${j.statement}`).join("\n");
 }
 
+/** Bloque de contexto de producto (P5): vacío si no hay nada que aportar. */
+function formatContext(ctx?: ConceptContext): string {
+  if (!ctx) return "";
+  const parts: string[] = [];
+  if (ctx.productContext)
+    parts.push(`Contexto de producto:\n${ctx.productContext}`);
+  if (ctx.hypotheses && ctx.hypotheses.length > 0)
+    parts.push(`Hipótesis a tener en cuenta:\n- ${ctx.hypotheses.join("\n- ")}`);
+  if (ctx.constraints && ctx.constraints.length > 0)
+    parts.push(
+      `Restricciones a respetar (no las violes en los conceptos):\n- ${ctx.constraints.join("\n- ")}`,
+    );
+  if (ctx.nonGoals && ctx.nonGoals.length > 0)
+    parts.push(
+      `Fuera de alcance (no propongas conceptos sobre esto):\n- ${ctx.nonGoals.join("\n- ")}`,
+    );
+  return parts.length > 0 ? `\n\n${parts.join("\n\n")}\n` : "";
+}
+
 export interface AnthropicExplorerOptions {
   model?: string;
   maxTokens?: number;
@@ -149,14 +188,22 @@ export function createAnthropicExplorer(
 ): ConceptProposer {
   const model = resolveModel("PDA_MODEL_EXPLORE", opts.model);
   return {
-    async propose({ topic, problemStatement, jobs, discardedFeedback }) {
+    async propose({
+      topic,
+      problemStatement,
+      jobs,
+      discardedFeedback,
+      context,
+    }) {
       const feedbackBlock = discardedFeedback
         ? `\nConceptos descartados (no repetir estos enfoques):\n${discardedFeedback}\n`
         : "";
+      const contextBlock = formatContext(context);
       const user =
         `Tópico: ${topic}\n\n` +
         `Problem statement:\n${problemStatement}\n\n` +
         `Jobs To Be Done:\n${formatJobs(jobs)}` +
+        contextBlock +
         feedbackBlock;
 
       const { parsed } = await callStructured<{ concepts?: RawConcept[] }>({

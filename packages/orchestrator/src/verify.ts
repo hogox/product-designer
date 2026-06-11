@@ -2,7 +2,13 @@
 // propuesta. Materializan los invariantes anti-alucinación; el gate exige que los
 // bloqueantes pasen antes de aprobar.
 
-import type { Finding, Spec, VerificationCriterion } from "@pda/spec";
+import type {
+  Concept,
+  Finding,
+  Job,
+  Spec,
+  VerificationCriterion,
+} from "@pda/spec";
 
 function crit(
   criterion: string,
@@ -124,6 +130,47 @@ export function reviewVerification(
     });
   }
   return out;
+}
+
+/**
+ * Verificación de cierre de EXPLORACIÓN (P4): el triage está completo y con procedencia —
+ * hay al menos un concepto seleccionado, no queda ninguno `propuesto` sin resolver, y todo
+ * seleccionado cita JTBD que existen en la spec vigente. Es la precondición del Agente 4.
+ */
+export function explorationVerification(
+  concepts: Concept[],
+  jobs: Job[],
+): VerificationCriterion[] {
+  const jobIds = new Set(jobs.map((j) => j.id));
+  const selected = concepts.filter((c) => c.review_status === "seleccionado");
+  const stillProposed = concepts.filter(
+    (c) => c.review_status === "propuesto",
+  );
+  const selectedAnchored = selected.every(
+    (c) =>
+      c.addresses_jtbd.length > 0 &&
+      c.addresses_jtbd.every((id) => jobIds.has(id)),
+  );
+
+  return [
+    crit(
+      "Hay al menos un concepto seleccionado",
+      selected.length > 0,
+      `${selected.length} seleccionados`,
+    ),
+    crit(
+      "No quedan conceptos propuestos sin resolver (triage completo)",
+      stillProposed.length === 0,
+      stillProposed.length === 0
+        ? "triage completo"
+        : `${stillProposed.length} sin resolver: ${stillProposed.map((c) => c.id).join(", ")}`,
+    ),
+    crit(
+      "Todo concepto seleccionado cita JTBD vigentes (procedencia)",
+      selectedAnchored,
+      `${selected.length} seleccionados anclados`,
+    ),
+  ];
 }
 
 /** Verificación completa de una propuesta de Definición: hallazgos + enmarcado + revisión. */
