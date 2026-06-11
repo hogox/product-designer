@@ -3,7 +3,7 @@
 // Definición = Agente 2 (hallazgos validados → problem statement + JTBD + métricas).
 
 import { readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 import type { Evidence, Finding, GitAuthor, Spec } from "@pda/spec";
 import { readSources, sourceFilePath, updateSource } from "@pda/spec";
@@ -16,6 +16,9 @@ import {
   buildEvidencePool,
   deriveFindings,
   createAnthropicFindingsProposer,
+  computeFileSha256,
+  readEvidenceCache,
+  writeEvidenceCache,
 } from "@pda/agent1";
 import { defineProblem, createAnthropicDefiner } from "@pda/agent2";
 
@@ -30,6 +33,10 @@ export interface DiscoveryRunnerOptions {
   /** Rutas a los binarios de las fuentes (subidas o de muestra). */
   files: string[];
   topic: string;
+  /** Directorio donde persistir/leer el cache de evidencia por sha256. */
+  cacheDir?: string;
+  /** Si true, fuerza re-extracción aunque haya hit en el cache (útil para A/B). */
+  noCache?: boolean;
 }
 
 /**
@@ -44,23 +51,83 @@ export function createDiscoveryRunner(
     async run(current: Spec) {
       const evidence: Evidence[] = [];
       const proposer = createAnthropicProposer();
+      const model =
+        process.env["PDA_MODEL_EXTRACT"] ??
+        process.env["PDA_MODEL"] ??
+        "claude-opus-4-8";
+      let cacheHits = 0;
 
       // La EXTRACCIÓN se hace sin sesgo (invariante 3): solo el topic neutral, nunca el
       // intake. El grounding del intake entra recién en la DERIVACIÓN (abajo).
-      for (const path of opts.files) {
-        for (const doc of await ingestFile(path)) {
-          if (doc.kind === "text") {
-            const { accepted } = await extractTextEvidence(doc, {
-              topic: opts.topic,
-              proposer,
-            });
-            evidence.push(...accepted);
-          } else if (doc.kind === "tabular") {
-            evidence.push(
-              ...computeFunnelMetrics(doc).slice(0, 4).map(metricToEvidence),
+      for (const filePath of opts.files) {
+        // --- cache hit? ---
+        if (opts.cacheDir && !opts.noCache) {
+          const sha256 = await computeFileSha256(filePath);
+          const cached = await readEvidenceCache(
+            opts.cacheDir,
+            sha256,
+            opts.topic,
+          );
+          if (cached !== null) {
+            evidence.push(...cached);
+            cacheHits++;
+            process.stderr.write(
+              `[cache:hit] ${basename(filePath)} (${cached.length} citas)\n`,
+            );
+            continue;
+          }
+
+          // --- cache miss: extraer y persistir ---
+          const fileEvidence: Evidence[] = [];
+          for (const doc of await ingestFile(filePath)) {
+            if (doc.kind === "text") {
+              const { accepted } = await extractTextEvidence(doc, {
+                topic: opts.topic,
+                proposer,
+              });
+              evidence.push(...accepted);
+              fileEvidence.push(...accepted);
+            } else if (doc.kind === "tabular") {
+              evidence.push(
+                ...computeFunnelMetrics(doc).slice(0, 4).map(metricToEvidence),
+              );
+            }
+          }
+          if (fileEvidence.length > 0) {
+            await writeEvidenceCache(
+              opts.cacheDir,
+              sha256,
+              opts.topic,
+              fileEvidence,
+              {
+                source: basename(filePath),
+                model,
+                extractedAt: new Date().toISOString(),
+              },
             );
           }
+        } else {
+          // cache desactivado: extracción directa
+          for (const doc of await ingestFile(filePath)) {
+            if (doc.kind === "text") {
+              const { accepted } = await extractTextEvidence(doc, {
+                topic: opts.topic,
+                proposer,
+              });
+              evidence.push(...accepted);
+            } else if (doc.kind === "tabular") {
+              evidence.push(
+                ...computeFunnelMetrics(doc).slice(0, 4).map(metricToEvidence),
+              );
+            }
+          }
         }
+      }
+
+      if (cacheHits > 0) {
+        process.stderr.write(
+          `[cache] ${cacheHits}/${opts.files.length} fuentes desde cache (0 tokens de extracción)\n`,
+        );
       }
 
       // Grounding derivado del intake de la spec (W6.2): orienta QUÉ derivar del pool ya
@@ -137,6 +204,8 @@ export interface RunDiscoveryWithSourcesOptions {
   fallback: SampleFallback;
   author?: GitAuthor;
   actor?: string;
+  /** Si true, fuerza re-extracción ignorando el cache (útil para A/B). */
+  noCache?: boolean;
   /** Inyectable para tests (default: el runner real del Agente 1). */
   makeRunner?: (files: string[]) => DiscoveryRunner;
 }
@@ -151,9 +220,16 @@ export async function runDiscoveryWithSources(
   opts: RunDiscoveryWithSourcesOptions,
 ): Promise<DiscoveryResult & { fromSamples: boolean; sourceIds: string[] }> {
   const resolved = await resolveDiscoverySources(rootDir, specId, opts.fallback);
+  const cacheDir = join(rootDir, "specs", specId, "evidence-cache");
   const makeRunner =
     opts.makeRunner ??
-    ((files: string[]) => createDiscoveryRunner({ files, topic: opts.topic }));
+    ((files: string[]) =>
+      createDiscoveryRunner({
+        files,
+        topic: opts.topic,
+        cacheDir,
+        noCache: opts.noCache,
+      }));
 
   const result = await runDiscovery(rootDir, specId, {
     runner: makeRunner(resolved.files),
@@ -181,10 +257,11 @@ export function createDefinitionRunner(opts: {
   topic: string;
 }): DefinitionRunner {
   return {
-    async run(current: Spec, findings: Finding[]) {
+    async run(current: Spec, findings: Finding[], feedback?: string) {
       const { proposed } = await defineProblem(current, findings, {
         topic: opts.topic,
         definer: createAnthropicDefiner(),
+        feedback,
       });
       return { proposed };
     },
