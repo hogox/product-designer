@@ -1,7 +1,9 @@
-// Server delgado del dashboard: SOLO lee el almacén de spec (PRD §14: centrado en la spec).
-// No ejecuta agentes ni muta versiones — eso llega con el orquestador (Fase 1, pasos 1.7–1.8).
+// Server del dashboard: lee el almacén de spec y orquesta las corridas de agente disparadas
+// desde la UI (Sesión 16). La ANTHROPIC_API_KEY vive SOLO acá (cargada vía --env-file); el
+// browser dispara y observa, nunca ve la key. Las corridas son jobs async con lock por
+// (spec, agente) — ver agentJobs.ts.
 
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import express from "express";
@@ -37,7 +39,24 @@ import {
   reviewConcept,
   closeExploration,
   explorationVerification,
+  resolveTopic,
+  runDiscoveryWithSources,
+  createDefinitionRunner,
+  createExplorationRunner,
+  runDefinition,
+  runExploration,
 } from "@pda/orchestrator";
+
+import {
+  startAgentJob,
+  getJob,
+  jobView,
+  isAgentName,
+  JobConflictError,
+  type AgentName,
+  type AgentRunSummary,
+  type TokenUsage,
+} from "./agentJobs.ts";
 
 const REVIEW_STATUSES = [
   "pendiente",
@@ -548,6 +567,132 @@ app.post("/api/specs/:id/exploration/close", async (req, res) => {
   } catch (err) {
     res.status(409).json({ error: String(err) });
   }
+});
+
+// --- corridas de agente disparadas desde la UI (Sesión 16) ---
+
+const SAMPLE_FALLBACK = {
+  entrevistasDir: join(REPO_ROOT, "samples", "entrevistas"),
+  funnelCsv: join(REPO_ROOT, "samples", "analitica", "funnel-otp.csv"),
+};
+
+/** ¿Existe una propuesta de Definición pendiente (spec.proposed.yaml)? */
+async function hasProposalFile(specId: string): Promise<boolean> {
+  try {
+    await readProposedSpec(REPO_ROOT, specId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Chequeo SÍNCRONO de precondición (barato, sin modelo) para dar un 400 inmediato antes de
+ * arrancar el job. Los run* del orquestador re-chequean (defensa en profundidad).
+ */
+async function assertCanRun(specId: string, agent: AgentName): Promise<void> {
+  if (agent === "define") {
+    const findings = await readFindings(REPO_ROOT, specId);
+    if (findings.length === 0) {
+      throw new Error(
+        "no hay hallazgos validados; corré Descubrimiento (discover) primero",
+      );
+    }
+  }
+  if (agent === "explore") {
+    const spec = await readSpec(REPO_ROOT, specId);
+    if (spec.status !== "approved") {
+      throw new Error(
+        `la spec debe estar 'approved' para explorar (estado actual: ${spec.status})`,
+      );
+    }
+    if (spec.jtbd.length === 0) {
+      throw new Error("la spec no tiene JTBD; corré Definición y aprobá la compuerta");
+    }
+    if (await hasProposalFile(specId)) {
+      throw new Error(
+        "hay una propuesta de Definición pendiente; aprobala o descartala antes de explorar",
+      );
+    }
+  }
+}
+
+/** Corre el agente real vía el orquestador y devuelve el resumen (+ tokens, P3). */
+async function runAgent(
+  specId: string,
+  agent: AgentName,
+  by: string,
+): Promise<{ result: AgentRunSummary; tokens?: TokenUsage }> {
+  const spec = await readSpec(REPO_ROOT, specId);
+  const topic = resolveTopic(spec);
+  const author = { name: by, email: "operator@pda.local" };
+
+  if (agent === "discover") {
+    const r = await runDiscoveryWithSources(REPO_ROOT, specId, {
+      topic,
+      fallback: SAMPLE_FALLBACK,
+      author,
+      actor: by,
+    });
+    return { result: { agent, counts: { hallazgos: r.findings.length } } };
+  }
+  if (agent === "define") {
+    const gate = await runDefinition(REPO_ROOT, specId, {
+      runner: createDefinitionRunner({ topic }),
+      author,
+      actor: by,
+    });
+    return {
+      result: {
+        agent,
+        counts: {
+          jtbd: gate.proposed.jtbd.length,
+          metricas: gate.proposed.outcomes.length,
+        },
+      },
+    };
+  }
+  const r = await runExploration(REPO_ROOT, specId, {
+    runner: createExplorationRunner({ topic }),
+    author,
+    actor: by,
+  });
+  return { result: { agent, counts: { conceptos: r.concepts.length } } };
+}
+
+// arrancar una corrida: 400 si falla la precondición, 409 si ya hay una en curso
+app.post("/api/specs/:id/run/:agent", async (req, res) => {
+  const { id } = req.params;
+  const agent = req.params.agent;
+  if (!isAgentName(agent)) {
+    return res.status(404).json({ error: `agente desconocido: ${agent}` });
+  }
+  const by = String(req.body?.by ?? "").trim() || "operador";
+
+  try {
+    await assertCanRun(id, agent);
+  } catch (err) {
+    return res.status(400).json({ error: String(err instanceof Error ? err.message : err) });
+  }
+
+  try {
+    const job = startAgentJob(id, agent, by, () => runAgent(id, agent, by));
+    res.status(202).json(jobView(job));
+  } catch (err) {
+    if (err instanceof JobConflictError) {
+      return res.status(409).json({ error: err.message });
+    }
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// estado de la corrida (la UI poll-ea esto)
+app.get("/api/specs/:id/run/:agent", (req, res) => {
+  const agent = req.params.agent;
+  if (!isAgentName(agent)) {
+    return res.status(404).json({ error: `agente desconocido: ${agent}` });
+  }
+  res.json(jobView(getJob(req.params.id, agent)));
 });
 
 app.listen(PORT, () => {
