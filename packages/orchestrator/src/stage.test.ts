@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
+
+import { computeFileSha256, writeEvidenceCache } from "@pda/agent1";
 
 import {
   createSpecV0,
@@ -39,6 +41,7 @@ import {
   explorationVerification,
   blockingPasses,
   resolveTopic,
+  discoverPreflight,
   type DiscoveryRunner,
   type DefinitionRunner,
   type ExplorationRunner,
@@ -900,6 +903,49 @@ test("resolveTopic usa la researchQuestion del intake cuando existe", () => {
 test("resolveTopic cae al título de la spec sin intake", () => {
   const spec = createSpecV0({ id: "x", title: "Reducir abandono OTP" });
   assert.equal(resolveTopic(spec), "Reducir abandono OTP");
+});
+
+// ─── discoverPreflight (P2): costo estimado cache-aware, sin gastar tokens ────────
+
+test("discoverPreflight cuenta texto/tabular y detecta cache hits", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    const topic = resolveTopic(await readSpec(root, id));
+
+    // fallback con 1 texto (en entrevistasDir) + 1 tabular (funnelCsv aparte, no en el dir)
+    const fallbackDir = join(root, "fallback");
+    await mkdir(fallbackDir, { recursive: true });
+    const txt = join(fallbackDir, "entrevista.txt");
+    const csv = join(root, "funnel.csv");
+    await writeFile(txt, "una cita de prueba sobre el OTP", "utf8");
+    await writeFile(csv, "step,count\nload,100\n", "utf8");
+
+    // sembrar el cache de evidencia para el .txt bajo el topic de la spec
+    const cacheDir = join(root, "specs", id, "evidence-cache");
+    const sha = await computeFileSha256(txt);
+    await writeEvidenceCache(
+      cacheDir,
+      sha,
+      topic,
+      [{ source: "entrevista.txt", locator: "p1", quote: "una cita" }],
+      { source: "entrevista.txt", model: "test", extractedAt: "2026-01-01T00:00:00Z" },
+    );
+
+    const pf = await discoverPreflight(root, id, {
+      entrevistasDir: fallbackDir,
+      funnelCsv: csv,
+    });
+
+    assert.equal(pf.tabular, 1); // el .csv no gasta tokens
+    assert.equal(pf.textSources, 1); // el .txt
+    assert.equal(pf.cached, 1); // ya en cache → 0 tokens de extracción
+    assert.equal(pf.toExtract, 0);
+    assert.equal(pf.fromSamples, true);
+    assert.equal(pf.alreadyRan, false); // sin findings.yaml
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("automatedVerification + iterateGate", async () => {

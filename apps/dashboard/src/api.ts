@@ -247,6 +247,81 @@ export function closeExploration(
   });
 }
 
+// --- corridas de agente desde la UI (Sesión 16) ---
+
+export type AgentName = "discover" | "define" | "explore";
+
+export interface DiscoverPreflight {
+  agent: "discover";
+  willDerive: boolean;
+  sources: number;
+  textSources: number;
+  cached: number;
+  toExtract: number;
+  tabular: number;
+  fromSamples: boolean;
+  alreadyRan: boolean;
+}
+
+export interface LightPreflight {
+  agent: "define" | "explore";
+  modelCalls: number;
+  alreadyRan: boolean;
+  findings?: number;
+  mergeMode?: boolean;
+}
+
+export type Preflight = DiscoverPreflight | LightPreflight;
+
+export interface TokenUsage {
+  input: number;
+  output: number;
+  total: number;
+  cacheHits?: number;
+}
+
+export interface AgentRunSummary {
+  agent: AgentName;
+  counts: Record<string, number>;
+}
+
+export interface RunStatus {
+  status: "idle" | "running" | "done" | "error";
+  agent?: AgentName;
+  by?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  result?: AgentRunSummary;
+  tokens?: TokenUsage;
+  error?: string;
+}
+
+export function getRunPreflight(
+  specId: string,
+  agent: AgentName,
+): Promise<Preflight> {
+  return getJson<Preflight>(`/api/specs/${specId}/run/${agent}/preflight`);
+}
+
+export function startRun(
+  specId: string,
+  agent: AgentName,
+  by: string,
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/run/${agent}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ by }),
+  });
+}
+
+export function getRunStatus(
+  specId: string,
+  agent: AgentName,
+): Promise<RunStatus> {
+  return getJson<RunStatus>(`/api/specs/${specId}/run/${agent}`);
+}
+
 // Verificación de Descubrimiento (espejo cliente de los 3 chequeos del orquestador):
 // toda evidencia anclada, lo cuantitativo computado, lo cualitativo con cita.
 export interface DiscoveryCriterion {

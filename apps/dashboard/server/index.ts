@@ -45,6 +45,7 @@ import {
   createExplorationRunner,
   runDefinition,
   runExploration,
+  discoverPreflight,
 } from "@pda/orchestrator";
 
 import {
@@ -659,6 +660,42 @@ async function runAgent(
   });
   return { result: { agent, counts: { conceptos: r.concepts.length } } };
 }
+
+// preflight: costo estimado de la corrida ANTES de gastar tokens (P2)
+app.get("/api/specs/:id/run/:agent/preflight", async (req, res) => {
+  const agent = req.params.agent;
+  if (!isAgentName(agent)) {
+    return res.status(404).json({ error: `agente desconocido: ${agent}` });
+  }
+  const id = req.params.id;
+  try {
+    if (agent === "discover") {
+      const pf = await discoverPreflight(REPO_ROOT, id, SAMPLE_FALLBACK);
+      return res.json({ agent, willDerive: true, ...pf });
+    }
+    if (agent === "define") {
+      const findings = await readFindings(REPO_ROOT, id);
+      return res.json({
+        agent,
+        modelCalls: 1,
+        findings: findings.length,
+        alreadyRan: await hasProposalFile(id),
+      });
+    }
+    // explore: re-correr es merge no destructivo (P3 de la sesión 15c)
+    const concepts = await readConcepts(REPO_ROOT, id);
+    return res.json({
+      agent,
+      modelCalls: 1,
+      alreadyRan: concepts.length > 0,
+      mergeMode: true,
+    });
+  } catch (err) {
+    res
+      .status(400)
+      .json({ error: String(err instanceof Error ? err.message : err) });
+  }
+});
 
 // arrancar una corrida: 400 si falla la precondición, 409 si ya hay una en curso
 app.post("/api/specs/:id/run/:agent", async (req, res) => {

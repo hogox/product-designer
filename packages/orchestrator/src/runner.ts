@@ -3,10 +3,16 @@
 // Definición = Agente 2 (hallazgos validados → problem statement + JTBD + métricas).
 
 import { readdir } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, extname, join } from "node:path";
 
 import type { Evidence, Finding, GitAuthor, Spec } from "@pda/spec";
-import { readSources, sourceFilePath, updateSource } from "@pda/spec";
+import {
+  readSources,
+  readSpec,
+  readFindings,
+  sourceFilePath,
+  updateSource,
+} from "@pda/spec";
 import {
   ingestFile,
   extractTextEvidence,
@@ -201,6 +207,67 @@ export async function resolveDiscoverySources(
     files: [...(await listDirFiles(fallback.entrevistasDir)), fallback.funnelCsv],
     sourceIds: [],
     fromSamples: true,
+  };
+}
+
+/** Costo estimado de una corrida de Descubrimiento, antes de gastar tokens (Sesión 16 · P2). */
+export interface DiscoverPreflight {
+  /** Fuentes resueltas (subidas o de muestra). */
+  sources: number;
+  /** Fuentes de texto (se extraen con el modelo). */
+  textSources: number;
+  /** Fuentes de texto ya en el cache de evidencia (0 tokens de extracción). */
+  cached: number;
+  /** Fuentes de texto a re-extraer (textSources - cached). */
+  toExtract: number;
+  /** Fuentes tabulares (cómputo determinista, 0 tokens). */
+  tabular: number;
+  /** Si cae al set de muestra (no hay fuentes subidas). */
+  fromSamples: boolean;
+  /** ¿Ya hay hallazgos de una corrida previa? (re-correr los reemplaza). */
+  alreadyRan: boolean;
+}
+
+const TABULAR_EXT = new Set([".csv", ".xlsx", ".xls"]);
+
+/**
+ * Calcula el costo de una corrida de Descubrimiento SIN llamar al modelo (P2): resuelve las
+ * fuentes y, para cada texto, mira si su sha256 ya está en el cache de evidencia. Permite a la
+ * UI mostrar "K se re-extraen, M ya en cache (0 tokens)" y desalentar corridas inútiles.
+ */
+export async function discoverPreflight(
+  rootDir: string,
+  specId: string,
+  fallback: SampleFallback,
+): Promise<DiscoverPreflight> {
+  const spec = await readSpec(rootDir, specId);
+  const topic = resolveTopic(spec);
+  const resolved = await resolveDiscoverySources(rootDir, specId, fallback);
+  const cacheDir = join(rootDir, "specs", specId, "evidence-cache");
+
+  let textSources = 0;
+  let cached = 0;
+  let tabular = 0;
+  for (const file of resolved.files) {
+    if (TABULAR_EXT.has(extname(file).toLowerCase())) {
+      tabular++;
+      continue;
+    }
+    textSources++;
+    const sha256 = await computeFileSha256(file);
+    const hit = await readEvidenceCache(cacheDir, sha256, topic);
+    if (hit !== null) cached++;
+  }
+
+  const findings = await readFindings(rootDir, specId);
+  return {
+    sources: resolved.files.length,
+    textSources,
+    cached,
+    toExtract: textSources - cached,
+    tabular,
+    fromSamples: resolved.fromSamples,
+    alreadyRan: findings.length > 0,
   };
 }
 
