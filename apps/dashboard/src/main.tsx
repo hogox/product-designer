@@ -10,7 +10,6 @@ import { StagePage, StageIndexRedirect } from "./pages/StagePage";
 import { SourcesPage } from "./pages/SourcesPage";
 import { AuditPage } from "./pages/AuditPage";
 import "./globals.css";
-import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

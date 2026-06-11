@@ -1,7 +1,20 @@
 // Modal de comentario obligatorio (D2 · W2.4): rechazar o pausar un hallazgo exige un
 // motivo (extiende invariante 7). Una decisión por modal.
+// W4.2: Dialog stock (foco atrapado + Esc); cero CSS legado.
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function ReviewCommentModal({
   findingId,
@@ -15,54 +28,54 @@ export function ReviewCommentModal({
   onClose: () => void;
 }) {
   const [comment, setComment] = useState("");
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   const verb = action === "rechazado" ? "Rechazar" : "Pausar";
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <form
-        className="modal"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (comment.trim()) onSubmit(comment.trim());
-        }}
-      >
-        <h2>
-          {verb} {findingId}
-        </h2>
-        <label htmlFor="review-comment">
-          Motivo (obligatorio — queda en el log de auditoría)
-        </label>
-        <textarea
-          id="review-comment"
-          autoFocus
-          rows={3}
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder={
-            action === "rechazado"
-              ? "La cita no respalda la afirmación…"
-              : "Necesito validar con analítica antes de decidir…"
-          }
-        />
-        <div className="modal-actions">
-          <button type="button" onClick={onClose}>
-            Cancelar
-          </button>
-          <button type="submit" className="primary" disabled={!comment.trim()}>
-            {verb}
-          </button>
-        </div>
-      </form>
-    </div>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {verb} {findingId}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (comment.trim()) onSubmit(comment.trim());
+          }}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="review-comment">
+              Motivo (obligatorio — queda en el log de auditoría)
+            </Label>
+            <Textarea
+              id="review-comment"
+              autoFocus
+              rows={3}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={
+                action === "rechazado"
+                  ? "La cita no respalda la afirmación…"
+                  : "Necesito validar con analítica antes de decidir…"
+              }
+            />
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={!comment.trim()}>
+              {verb}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
