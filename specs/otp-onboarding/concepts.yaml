@@ -1,0 +1,80 @@
+- id: C-001
+  title: Pantalla de espera con feedback en vivo
+  description: Una pantalla de verificación rediseñada que muestra confirmación
+    inmediata de envío, el número de teléfono enmascarado al que llega el código
+    y un contador visual de cuenta regresiva. Incluye estados claros (enviando,
+    enviado, reintentando) y mensajes que indican el tiempo estimado de llegada
+    del SMS.
+  rationale: Aborda directamente la falta de retroalimentación en pantalla dando
+    certeza sobre el envío, el destino y el tiempo de espera, reduciendo la
+    frustración y la desconfianza durante la espera.
+  addresses_jtbd:
+    - J-001
+    - J-002
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-002
+  title: Reenvío inteligente y autodetección del código
+  description: Mecanismo que habilita el botón de reenvío de forma temprana y
+    progresiva, con un temporizador transparente que comunica cuándo estará
+    disponible. Si la plataforma lo permite, autocompleta el código al detectar
+    el SMS entrante para eliminar el paso manual.
+  rationale: Ataca el problema del botón de reenvío que tarda en activarse y la
+    demora percibida, ofreciendo control y rapidez para reintentar sin esperas
+    prolongadas.
+  addresses_jtbd:
+    - J-001
+    - J-003
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-003
+  title: Verificación multicanal con alternativas
+  description: Cuando el SMS falla o tarda demasiado, se ofrecen métodos
+    alternativos de verificación como huella digital, llamada de voz con el
+    código o correo electrónico. El usuario puede elegir el canal que prefiera
+    para no depender exclusivamente del SMS.
+  rationale: Responde a las fallas de entrega del SMS dando rutas alternativas
+    para completar el onboarding, eliminando el punto único de falla que causa
+    abandono permanente.
+  addresses_jtbd:
+    - J-004
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-004
+  title: Retoma de onboarding con avance guardado
+  description: El sistema guarda el progreso del onboarding y permite retomar la
+    verificación desde donde se quedó, mediante un enlace persistente,
+    notificación de recordatorio o sesión recuperable al reabrir la app.
+  rationale: Atiende el abandono a medias permitiendo recuperar el avance,
+    reduciendo el desistimiento definitivo de la creación de cuenta.
+  addresses_jtbd:
+    - J-005
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-005
+  title: Asistente proactivo de verificación
+  description: "Un flujo conversacional que acompaña al usuario durante la espera:
+    detecta demoras anómalas, informa proactivamente el estatus del envío,
+    sugiere acciones (reenviar, cambiar de método) y ofrece retomar más tarde si
+    la verificación no avanza."
+  rationale: Combina certeza informativa, alternativas y recuperación en un
+    acompañamiento activo durante toda la espera, difiriendo de los conceptos
+    pasivos al anticiparse a la frustración en cada punto crítico del proceso.
+  addresses_jtbd:
+    - J-001
+    - J-002
+    - J-003
+    - J-004
+    - J-005
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null

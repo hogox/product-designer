@@ -21,3 +21,5 @@
 {"timestamp":"2026-06-09T20:15:26.705Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"10 hallazgos (descubrimiento); verificación OK"}
 {"timestamp":"2026-06-09T20:15:27.647Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa definicion"}
 {"timestamp":"2026-06-09T20:15:51.048Z","actor":"agent2","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"definición: 5 JTBD, 7 métricas; verificación OK"}
+{"timestamp":"2026-06-11T16:16:20.426Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa exploracion"}
+{"timestamp":"2026-06-11T16:16:38.425Z","actor":"agent3","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"5 conceptos propuestos (exploracion)"}
