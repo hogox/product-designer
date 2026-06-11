@@ -83,7 +83,13 @@
     de dialog.tsx/sheet.tsx) → se va el warning dev-only de refs (cierra la deuda de W4.1). A11y: foco
     atrapado + Esc (stock) + navegación por teclado en el triage (botones nativos), verificado.
     Stock nuevo: dialog/input/label/textarea.
-  - Faltan: W5 (capa de usuario mock), W6.3+W6.4 (wizard de intake + retrofit) + re-ensayo de demo.
+  - Sesión 10 hecha (W5 — capa de usuario mock): `session.tsx` (SessionProvider en localStorage +
+    `useSession` + `actorLabel`/`userInitials`); login MOCK declarado (gate en `main.tsx`: sin usuario
+    → LoginPage); menú de cuenta (`AccountMenu`, DropdownMenu stock) en sidebar y home; página
+    `/settings` (perfil real editable + placeholders `mock · Fase 5` de conectores/RBAC/equipo). W5.4:
+    la IDENTIDAD es real — el usuario de sesión firma reviewFinding / gate / fuentes / crear spec
+    (verificado: aprobar registra "Hugo Muñoz (Lead PM)"). Lo único real de W5; el resto es mock.
+  - Faltan: W6.3+W6.4 (wizard de intake + retrofit) + re-ensayo del guión de demo (<12 min).
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 

@@ -276,6 +276,29 @@ al motor. Hoy: esquema + grounding + completitud (el wizard UI es la sesión 12)
   y `SheetOverlay`) → desaparece el warning dev-only "Function components cannot be given refs" que dejó
   W4.1 (el template shadcn@latest apunta a React 19). Stock nuevo SIN editar: dialog/input/label/textarea.
 
+### Fase D2 · Sesión 10 (W5 — capa de usuario mock) ✅ — login mock, identidad real
+
+La demo se siente como un producto con cuentas, sin construir autenticación real. **Login = mock
+declarado** (sin contraseñas ni sesión de servidor: el riesgo sería parecer seguridad sin serlo).
+**La identidad es lo único real**: el nombre del usuario firma la auditoría → puente al RBAC (Fase 5).
+
+- **`session.tsx`:** `SessionProvider` (usuario en `localStorage` `pda.session.user`, sync entre
+  pestañas vía `storage` event) + `useSession` (`user`/`login`/`logout`/`updateProfile`) +
+  `actorLabel(user)` = `"Nombre (Rol)"` (lo que firma la auditoría) + `userInitials`. Default:
+  Hugo Muñoz, Lead PM, munoz.hugo@gmail.com.
+- **Login (`LoginPage`, W5.1):** email+contraseña sin validación, badge `mock`, "Entrás como Hugo…".
+  Gate en `main.tsx` (`AppGate`): sin usuario → LoginPage (sin router); con usuario → las rutas +
+  nueva ruta `/settings`. Logout vuelve al login.
+- **Menú de cuenta (`AccountMenu`, W5.2):** DropdownMenu stock (avatar+nombre → perfil/Configuración/
+  Cerrar sesión), arriba del sidebar y en la home (que no tiene sidebar).
+- **Settings (`SettingsPage`, W5.3):** mini-roadmap honesto — **perfil REAL** (nombre/rol editables,
+  `updateProfile` → firman la auditoría) + placeholders `mock · Fase 5` (conectores MCP/OAuth, RBAC,
+  miembros del equipo) con referencia al PRD.
+- **W5.4 (identidad real):** `actorLabel(user)` reemplaza el `"Lead de diseño"` hardcodeado en
+  `reviewFinding`, el `actor` del gate iterate, el aprobador del gate, el `by` de subir/reclasificar/
+  descartar fuentes y de crear spec. **Verificado live:** aprobar un hallazgo registra actor
+  "Hugo Muñoz (Lead PM)" en el log. Stock nuevo SIN editar: dropdown-menu.
+
 **Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
@@ -306,6 +329,9 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
   inversa. Modales en Dialog stock (NewSpec, comentario de revisión, confirmación de compuerta, iterar,
   descarte) con foco atrapado y Esc; **`styles.css` eliminado** — el dashboard es 100% shadcn/Tailwind,
   cero CSS legado. Home del dashboard: `http://localhost:5173`.
+- **Capa de usuario (sesión 10):** login mock (gate en `main.tsx`), menú de cuenta (avatar HM) en
+  sidebar y home, página `/settings` (perfil real + roadmap mock de Fase 5). La identidad de sesión
+  firma la auditoría (verificado: "Hugo Muñoz (Lead PM)"). El login se limpia con `localStorage.removeItem('pda.session.user')`.
 - **Intake (sesión 11):** la spec puede llevar un `intake` (pregunta de discovery + plan); cuando
   existe, el Agente 1 deriva hallazgos orientados a la pregunta (grounding solo en derivación) y el
   hub de Fuentes muestra la completitud (esperado-vs-subido). `otp-onboarding` sigue **sin intake**
@@ -445,6 +471,14 @@ cuando los haya (el motor corre igual).
   `agent.proposed` (`audit.lastIndexOf`), no el log completo — evita conteos confusos de iteraciones
   viejas. El verbo que marca "propuesta nueva" es `agent.proposed` (lo escribe `stage.ts`); si cambia,
   actualizar el filtro en `OverviewPage`. El log completo vive en `/auditoria` ("Ver todo el log").
+- **`ref` es prop reservado (D2·W5):** nombrar un prop `ref` en un componente propio (p. ej.
+  `<RoadmapCard ref="PRD §…">`) NO lo pasa como prop —React lo intercepta— y un string ref en un
+  componente función **crashea** en React 18 (pantalla en blanco, error solo en el component-stack).
+  El typecheck NO lo atrapa (`ref: string` es válido en TS). Usar cualquier otro nombre (`prd`, etc.).
+- **Identidad de sesión firma la auditoría (D2·W5.4):** todo `by`/`actor` que va al server sale de
+  `actorLabel(useSession().user)`. Si agregás una acción auditada nueva en el dashboard, pasale el
+  actor del usuario de sesión (no un string hardcodeado) o la auditoría mentirá sobre quién actuó.
+  El login es mock (localStorage), pero esta firma es real — es el puente al RBAC de la Fase 5.
 - **styles.css ELIMINADO (D2·W4.2):** el CSS legado murió entero al migrar los últimos modales a Dialog
   stock; ya no existe `apps/dashboard/src/styles.css` ni su import. Todo el dashboard es shadcn/Tailwind:
   no hay clases `.modal*`/`.primary`/`.panel`/etc. ni `--legacy-*`. Cualquier estilo nuevo va como
@@ -510,9 +544,8 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
 - **Sesión 9 (W4.2 + W4.3) — HECHA:** modales a Dialog stock + confirmación de compuerta + iterar +
   descarte (cero `window.prompt`); `styles.css` eliminado entero; a11y (foco atrapado/Esc/teclado) +
   shim React 18 que cierra el warning de refs de W4.1.
-- **Sesión 10 (W5) — PRÓXIMA (skipped, se hace ahora):** capa de usuario mock (login, avatar, perfil,
-  settings; identidad real firma la auditoría — `reviewedBy`/`uploadedBy`/`--by` y el actor del
-  `intake.update`).
+- **Sesión 10 (W5) — HECHA:** capa de usuario mock (login mock + menú de cuenta + settings) con
+  identidad REAL que firma la auditoría (`actorLabel` en reviewFinding/gate/fuentes/crear spec).
 - **PRÓXIMA = Sesión 12 (W6.3 + W6.4 — wizard + retrofit):**
   - **W6.3 (wizard UI, 5 pasos):** stepper propio (shadcn no trae Stepper; números/checks, sin deps
     nuevas): Identidad → Enmarcado (pregunta obligatoria, hipótesis, contexto) → Plan de discovery
@@ -520,6 +553,8 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
     **plantillas deterministas, SIN modelo**) → Fuentes (reusa el modal del hub W1) → Resumen→crear
     (commit v0 con intake + `spec.create` enriquecida). El overview "Spec viva" muestra la
     researchQuestion como encabezado de contexto. Usar el cliente `patchIntake` ya cableado.
+  Nota: el `by`/actor del wizard (crear spec + intake) debe salir de `actorLabel(useSession().user)`
+  (W5.4), no de un string fijo. La home y el sidebar ya montan el menú de cuenta.
   - **W6.4 (retrofit):** pantalla "editar intake" (pasos 2–3 como formulario) para specs previas;
     ya existe `PATCH …/intake` con auditoría `intake.update`.
   - Cerrar con **re-ensayo del guión de demo** (paso 0 nuevo: crear por wizard; <12 min).
