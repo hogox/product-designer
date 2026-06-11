@@ -34,6 +34,7 @@ import {
 } from "../api";
 import { SourceKindBadge } from "../components/badges";
 import { SectionIcon, SOURCE_KIND_ICON } from "../components/icons";
+import { actorLabel, useSession } from "../session";
 
 const KINDS: SourceKind[] = [
   "documento",
@@ -60,6 +61,8 @@ function humanSize(bytes: number): string {
 
 export function SourcesPage() {
   const { specId } = useParams();
+  const { user } = useSession();
+  const by = actorLabel(user);
   const [sources, setSources] = useState<SourceEntry[]>([]);
   const [completeness, setCompleteness] = useState<SourceCompleteness | null>(
     null,
@@ -96,7 +99,7 @@ export function SourcesPage() {
       setError(null);
       try {
         for (const file of Array.from(files)) {
-          const res = await uploadSource(specId, file);
+          const res = await uploadSource(specId, file, { by });
           if (!res.ok) {
             const body = (await res.json().catch(() => ({}))) as {
               error?: string;
@@ -109,18 +112,21 @@ export function SourcesPage() {
         setBusy(false);
       }
     },
-    [specId, refetch],
+    [specId, by, refetch],
   );
 
   async function onReclassify(sid: string, kind: SourceKind) {
     if (!specId) return;
-    await patchSource(specId, sid, { kind });
+    await patchSource(specId, sid, { kind, by });
     await refetch();
   }
 
   async function confirmDiscard(sid: string, reason?: string) {
     if (!specId) return;
-    await discardSource(specId, sid, { reason: reason?.trim() || undefined });
+    await discardSource(specId, sid, {
+      reason: reason?.trim() || undefined,
+      by,
+    });
     setDiscardSid(null);
     await refetch();
   }

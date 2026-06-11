@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { postJson, type SpecIndexEntry } from "../api";
+import { actorLabel, useSession } from "../session";
 import { specPath } from "../nav";
 
 export function NewSpecModal({
@@ -30,6 +31,7 @@ export function NewSpecModal({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const { user } = useSession();
   const [name, setName] = useState("");
   const [product, setProduct] = useState("");
   const [description, setDescription] = useState("");
@@ -46,6 +48,7 @@ export function NewSpecModal({
         name: name.trim(),
         product: product.trim(),
         description: description.trim() || null,
+        by: actorLabel(user),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };

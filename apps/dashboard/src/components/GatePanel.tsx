@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SectionIcon } from "./icons";
+import { actorLabel, useSession } from "../session";
 import { postJson } from "../api";
 
 export function GatePanel({
@@ -38,6 +39,7 @@ export function GatePanel({
   gateName?: string;
   onChange: () => void;
 }) {
+  const { user } = useSession();
   const pending = proposed !== null;
   const blockingFail =
     proposed?.verification.some((c) => c.blocking && c.status !== "pass") ??
@@ -59,7 +61,7 @@ export function GatePanel({
     if (!specId) return;
     const res = await postJson(`/api/gate/${specId}/iterate`, {
       feedback,
-      actor: "Lead de diseño",
+      actor: actorLabel(user),
     });
     if (res.ok) {
       setDialog(null);
@@ -115,6 +117,7 @@ export function GatePanel({
         <GateApproveDialog
           proposed={proposed}
           gateName={gateName}
+          defaultApprover={actorLabel(user)}
           onConfirm={approve}
           onClose={() => setDialog(null)}
         />
@@ -133,15 +136,17 @@ export function GatePanel({
 function GateApproveDialog({
   proposed,
   gateName,
+  defaultApprover,
   onConfirm,
   onClose,
 }: {
   proposed: Spec;
   gateName: string;
+  defaultApprover: string;
   onConfirm: (approver: string) => void;
   onClose: () => void;
 }) {
-  const [approver, setApprover] = useState("");
+  const [approver, setApprover] = useState(defaultApprover);
   const nextVersion = proposed.version + 1;
   const passed = proposed.verification.filter((c) => c.status === "pass").length;
 

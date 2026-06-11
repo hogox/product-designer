@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { STAGES } from "../stages";
 import { specPath } from "../nav";
 import { STAGE_ICON } from "./icons";
+import { AccountMenu } from "./AccountMenu";
 import type { StageState, SpecGroup } from "../api";
 
 const navCls = ({ isActive }: { isActive: boolean }) =>
@@ -43,7 +44,8 @@ export function StageSidebar({
 
   return (
     <aside className="sticky top-0 flex h-screen flex-col gap-3 overflow-y-auto border-r bg-card p-3">
-      <Link to="/" className="px-2 pt-1 text-sm font-bold text-foreground">
+      <AccountMenu />
+      <Link to="/" className="px-2 text-sm font-bold text-foreground">
         Product Designer Agéntico
       </Link>
 

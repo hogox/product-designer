@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { reviewFinding, type ReviewStatus } from "../api";
+import { actorLabel, useSession } from "../session";
 import { ReviewCommentModal } from "./ReviewCommentModal";
 import { FindingDrawer } from "./FindingDrawer";
 import {
@@ -53,6 +54,7 @@ export function FindingsTriage({
   jtbd: Job[];
   onChange: () => void;
 }) {
+  const { user } = useSession();
   const [filter, setFilter] = useState<"todos" | ReviewStatus>("todos");
   const [modal, setModal] = useState<{
     fid: string;
@@ -79,7 +81,7 @@ export function FindingsTriage({
     const res = await reviewFinding(specId, fid, {
       status,
       comment,
-      by: "Lead de diseño",
+      by: actorLabel(user),
     });
     if (res.ok) {
       setModal(null);

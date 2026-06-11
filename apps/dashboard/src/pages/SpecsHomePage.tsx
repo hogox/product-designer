@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getSpecGroups, type SpecGroup, type SpecIndexEntry } from "../api";
 import { NewSpecModal } from "../components/NewSpecModal";
+import { AccountMenu } from "../components/AccountMenu";
 import { specPath } from "../nav";
 
 export function SpecsHomePage() {
@@ -40,6 +41,11 @@ export function SpecsHomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mb-4 flex justify-end">
+        <div className="w-56">
+          <AccountMenu />
+        </div>
+      </div>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Mis specs</h1>
