@@ -23,3 +23,4 @@
 {"timestamp":"2026-06-09T20:15:51.048Z","actor":"agent2","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"definición: 5 JTBD, 7 métricas; verificación OK"}
 {"timestamp":"2026-06-11T16:16:20.426Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa exploracion"}
 {"timestamp":"2026-06-11T16:16:38.425Z","actor":"agent3","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"5 conceptos propuestos (exploracion)"}
+{"timestamp":"2026-06-11T16:17:50.773Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"otp-onboarding","target":"C-001","reason":null}

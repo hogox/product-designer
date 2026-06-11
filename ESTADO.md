@@ -404,12 +404,27 @@ Primer agente del diamante Solución. Genera conceptos de solución divergentes 
   `badges.tsx`: `ConceptReviewStatusBadge`. `ConceptsTriage.tsx`: cards con filtros, botones
   Seleccionar/Descartar/Reabrir, modal de nota de descarte. `StagePage.tsx` enruta la sección `conceptos`.
 
-**Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
+**Tests F3-A:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
 routing, home, Fuentes y la triage plena (aprobar/pausar/rechazar/filtros) en el preview. La ingestión
 W1.3 se verificó **offline** (runner stub, sin tokens). El wizard y el retrofit de intake se
 verificaron live en el preview (sesión 12).
+
+### Sesión 15a — cierre de F3-A: tests, limpieza y verificación live ✅
+
+- **Tests `@pda/agent3` (7 nuevos):** `assembleConcepts` — JTBD válidos/inválidos/mixtos/ids consecutivos/
+  lote mixto; `exploreConceptsFromJobs` — stub proposer + feedback de descartados pasado al proposer.
+- **Tests `@pda/orchestrator` (+7 nuevos → 29 total):** `runExploration` (falla sin approved / sin JTBD /
+  persiste+audita+commitea) + `reviewConcept` (seleccionar sin nota, descartar exige nota invariante 7,
+  descartar con nota audita concept.discard, reabrir audita concept.reopen).
+- **Limpieza:** `@anthropic-ai/sdk` eliminado de `agent1/package.json` y `agent2/package.json`
+  (eran dependencias huérfanas tras la migración a `@pda/llm` en sesión 14).
+- **Verificación live:** `explore otp-onboarding` → 5 conceptos reales a 2310 tokens. UI confirmada:
+  ConceptsTriage carga los 5 conceptos, Seleccionar cambia badge Propuesto→Seleccionado y actualiza
+  contadores (Propuesto 4 · Seleccionado 1 · Descartado 0).
+
+**Tests totales: 122** (spec 60 · agent1 23 · agent2 3 · agent3 7 · orchestrator 29). Todos pasan.
 
 ## 5. Estado actual del repo
 
@@ -448,9 +463,9 @@ verificaron live en el preview (sesión 12).
 - **O1 COMPLETA (sesión 13):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
   P3 cache por sha256, P4 feedback de iterate, P5 script A/B. Pendiente: correr el A/B
   (`node --env-file=.env scripts/extract-ab.mjs`) y decidir si adoptar Haiku como default de extracción.
-- **F3-A COMPLETA (sesión 14):** `@pda/llm` (callStructured + resolveModel), migración de los 3
+- **F3-A COMPLETA (sesiones 14–15a):** `@pda/llm` (callStructured + resolveModel), migración de los 3
   proposers, `@pda/agent3` (Exploración), orquestador con `runExploration`/`reviewConcept`/CLI,
-  dashboard `exploracion` real (ConceptsTriage + endpoints). Demo en
+  dashboard `exploracion` real (ConceptsTriage + endpoints). 122 tests (todos pasan). Demo en
   `http://localhost:5173/spec/otp-onboarding/etapa/exploracion/conceptos`.
   Correr el agente: `node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding`
 

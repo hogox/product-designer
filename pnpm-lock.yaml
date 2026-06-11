@@ -96,9 +96,6 @@ importers:
 
   packages/agent1:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.102.0
-        version: 0.102.0(zod@3.25.76)
       '@pda/llm':
         specifier: workspace:*
         version: link:../llm
@@ -121,9 +118,6 @@ importers:
 
   packages/agent2:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.102.0
-        version: 0.102.0(zod@3.25.76)
       '@pda/llm':
         specifier: workspace:*
         version: link:../llm

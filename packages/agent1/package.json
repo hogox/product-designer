@@ -14,12 +14,11 @@
     "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\""
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.102.0",
+    "@pda/llm": "workspace:*",
     "@pda/spec": "workspace:*",
     "papaparse": "^5.4.1",
     "pdfjs-dist": "^4.10.38",
-    "xlsx": "^0.18.5",
-    "@pda/llm": "workspace:*"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/papaparse": "^5.3.15"

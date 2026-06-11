@@ -13,6 +13,8 @@ import {
   readAudit,
   readFindings,
   readProposedSpec,
+  readConcepts,
+  type Concept,
   type Finding,
   type Spec,
 } from "@pda/spec";
@@ -20,6 +22,8 @@ import {
 import {
   runDiscovery,
   runDefinition,
+  runExploration,
+  reviewConcept,
   approveGate,
   iterateGate,
   rejectFinding,
@@ -29,6 +33,7 @@ import {
   blockingPasses,
   type DiscoveryRunner,
   type DefinitionRunner,
+  type ExplorationRunner,
 } from "./index.js";
 
 const execFileAsync = promisify(execFile);
@@ -363,6 +368,220 @@ test("flujo completo: discover → define → approve sube a v1 con history", as
     assert.ok(next.jtbd.length >= 1);
     const audit = await readAudit(root, id);
     assert.ok(audit.some((a) => a.action === "gate.approve"));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// ─── runExploration + reviewConcept ───────────────────────────────────────────
+
+function approvedSpecWithJtbd(id: string): Spec {
+  return {
+    ...createSpecV0({ id, title: "Reducir abandono OTP" }),
+    status: "approved",
+    current_stage: "definicion",
+    problem_statement: "Los usuarios abandonan en el paso de verificación OTP.",
+    jtbd: [
+      {
+        id: "J-001",
+        statement:
+          "Cuando verifico mi identidad, quiero confirmar el código rápido",
+        supported_by: ["F-001"],
+      },
+    ],
+    findings: [finding("F-001", "t")],
+  };
+}
+
+function explorationStub(concepts: Concept[]): ExplorationRunner {
+  return {
+    async run() {
+      return { concepts };
+    },
+  };
+}
+
+function concept(id: string): Concept {
+  return {
+    id,
+    title: `Concepto ${id}`,
+    description: "Descripción breve.",
+    rationale: "Rationale.",
+    addresses_jtbd: ["J-001"],
+    review_status: "propuesto",
+    review_note: null,
+    reviewed_by: null,
+    reviewed_at: null,
+  };
+}
+
+test("runExploration falla si la spec no está approved", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await assert.rejects(
+      () =>
+        runExploration(root, id, {
+          runner: explorationStub([concept("C-001")]),
+          author: AUTHOR,
+        }),
+      /estado.*approved|approved.*estado/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("runExploration falla si la spec no tiene JTBD", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, {
+      ...createSpecV0({ id, title: "OTP" }),
+      status: "approved",
+      current_stage: "definicion",
+    });
+    await assert.rejects(
+      () =>
+        runExploration(root, id, {
+          runner: explorationStub([concept("C-001")]),
+          author: AUTHOR,
+        }),
+      /jtbd|JTBD/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("runExploration persiste conceptos, audita y commitea", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    const r = await runExploration(root, id, {
+      runner: explorationStub([concept("C-001"), concept("C-002")]),
+      author: AUTHOR,
+    });
+
+    assert.equal(r.stage, "exploracion");
+    assert.equal(r.concepts.length, 2);
+
+    const persisted = await readConcepts(root, id);
+    assert.equal(persisted.length, 2);
+    assert.equal(persisted[0]!.id, "C-001");
+
+    const audit = await readAudit(root, id);
+    assert.ok(audit.some((a) => a.action === "agent.proposed"));
+    assert.ok(audit.some((a) => a.action === "stage.start"));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewConcept: seleccionar no exige nota y audita concept.select", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await runExploration(root, id, {
+      runner: explorationStub([concept("C-001")]),
+      author: AUTHOR,
+    });
+
+    const c = await reviewConcept(root, id, "C-001", {
+      status: "seleccionado",
+      actor: "Hugo",
+    });
+    assert.equal(c.review_status, "seleccionado");
+    assert.equal(c.reviewed_by, "Hugo");
+    assert.ok(c.reviewed_at);
+
+    const audit = await readAudit(root, id);
+    assert.equal(
+      audit.find((a) => a.action === "concept.select")?.target,
+      "C-001",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewConcept: descartar exige nota (invariante 7)", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await runExploration(root, id, {
+      runner: explorationStub([concept("C-001")]),
+      author: AUTHOR,
+    });
+
+    await assert.rejects(
+      () =>
+        reviewConcept(root, id, "C-001", {
+          status: "descartado",
+          actor: "Hugo",
+        }),
+      /exige una nota/i,
+    );
+    await assert.rejects(
+      () =>
+        reviewConcept(root, id, "C-001", {
+          status: "descartado",
+          note: "   ",
+          actor: "Hugo",
+        }),
+      /exige una nota/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewConcept: descartar con nota audita concept.discard", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await runExploration(root, id, {
+      runner: explorationStub([concept("C-001")]),
+      author: AUTHOR,
+    });
+
+    const c = await reviewConcept(root, id, "C-001", {
+      status: "descartado",
+      note: "demasiado costoso de implementar",
+      actor: "Hugo",
+    });
+    assert.equal(c.review_status, "descartado");
+    assert.equal(c.review_note, "demasiado costoso de implementar");
+
+    const audit = await readAudit(root, id);
+    const entry = audit.find((a) => a.action === "concept.discard");
+    assert.ok(entry);
+    assert.equal(entry.target, "C-001");
+    assert.match(entry.reason ?? "", /costoso/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("reviewConcept: reabrir audita concept.reopen", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    await runExploration(root, id, {
+      runner: explorationStub([concept("C-001")]),
+      author: AUTHOR,
+    });
+
+    await reviewConcept(root, id, "C-001", {
+      status: "seleccionado",
+      actor: "Hugo",
+    });
+    const c = await reviewConcept(root, id, "C-001", {
+      status: "propuesto",
+      actor: "Hugo",
+    });
+    assert.equal(c.review_status, "propuesto");
+
+    const audit = await readAudit(root, id);
+    assert.ok(audit.some((a) => a.action === "concept.reopen"));
   } finally {
     await rm(root, { recursive: true, force: true });
   }

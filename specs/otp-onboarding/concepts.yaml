@@ -11,10 +11,10 @@
   addresses_jtbd:
     - J-001
     - J-002
-  review_status: propuesto
+  review_status: seleccionado
   review_note: null
-  reviewed_by: null
-  reviewed_at: null
+  reviewed_by: Hugo Muñoz (Lead PM)
+  reviewed_at: 2026-06-11T16:17:50.767Z
 - id: C-002
   title: Reenvío inteligente y autodetección del código
   description: Mecanismo que habilita el botón de reenvío de forma temprana y
