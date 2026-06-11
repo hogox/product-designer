@@ -76,8 +76,14 @@
     `GET …/sources/completeness`; indicador con chips "falta: <tipo>" en el hub de Fuentes (reusa
     variantes de Badge; cero edición de ui/). Corrida comparativa real: con intake los hallazgos
     se ordenan por relevancia a la pregunta (reenvío sube a high, biométrica off-question baja a low).
-  - Faltan: W4.2+W4.3 (modales Dialog + accesibilidad), W5 (capa de usuario mock), W6.3+W6.4
-    (wizard de intake + retrofit) + re-ensayo del guión de demo.
+  - Sesión 9 hecha (W4.2+W4.3 — modales Dialog + accesibilidad): `NewSpecModal`/`ReviewCommentModal`
+    migrados a Dialog stock; modal de **confirmación de compuerta** (resumen versión/conteos/criterios)
+    + modal de iterar + descarte de fuente — adiós a TODOS los `window.prompt`. `styles.css` ELIMINADO
+    entero (cero CSS legado; todo shadcn/Tailwind). Shim de compat React 18 (forwardRef en los Overlay
+    de dialog.tsx/sheet.tsx) → se va el warning dev-only de refs (cierra la deuda de W4.1). A11y: foco
+    atrapado + Esc (stock) + navegación por teclado en el triage (botones nativos), verificado.
+    Stock nuevo: dialog/input/label/textarea.
+  - Faltan: W5 (capa de usuario mock), W6.3+W6.4 (wizard de intake + retrofit) + re-ensayo de demo.
 - BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
   (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
 

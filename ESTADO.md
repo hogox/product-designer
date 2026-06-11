@@ -261,6 +261,21 @@ al motor. Hoy: esquema + grounding + completitud (el wizard UI es la sesión 12)
   se nombra explícito, la **biométrica off-question baja a low/scope**. Sin inventar evidencia (mismas
   citas/cálculos). Outputs en `/tmp/intake-ab/` + harness reproducible `scripts/intake-ab.mjs`.
 
+### Fase D2 · Sesión 9 (W4.2+W4.3 — modales Dialog + accesibilidad) ✅ — muere el CSS legado
+
+- **W4.2 (modales con propósito único):** `NewSpecModal` y `ReviewCommentModal` migrados a **Dialog
+  stock** (Input/Label/Textarea/Button). **Confirmación de compuerta** (`GateApproveDialog`): resumen
+  de lo que se aprueba ANTES del commit — versión destino (v+1), conteos (JTBD/métricas/hallazgos) y la
+  lista de criterios de verificación con pass/fail — + campo de aprobador. Modal de **iterar** (feedback)
+  y de **descarte de fuente** (motivo opcional). Resultado: **cero `window.prompt`** en el dashboard.
+- **styles.css ELIMINADO** entero + su import en `main.tsx` (mueren `--legacy-muted`/`--legacy-accent`).
+  Todo el dashboard es shadcn/Tailwind; no queda una sola clase CSS legada.
+- **W4.3 (accesibilidad):** foco atrapado + cierre con Esc + restauración de foco los traen Dialog/Sheet
+  stock (verificado); navegación por teclado en el triage = botones nativos (Ver detalle/Aprobar/Pausar/
+  Rechazar focusables; Enter abre el drawer). **Shim de compat React 18** (`forwardRef` en `DialogOverlay`
+  y `SheetOverlay`) → desaparece el warning dev-only "Function components cannot be given refs" que dejó
+  W4.1 (el template shadcn@latest apunta a React 19). Stock nuevo SIN editar: dialog/input/label/textarea.
+
 **Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
@@ -288,8 +303,9 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
 - **Piel nueva (sesiones 7–8):** tema claro shadcn en TODO el dashboard. Sistema de chips = variantes
   cva de Badge (AA verificado); iconos tintados por concepto; stat-cards y cards interactivas;
   avatares de actor en auditoría; drawer de hallazgo (Sheet) con cadena de evidencia + trazabilidad
-  inversa. Sidebar, home y fuentes ya migrados; solo los **modales** quedan con CSS legado (migran en
-  la sesión 9). Home del dashboard: `http://localhost:5173`.
+  inversa. Modales en Dialog stock (NewSpec, comentario de revisión, confirmación de compuerta, iterar,
+  descarte) con foco atrapado y Esc; **`styles.css` eliminado** — el dashboard es 100% shadcn/Tailwind,
+  cero CSS legado. Home del dashboard: `http://localhost:5173`.
 - **Intake (sesión 11):** la spec puede llevar un `intake` (pregunta de discovery + plan); cuando
   existe, el Agente 1 deriva hallazgos orientados a la pregunta (grounding solo en derivación) y el
   hub de Fuentes muestra la completitud (esperado-vs-subido). `otp-onboarding` sigue **sin intake**
@@ -419,20 +435,20 @@ cuando los haya (el motor corre igual).
   nombre (`/agent|agente|ia|bot|modelo|orquestador|orchestrator|sistema|system/i`). Humano = iniciales
   con tono `bg-{c}-100 text-{c}-700` (AA, amber el más justo a 4.54); agente/sistema = icono Bot sobre
   `bg-muted`. Si un actor nuevo es máquina y no matchea, agregalo al regex o saldrá como humano.
-- **Sheet stock + React 18 (D2·W4.1):** el `sheet.tsx` de shadcn@latest está escrito para React 19
-  (refs como prop, sin `forwardRef`); el proyecto pinea **React 18.3** → emite el warning dev-only
-  `Function components cannot be given refs` en `SheetOverlay` en cada render del drawer. Es **inocuo**
-  (el overlay cierra al click-afuera, Esc y foco atrapado funcionan; el build de prod lo elimina) y se
-  dejó stock SIN editar para respetar la disciplina (solo `badge.tsx` se edita en `ui/`). Fix futuro:
-  envolver `SheetOverlay`/`SheetContent` en `forwardRef` (shim de compat) o subir a React 19.
+- **Shim React 18 en los Overlay (D2·W4.3, resuelto):** el template shadcn@latest apunta a React 19
+  (refs como prop), pero el proyecto pinea **React 18.3** → Radix le pasaba un ref a `DialogOverlay`/
+  `SheetOverlay` (componentes función planos) y avisaba `Function components cannot be given refs`. Se
+  resolvió envolviendo ambos Overlay en `forwardRef` (`dialog.tsx`/`sheet.tsx`) — shim de compat, cero
+  cambio visual/funcional. Son las ÚNICAS ediciones a mano de `components/ui/` además de las variantes
+  cva de `badge.tsx`. Si se sube a React 19, el shim se puede revertir (deja de ser necesario).
 - **Resumen de auditoría del overview (D2·W3.4):** muestra solo la rebanada desde la última entrada
   `agent.proposed` (`audit.lastIndexOf`), no el log completo — evita conteos confusos de iteraciones
   viejas. El verbo que marca "propuesta nueva" es `agent.proposed` (lo escribe `stage.ts`); si cambia,
   actualizar el filtro en `OverviewPage`. El log completo vive en `/auditoria` ("Ver todo el log").
-- **styles.css en la última milla (D2·W3.3):** ya solo quedan los **modales** (`.modal*`,
-  `button.primary`) — todo el resto es shadcn/Tailwind. Al migrar los modales a Dialog stock (sesión 9)
-  el archivo `styles.css` y su import en `main.tsx` se borran enteros (y con ellos `--legacy-muted`/
-  `--legacy-accent`). No agregar reglas nuevas acá: cualquier estilo va como utilidad Tailwind.
+- **styles.css ELIMINADO (D2·W4.2):** el CSS legado murió entero al migrar los últimos modales a Dialog
+  stock; ya no existe `apps/dashboard/src/styles.css` ni su import. Todo el dashboard es shadcn/Tailwind:
+  no hay clases `.modal*`/`.primary`/`.panel`/etc. ni `--legacy-*`. Cualquier estilo nuevo va como
+  utilidad Tailwind o token en `globals.css` (único punto de personalización).
 - **Intake opcional, cero migración (D2·W6.1):** `intake` es `nullable + default(null)` → toda spec
   previa (otp-onboarding incluida) carga con `intake: null` sin tocar el YAML. `createSpecV0` arranca
   con `intake: null`. Al agregar `intake` a `SpecSchema` se rompió un fixture tipado (`: Spec`) en
@@ -491,17 +507,12 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   expectedSourceKinds) + kind `persona`; grounding del Agente 1 SOLO en la derivación; completitud de
   fuentes + `PATCH …/intake` (auditoría `intake.update`) + indicador con chips "falta:" en Fuentes.
   Comparativa real validó el efecto del grounding (ver Sesión 11 arriba). Falta el wizard UI (sesión 12).
-- **Sesión 9 (W4.2 + W4.3) — PENDIENTE:**
-  - **W4.2 (modales con propósito único):** migrar `NewSpecModal` y `ReviewCommentModal` a **Dialog
-    stock** + el modal de **confirmación de compuerta** (resumen de versión/conteos/criterios antes
-    del commit). Al migrarlos, **borrar `styles.css` entero** y su import en `main.tsx` (mueren
-    `--legacy-muted`/`--legacy-accent`). Regla: un modal = una decisión; lo exploratorio ya vive en
-    el drawer (W4.1).
-  - **W4.3 (accesibilidad mínima):** foco atrapado en modales (Dialog lo trae stock), cierre con Esc,
-    navegación por teclado en el triage. Pendiente menor: el warning dev-only del Sheet en React 18
-    (ver §7) — evaluar `forwardRef` shim o subir a React 19.
-- **Sesión 10 (W5) — PENDIENTE:** capa de usuario mock (login, avatar, perfil, settings; identidad
-  real firma la auditoría — `reviewedBy`/`uploadedBy`/`--by` y el actor del `intake.update`).
+- **Sesión 9 (W4.2 + W4.3) — HECHA:** modales a Dialog stock + confirmación de compuerta + iterar +
+  descarte (cero `window.prompt`); `styles.css` eliminado entero; a11y (foco atrapado/Esc/teclado) +
+  shim React 18 que cierra el warning de refs de W4.1.
+- **Sesión 10 (W5) — PRÓXIMA (skipped, se hace ahora):** capa de usuario mock (login, avatar, perfil,
+  settings; identidad real firma la auditoría — `reviewedBy`/`uploadedBy`/`--by` y el actor del
+  `intake.update`).
 - **PRÓXIMA = Sesión 12 (W6.3 + W6.4 — wizard + retrofit):**
   - **W6.3 (wizard UI, 5 pasos):** stepper propio (shadcn no trae Stepper; números/checks, sin deps
     nuevas): Identidad → Enmarcado (pregunta obligatoria, hipótesis, contexto) → Plan de discovery
