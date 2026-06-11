@@ -429,11 +429,55 @@ verificaron live en el preview (sesión 12).
 
 **Tests totales: 122** (spec 60 · agent1 23 · agent2 3 · agent3 7 · orchestrator 29). Todos pasan.
 
+### Sesión 15c — cierre de la etapa Exploración (8 gaps de auditoría pre-Agente 4) ✅
+
+Auditoría (11-06) detectó que F3-A quedó funcional pero **sin cierre de etapa**: la spec nunca
+avanzaba, los conceptos seleccionados no entraban a la spec y no había precondición computable para
+el Agente 4. Plan: [PLAN-SESION-15C-cierre-exploracion.md](PLAN-SESION-15C-cierre-exploracion.md).
+
+- **P0 — topic desde la spec:** `resolveTopic(spec)` (`intake.researchQuestion ?? title`) reemplaza
+  la constante `TOPIC` hardcodeada a OTP; `discover`/`define`/`explore` lo derivan de la spec real.
+- **P1 — coherencia + procedencia:** `ConceptSchema += spec_version` (sella la versión de origen);
+  `runExploration` **falla si hay `spec.proposed.yaml` pendiente**; `discardProposal` + CLI
+  `discard-proposal` (descarta una propuesta colgada sin aprobarla, exige motivo, audita
+  `proposal.discard`). Saneo de `otp-onboarding`: propuesta de Definición previa descartada,
+  conceptos sellados a v3.
+- **P2 — transición de etapa:** `runExploration` escribe `current_stage: exploracion` en su primer
+  run; `approveGate` hereda `proposed.current_stage` (muere el hardcode `"definicion"`).
+- **P3 — re-explore no destructivo:** merge que conserva intactos los conceptos `seleccionado`/
+  `descartado` y reemplaza solo los `propuesto`; los ids continúan desde `maxId+1`
+  (`assembleConcepts(jobs, raws, { firstId })`) — nunca se recicla un id ya emitido.
+- **P4 — cierre formal (la entrada del Agente 4):** `explorationVerification` (≥1 seleccionado, 0
+  propuestos, procedencia JTBD) + `closeExploration` — **NO es compuerta y NO sube versión**:
+  promueve los seleccionados a `spec.concepts`, registra una `Decision` (`DEC-NNN`) con el rationale
+  humano, avanza a `current_stage: diseno`, consume `concepts.yaml`, audita `exploration.close`.
+  CLI `close-exploration`; server `GET …/exploration/verification` + `POST …/exploration/close`;
+  UI: panel "Cerrar Exploración" (criterios pass/fail + Dialog de rationale) + vista solo-lectura
+  "Exploración cerrada".
+- **P5 — grounding del explorador + fix de feedback:** el explorador recibe `productContext`/
+  `hypotheses`/`constraints`/`non_goals` (no viola invariante 3: en Exploración no hay extracción).
+  `runDefinition` filtra `agent.proposed` por actor `agent2` → un `explore` intercalado ya no tapa
+  el feedback de la compuerta.
+- **P6 — visibilidad:** `status` CLI + `StageState` reportan `concepts`/`conceptsSelected`; stat-card
+  "Conceptos" en el Overview; sección "Conceptos de solución" en la Spec viva (post-cierre);
+  `StagePlaceholder` deriva las etapas reales de `STAGES.filter(real)` (no se vuelve a quedar viejo).
+- **P7 — higiene:** tests de `@pda/llm` (8: `resolveModel` + `callStructured` con cliente inyectado,
+  incl. thinking omitido en Haiku); identidad git local configurada (mata el warning de committer).
+
+**Verificación live (otp-onboarding):** triage de los 3 conceptos propuestos restantes → el panel de
+cierre pasa de **bloqueado** a **listo** → cierre promueve C-001/C-002/C-003 a la spec, registra
+DEC-001 con rationale, avanza a etapa `diseno` y consume `concepts.yaml`. Sin errores de consola.
+
+**Tests totales: 143** (llm 8 · spec 60 · agent1 23 · agent2 3 · agent3 9 · orchestrator 40). Todos pasan.
+
 ## 5. Estado actual del repo
 
-- Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa `definicion`, con una
-  **propuesta de Definición pendiente** (8 hallazgos en la spec, 5 JTBD, propuesta `in_review`).
+- Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa **`diseno`** (Exploración
+  cerrada en sesión 15c). Tiene **3 conceptos de solución promovidos** a la spec (C-001/C-002/C-003)
+  y la decisión **DEC-001** con su rationale. Es la **entrada lista para el Agente 4** (Diseño).
   **Ready-to-demo** en `http://localhost:5173/spec/otp-onboarding`.
+  (Para volver a demostrar el triage/cierre de Exploración desde cero: `git restore specs/` a un
+  commit previo al cierre, o re-correr `explore` sobre una spec en estado `exploracion`.)
 - Multi-spec operativo por API/CLI **y por UI**: home "Mis specs" en `/`, crear/cambiar de spec sin
   terminal, contexto aislado por URL (`/spec/:id/...`). El índice `specs/index.yaml` es cache
   regenerable y está **gitignored**.
@@ -466,11 +510,14 @@ verificaron live en el preview (sesión 12).
 - **O1 COMPLETA (sesiones 13–15b):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
   P3 cache por sha256, P4 feedback de iterate, P5 A/B corrido → **Opus se mantiene** (solapamiento Haiku
   21.4%, gate 90%). Fix: `callStructured` omite thinking en modelos Haiku.
-- **F3-A COMPLETA (sesiones 14–15a):** `@pda/llm` (callStructured + resolveModel), migración de los 3
-  proposers, `@pda/agent3` (Exploración), orquestador con `runExploration`/`reviewConcept`/CLI,
-  dashboard `exploracion` real (ConceptsTriage + endpoints). 122 tests (todos pasan). Demo en
-  `http://localhost:5173/spec/otp-onboarding/etapa/exploracion/conceptos`.
-  Correr el agente: `node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding`
+- **F3-A COMPLETA + CERRADA (sesiones 14–15c):** `@pda/llm`, `@pda/agent3` (Exploración), orquestador
+  con `runExploration`/`reviewConcept`/`closeExploration`/`discardProposal`/CLI, dashboard
+  `exploracion` real (ConceptsTriage + panel de cierre + endpoints). La etapa **tiene cierre formal**:
+  el triage humano selecciona conceptos → `close-exploration` los promueve a `spec.concepts` + Decision
+  + avanza a `diseno`. Re-explore no destructivo, topic/grounding derivados de la spec, estado coherente
+  (sin propuesta colgada + explore). 143 tests (todos pasan).
+  Correr el agente: `node --env-file=.env packages/orchestrator/dist/cli.js explore <specId>`
+  Cerrar la etapa: `node packages/orchestrator/dist/cli.js close-exploration <specId> --rationale "..."`
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -486,10 +533,12 @@ node --env-file=.env packages/orchestrator/dist/cli.js define   otp-onboarding
 node           packages/orchestrator/dist/cli.js approve otp-onboarding --by "Lead PM"
 node           packages/orchestrator/dist/cli.js status  otp-onboarding
 
-# Agente 3 — Exploración (spec debe estar approved con JTBD):
+# Agente 3 — Exploración (spec approved con JTBD y SIN propuesta de Definición pendiente):
 node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding
-node           packages/orchestrator/dist/cli.js select-concept  otp-onboarding C-001
-node           packages/orchestrator/dist/cli.js discard-concept otp-onboarding C-002 --reason "..."
+node           packages/orchestrator/dist/cli.js select-concept    otp-onboarding C-001
+node           packages/orchestrator/dist/cli.js discard-concept   otp-onboarding C-002 --reason "..."
+node           packages/orchestrator/dist/cli.js close-exploration otp-onboarding --rationale "..."  # promueve a la spec → diseno
+node           packages/orchestrator/dist/cli.js discard-proposal  otp-onboarding --reason "..."     # descarta propuesta colgada
 
 # Demos por agente (corrida real, muestran el output):
 node --env-file=.env packages/agent1/dist/demo-derive.js     # documentos → hallazgos anclados
@@ -669,6 +718,31 @@ cuando los haya (el motor corre igual).
 - **`callStructured` (O1·P5 fix):** Haiku no soporta `thinking: adaptive`; el helper lo detecta
   por regex `/haiku/i` en el model id y omite el bloque `thinking` automáticamente. No hace falta
   configurar nada extra al usar Haiku como modelo alternativo.
+
+- **Cierre de Exploración NO es compuerta (15c·P4 — D2):** las compuertas son SOLO 3 (enmarcar/
+  curar/responder, PRD §6) y "curar" cierra Validación, no Exploración. Por eso `closeExploration`
+  **no sube versión** (eso lo hacen las compuertas vía `approveGate`): es una acción humana que
+  promueve los `seleccionado` a `spec.concepts`, registra una `Decision` y avanza la etapa. Si más
+  adelante se agrega un agente cuya etapa SÍ cierra con compuerta, usar `approveGate` (que ya hereda
+  `proposed.current_stage`), no este patrón.
+- **`spec.concepts` vs `concepts.yaml` (15c):** `concepts.yaml` es el archivo de TRABAJO (triage en
+  curso); al cerrar, los seleccionados se PROMUEVEN a `spec.concepts` (en el spec.yaml) y
+  `concepts.yaml` se elimina (consumido, espejo de `findings.yaml`→`approveGate`). El Agente 4 debe
+  leer `spec.concepts` (entrada versionada y estable), NO `concepts.yaml`. La UI distingue el estado
+  cerrado con `concepts.yaml` vacío + `spec.concepts` no vacío.
+- **Re-explore es merge, no replace (15c·P3):** `runExploration` conserva los conceptos ya triados
+  (`review_status !== "propuesto"`) y reemplaza solo los `propuesto`; los ids nuevos arrancan en
+  `maxConceptNum(existing)+1` (`assembleConcepts(..., {firstId})`). NUNCA reciclar un id: el audit
+  es append-only y apunta por id, así que reusar `C-001` haría que `concept.select C-001` apunte a
+  otro concepto. Precondición nueva: explore **falla si hay `spec.proposed.yaml`** (estado coherente).
+- **Feedback de compuerta filtrado por actor (15c·P5):** `runDefinition` busca el último
+  `gate.iterate` posterior al último `agent.proposed` **de actor `agent2`** (no cualquiera). Sin el
+  filtro, un `agent.proposed` de `agent3` (Exploración) intercalado tapaba el feedback. Si agregás un
+  agente que emita `agent.proposed`, recordá que el buscador de feedback de Definición filtra por
+  `agent2` — cada etapa debe filtrar por SU actor si reusa este patrón.
+- **Topic derivado de la spec (15c·P0):** `resolveTopic(spec)` = `intake.researchQuestion ?? title`.
+  Ya no hay constante `TOPIC` en `cli.ts`; cualquier comando que llame a un agente lee la spec y
+  deriva el topic. Si agregás un agente nuevo, derivá su topic igual (no hardcodees el dominio).
 
 - **Cache de evidencia (O1·P3):** se guarda en `specs/<id>/evidence-cache/<sha256[:16]>-<topic>.json`.
   El cache se versiona en git (trazabilidad de procedencia). Para forzar re-extracción:

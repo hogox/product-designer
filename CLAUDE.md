@@ -13,7 +13,7 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: F0+F1+F2 (hechas) · Fase D2 (COMPLETA) · Fase 3 (desbloqueada)
+## Alcance actual: F0+F1+F2 (hechas) · Fase D2 (COMPLETA) · F3-A Exploración (CERRADA) · F3-B (siguiente)
 
 - HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
   mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
@@ -45,12 +45,17 @@
     previas en `/spec/:id/intake`); `NewSpecModal` eliminado (subsumed por wizard). Overview muestra
     la `researchQuestion` como encabezado de contexto (o CTA para definirla). **D2 COMPLETA.**
 - HECHO (O1 — optimización de tokens, Sesión 13): 5 pasos sobre el motor. Ver ESTADO.md.
-- HECHO (F3-A — Agente 3 Exploración, Sesión 14): `@pda/llm` (callStructured/resolveModel),
+- HECHO (F3-A — Agente 3 Exploración, Sesiones 14–15c): `@pda/llm` (callStructured/resolveModel),
   migración de los 3 proposers, `@pda/agent3`, orquestador (`explore`/`select-concept`/
-  `discard-concept`), dashboard `exploracion` real (ConceptsTriage). Demo:
-  `node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding`
-- SIGUIENTE (F3-B/C/D/E): Agentes Diseño (A4) → Validación (A5) → gate curar → Entrega (A6) →
-  Aprendizaje (A7). También: config real MCP/conectores, RBAC, multi-agente paralelo.
+  `discard-concept`/`close-exploration`/`discard-proposal`), dashboard `exploracion` real
+  (ConceptsTriage + panel de cierre). **Etapa con cierre formal** (Sesión 15c, ver ESTADO.md §15c):
+  el triage humano selecciona conceptos → `close-exploration` los promueve a `spec.concepts` +
+  Decision y avanza la etapa a `diseno`. Topic/grounding derivados de la spec; re-explore no
+  destructivo; estado coherente (sin propuesta colgada + explore). 143 tests.
+  `otp-onboarding` quedó en etapa `diseno` con 3 conceptos promovidos — **entrada lista para el A4**.
+- SIGUIENTE (F3-B/C/D/E): **Agente 4 Diseño** (lee `spec.concepts`, produce artefactos de diseño
+  anclados a los conceptos) → Validación (A5) → gate curar → Entrega (A6) → Aprendizaje (A7).
+  También: config real MCP/conectores, RBAC, multi-agente paralelo.
 
 ## Metodología de trabajo
 
