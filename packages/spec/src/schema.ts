@@ -217,6 +217,33 @@ export const VerificationCriterionSchema = z.object({
   evidence: z.string().nullable(),
 });
 
+// Estado de revisión de un concepto de solución (Exploración, F3).
+// `propuesto` = estado inicial; `seleccionado` = humano elige desarrollarlo;
+// `descartado` = humano lo descarta (exige review_note, invariante 7).
+export const ConceptReviewStatusSchema = z.enum([
+  "propuesto",
+  "seleccionado",
+  "descartado",
+]);
+export type ConceptReviewStatus = z.infer<typeof ConceptReviewStatusSchema>;
+
+// Concepto de solución (output de Exploración): una dirección de diseño anclada a los
+// jobs que aborda. El assembly del Agente 3 rechaza conceptos que citen J-xxx inexistentes.
+export const ConceptSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  rationale: z.string().min(1),
+  addresses_jtbd: z
+    .array(z.string().min(1))
+    .min(1, "un concepto debe citar al menos un JTBD"),
+  review_status: ConceptReviewStatusSchema.default("propuesto"),
+  review_note: z.string().min(1).nullable().default(null),
+  reviewed_by: z.string().min(1).nullable().default(null),
+  reviewed_at: isoDateTime.nullable().default(null),
+});
+export type Concept = z.infer<typeof ConceptSchema>;
+
 // Jobs To Be Done (output de Definición). Cada job se ancla a los hallazgos que lo motivan
 // (procedencia heredada §D19): supported_by referencia ids de findings.
 export const JobSchema = z.object({
@@ -330,6 +357,7 @@ export const SpecSchema = z.object({
   verification: z.array(VerificationCriterionSchema),
   findings: z.array(FindingSchema),
   jtbd: z.array(JobSchema).default([]), // Jobs To Be Done (Definición)
+  concepts: z.array(ConceptSchema).default([]), // Conceptos de solución (Exploración, F3)
   // Enmarcado inicial del discovery (Fase D2 · W6). Opcional: nullable + default(null) →
   // specs previas (otp-onboarding) cargan sin migración; el retrofit lo llena (W6.4).
   intake: IntakeSchema.nullable().default(null),
@@ -389,6 +417,7 @@ export function createSpecV0(input: {
     verification: [],
     findings: [],
     jtbd: [],
+    concepts: [],
     intake: null,
     history: [],
   };

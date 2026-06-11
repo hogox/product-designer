@@ -8,7 +8,14 @@ import { promisify } from "node:util";
 
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
-import { FindingSchema, parseSpec, type Finding, type Spec } from "./schema.js";
+import {
+  ConceptSchema,
+  FindingSchema,
+  parseSpec,
+  type Concept,
+  type Finding,
+  type Spec,
+} from "./schema.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -21,6 +28,8 @@ export interface SpecPaths {
   proposed: string;
   /** hallazgos anclados (se llena en Fase 1) */
   findings: string;
+  /** conceptos de solución en triage (Exploración, F3) */
+  concepts: string;
   /** log de auditoría append-only */
   audit: string;
 }
@@ -33,6 +42,7 @@ export function specPaths(rootDir: string, id: string): SpecPaths {
     spec: join(dir, "spec.yaml"),
     proposed: join(dir, "spec.proposed.yaml"),
     findings: join(dir, "findings.yaml"),
+    concepts: join(dir, "concepts.yaml"),
     audit: join(dir, "audit.jsonl"),
   };
 }
@@ -102,6 +112,36 @@ export async function readFindings(
   }
   const data = parseYaml(raw);
   return Array.isArray(data) ? data.map((f) => FindingSchema.parse(f)) : [];
+}
+
+/** Escribe los conceptos de Exploración en `concepts.yaml` (cada uno validado). */
+export async function writeConcepts(
+  rootDir: string,
+  id: string,
+  concepts: Concept[],
+): Promise<string> {
+  const valid = concepts.map((c) => ConceptSchema.parse(c));
+  const { dir, concepts: file } = specPaths(rootDir, id);
+  await mkdir(dir, { recursive: true });
+  await writeFile(file, stringifyYaml(valid), "utf8");
+  return file;
+}
+
+/** Lee y valida los conceptos de `concepts.yaml` (vacío si no existe). */
+export async function readConcepts(
+  rootDir: string,
+  id: string,
+): Promise<Concept[]> {
+  const { concepts: file } = specPaths(rootDir, id);
+  let raw: string;
+  try {
+    raw = await readFile(file, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw err;
+  }
+  const data = parseYaml(raw);
+  return Array.isArray(data) ? data.map((c) => ConceptSchema.parse(c)) : [];
 }
 
 export interface GitAuthor {

@@ -126,6 +126,7 @@ function fullValidSpec(): Spec {
         supported_by: ["F-001", "F-002"],
       },
     ],
+    concepts: [],
     intake: null,
     history: [
       {
