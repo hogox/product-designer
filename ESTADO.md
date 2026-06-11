@@ -326,6 +326,45 @@ declarado** (sin contraseñas ni sesión de servidor: el riesgo sería parecer s
 - **Commit de esta sesión:** `f652389` (W6.3+W6.4). **D2 COMPLETA** — las 12 sesiones de W0–W6 están
   cerradas.
 
+### O1 — Optimización de tokens del motor (Sesión 13) ✅
+
+Sin tocar `derive.ts`/`define.ts` en lo sustantivo (la inteligencia del producto queda en Opus).
+
+- **P0 — logging de tokens:** los 3 proposers imprimen en stderr tras cada llamada:
+  `[tokens:extract/derive/define] in=N out=N total=N source=X model=Y`.
+  Permite capturar el baseline y medir el ahorro real en corridas siguientes.
+
+- **P1 — recortes triviales de schema (cero riesgo):**
+  - `extract.ts`: eliminado `locator` del schema/interfaz (`EVIDENCE_SCHEMA` + `RawEvidenceCandidate`).
+    El modelo ya no lo devuelve; el código lo derivaba vía `resolveLocator` de todos modos. Ahorro:
+    ~30% menos output tokens por llamada de extracción.
+  - `extract.ts`: resolución de modelo `PDA_MODEL_EXTRACT > PDA_MODEL > claude-opus-4-8`.
+    Permite configurar el modelo de extracción independientemente de derivación/definición.
+  - `ingest.ts`: `ingestPdf` segmenta por **bloque** (`\n\s*\n`, igual que `ingestText`) en lugar de
+    por línea. Locators pasan a `p.X, bloque Y`. Beneficio doble: menos segmentos (menos tokens de
+    input) y citas que cruzan líneas ya no caen al locator genérico `"documento"`.
+
+- **P3 — cache de evidencia por sha256:**
+  - Nuevo módulo `packages/agent1/src/evidence-cache.ts`: `computeFileSha256`, `readEvidenceCache`,
+    `writeEvidenceCache`. Clave: `(sha256[:16], topic-slug)` → `Evidence[]` ya verificada.
+  - `runner.ts`: antes de extraer un texto, computa sha256 y busca en cache. Hit → evidencia gratis
+    (0 tokens). Miss → extrae y persiste. `noCache: true` fuerza re-extracción (para el A/B).
+  - Cache en `specs/<id>/evidence-cache/` — **versionado en git** (trazabilidad de procedencia).
+  - Efecto en corridas 2+N: extracción cuesta 0 tokens para fuentes que no cambiaron.
+
+- **P4 — feedback de `gate.iterate` cableado a la Definición:**
+  - `stage.ts`/`runner.ts`/`define.ts`: `runDefinition` lee el audit y extrae el último
+    `gate.iterate.reason` posterior al último `agent.proposed`. Lo pasa al definer como bloque
+    "Feedback de iteración (a incorporar)". El modelo ajusta la propuesta sin re-descubrimiento.
+  - `DefinitionRunner.run` acepta `feedback?: string` (backward compat: sin feedback = igual a antes).
+
+- **P5 — A/B Opus vs Haiku (`scripts/extract-ab.mjs`):**
+  - Extrae el corpus 2 veces con distinto modelo (`PDA_MODEL_EXTRACT`), deriva ambas con Opus
+    (variable aislada). Compara: citas aceptadas, tasa de rechazo, cobertura de hallazgos.
+  - **Gate de adopción:** ≥90% cobertura y rechazo no sube >10% → cambiar default a Haiku.
+  - Outputs en `/tmp/extract-ab/{opus,haiku}.json`. Correr con: `node --env-file=.env scripts/extract-ab.mjs`.
+  - Pendiente: correr el A/B cuando haya `.env` disponible y decidir si adoptar Haiku como default.
+
 **Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
@@ -367,6 +406,9 @@ verificaron live en el preview (sesión 12).
   **retrofit** (`/spec/:id/intake`) edita el intake de specs existentes. `otp-onboarding` sigue
   **sin intake** (carga con `intake: null`); se puede definir desde Overview → "Definir enmarcado".
 - **D2 COMPLETA (sesión 12):** todas las wonders W0–W6 están cerradas. La Fase 3 está desbloqueada.
+- **O1 COMPLETA (sesión 13):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
+  P3 cache por sha256, P4 feedback de iterate, P5 script A/B. Pendiente: correr el A/B
+  (`node --env-file=.env scripts/extract-ab.mjs`) y decidir si adoptar Haiku como default de extracción.
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -550,6 +592,29 @@ cuando los haya (el motor corre igual).
   Los imports de valor pre-existentes del dashboard ya respetaban esto; la sesión 12 lo documentó
   formalmente. Si agregás un helper en `@pda/spec` que NO use Node.js, podés re-exportarlo desde
   un módulo sin side effects separado — pero por defecto asumí siempre `import type`.
+
+- **PDA_MODEL_EXTRACT (O1·P1):** configura el modelo de extracción independientemente del resto.
+  Cadena de resolución: `PDA_MODEL_EXTRACT` → `PDA_MODEL` → `claude-opus-4-8`. Derivación y
+  Definición siempre siguen `PDA_MODEL` (default Opus). Para testear Haiku:
+  `PDA_MODEL_EXTRACT=claude-haiku-4-5 node --env-file=.env packages/orchestrator/dist/cli.js discover ...`
+  Con `--no-cache` si querés comparar contra una extracción Opus previa (evita el cache hit).
+
+- **Cache de evidencia (O1·P3):** se guarda en `specs/<id>/evidence-cache/<sha256[:16]>-<topic>.json`.
+  El cache se versiona en git (trazabilidad de procedencia). Para forzar re-extracción:
+  `--no-cache` en el CLI, o borrar la carpeta `evidence-cache/` manualmente.
+  La clave es `(sha256, topic)`: si cambiás el topic de la spec o subís una versión nueva del
+  archivo (diferente sha256), el cache no da hit → se re-extrae automáticamente.
+  El tabular (CSV/XLSX) nunca cachea: sus métricas son cómputo determinista (0 tokens siempre).
+
+- **Iterate feedback (O1·P4):** `runDefinition` lee el audit y busca el último `gate.iterate.reason`
+  DESPUÉS del último `agent.proposed`. Si existe, lo inyecta en el prompt del definer. Solo el
+  ÚLTIMO feedback entra (el más reciente wins). Si el gate fue `approved` desde la última iteración,
+  el feedback ya no aplica (el indexado por posición lo evita naturalmente).
+
+- **Prompt caching NO aplica todavía (O1 — por qué):** el mínimo cacheable en Opus 4.8 es 4.096
+  tokens. Los system prompts de extracción/derivación/definición tienen ~150–250 tokens: por debajo
+  del threshold. Si en el futuro se agregan skills con prefijos grandes estables (>4k tokens fijos),
+  revisitar `cache_control: { type: "ephemeral" }` en el system prompt.
 
 ## 8. Qué falta — próximos pasos
 

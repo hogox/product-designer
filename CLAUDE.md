@@ -44,6 +44,8 @@
     Crear); creación atómica con intake + fuentes al commit; `IntakeEditPage` (retrofit para specs
     previas en `/spec/:id/intake`); `NewSpecModal` eliminado (subsumed por wizard). Overview muestra
     la `researchQuestion` como encabezado de contexto (o CTA para definirla). **D2 COMPLETA.**
+- HECHO (O1 — optimización de tokens, Sesión 13): 5 pasos implementados sobre el motor de
+  extracción/derivación/definición sin tocar la calidad. Ver sección O1 en ESTADO.md.
 - SIGUIENTE (F3): los 5 agentes restantes (Exploración→Aprendizaje) están desbloqueados.
   También fuera de F3: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
