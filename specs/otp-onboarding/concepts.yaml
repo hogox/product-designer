@@ -11,6 +11,7 @@
   addresses_jtbd:
     - J-001
     - J-002
+  spec_version: 3
   review_status: seleccionado
   review_note: null
   reviewed_by: Hugo Muñoz (Lead PM)
@@ -27,10 +28,11 @@
   addresses_jtbd:
     - J-001
     - J-003
-  review_status: propuesto
+  spec_version: 3
+  review_status: seleccionado
   review_note: null
-  reviewed_by: null
-  reviewed_at: null
+  reviewed_by: Hugo Muñoz (Lead PM)
+  reviewed_at: 2026-06-11T17:03:45.403Z
 - id: C-003
   title: Verificación multicanal con alternativas
   description: Cuando el SMS falla o tarda demasiado, se ofrecen métodos
@@ -42,6 +44,7 @@
     abandono permanente.
   addresses_jtbd:
     - J-004
+  spec_version: 3
   review_status: propuesto
   review_note: null
   reviewed_by: null
@@ -55,6 +58,7 @@
     reduciendo el desistimiento definitivo de la creación de cuenta.
   addresses_jtbd:
     - J-005
+  spec_version: 3
   review_status: propuesto
   review_note: null
   reviewed_by: null
@@ -74,6 +78,7 @@
     - J-003
     - J-004
     - J-005
+  spec_version: 3
   review_status: propuesto
   review_note: null
   reviewed_by: null

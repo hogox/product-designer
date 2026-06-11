@@ -24,3 +24,5 @@
 {"timestamp":"2026-06-11T16:16:20.426Z","actor":"orchestrator","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa exploracion"}
 {"timestamp":"2026-06-11T16:16:38.425Z","actor":"agent3","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"5 conceptos propuestos (exploracion)"}
 {"timestamp":"2026-06-11T16:17:50.773Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"otp-onboarding","target":"C-001","reason":null}
+{"timestamp":"2026-06-11T17:03:45.409Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"otp-onboarding","target":"C-002","reason":null}
+{"timestamp":"2026-06-11T18:03:30.822Z","actor":"Hugo Muñoz (Lead PM)","action":"proposal.discard","spec_id":"otp-onboarding","target":null,"reason":"Propuesta de Definición previa a F3-A; los conceptos vigentes citan los JTBD de v3. Se saneа el estado para cerrar Exploración."}
