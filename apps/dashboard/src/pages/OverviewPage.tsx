@@ -2,7 +2,7 @@
 // auditoría reciente. Misma estructura de información que antes — solo cambia la piel.
 
 import { Link } from "react-router-dom";
-import { Workflow } from "lucide-react";
+import { HelpCircle, Workflow } from "lucide-react";
 
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useShell } from "../App";
 import { SpecOverview } from "../components/SpecOverview";
@@ -40,6 +41,66 @@ export function OverviewPage() {
   return (
     <div className="space-y-4">
       <StatCards spec={spec} findings={findings} />
+
+      {/* W6.3: encabezado de contexto — pregunta de investigación o CTA para definirla */}
+      {spec.intake?.researchQuestion ? (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-medium tracking-wide text-primary uppercase">
+                  Pregunta de investigación
+                </div>
+                <p className="mt-0.5 text-sm font-medium text-foreground">
+                  {spec.intake.researchQuestion}
+                </p>
+                {spec.intake.hypotheses.filter((h) => h).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {spec.intake.hypotheses
+                      .filter((h) => h)
+                      .map((h, i) => (
+                        <Badge
+                          key={i}
+                          variant="outline"
+                          className="max-w-xs truncate text-xs"
+                          title={h}
+                        >
+                          H{i + 1}: {h}
+                        </Badge>
+                      ))}
+                  </div>
+                )}
+              </div>
+              <Link to={specPath(specId, "/intake")}>
+                <Button variant="outline" size="sm">
+                  Editar enmarcado
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-dashed">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <HelpCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Sin enmarcado definido</p>
+                  <p className="text-xs text-muted-foreground">
+                    La pregunta de investigación ayuda al Agente 1 a priorizar
+                    hallazgos.
+                  </p>
+                </div>
+              </div>
+              <Link to={specPath(specId, "/intake")}>
+                <Button size="sm">Definir enmarcado</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <SpecOverview spec={spec} />
         <div className="space-y-4">

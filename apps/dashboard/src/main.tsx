@@ -8,7 +8,9 @@ import { App } from "./App";
 import { LoginPage } from "./pages/LoginPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SpecsHomePage } from "./pages/SpecsHomePage";
+import { NewSpecWizard } from "./pages/NewSpecWizard";
 import { OverviewPage } from "./pages/OverviewPage";
+import { IntakeEditPage } from "./pages/IntakeEditPage";
 import { StagePage, StageIndexRedirect } from "./pages/StagePage";
 import { SourcesPage } from "./pages/SourcesPage";
 import { AuditPage } from "./pages/AuditPage";
@@ -25,10 +27,13 @@ function AppGate() {
         {/* Home: "Mis specs" (sin spec activa → sin sidebar de etapas) */}
         <Route path="/" element={<SpecsHomePage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        {/* Wizard de creación (W6.3): página completa, sin sidebar de etapas */}
+        <Route path="/nueva" element={<NewSpecWizard />} />
         {/* Toda spec cuelga de /spec/:specId (D2 · W0.3): la URL aísla el contexto */}
         <Route path="/spec/:specId" element={<App />}>
           <Route index element={<OverviewPage />} />
           <Route path="fuentes" element={<SourcesPage />} />
+          <Route path="intake" element={<IntakeEditPage />} />
           <Route path="etapa/:stageId" element={<StageIndexRedirect />} />
           <Route path="etapa/:stageId/:sectionId" element={<StagePage />} />
           <Route path="auditoria" element={<AuditPage />} />

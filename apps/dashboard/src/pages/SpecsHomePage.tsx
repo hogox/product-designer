@@ -3,21 +3,20 @@
 // (impulso visual): tarjetas Card interactivas con hover, chips como variantes de Badge.
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getSpecGroups, type SpecGroup, type SpecIndexEntry } from "../api";
-import { NewSpecModal } from "../components/NewSpecModal";
 import { AccountMenu } from "../components/AccountMenu";
 import { specPath } from "../nav";
 
 export function SpecsHomePage() {
+  const navigate = useNavigate();
   const [groups, setGroups] = useState<SpecGroup[]>([]);
   const [showArchived, setShowArchived] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,8 +24,6 @@ export function SpecsHomePage() {
       .then(setGroups)
       .catch((e) => setError(String(e)));
   }, []);
-
-  const products = groups.map((g) => g.product);
 
   const archivedCount = groups
     .flatMap((g) => g.specs)
@@ -54,15 +51,11 @@ export function SpecsHomePage() {
             hallazgos y auditoría.
           </p>
         </div>
-        <Button onClick={() => setShowModal(true)}>
+        <Button onClick={() => navigate("/nueva")}>
           <Plus className="size-4" />
           Nueva spec
         </Button>
       </header>
-
-      {showModal && (
-        <NewSpecModal products={products} onClose={() => setShowModal(false)} />
-      )}
 
       {error && (
         <Card className="border-destructive/40 p-4 text-sm text-destructive">
