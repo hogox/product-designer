@@ -24,11 +24,8 @@ function stubProposer(candidates: RawEvidenceCandidate[]): EvidenceProposer {
 test("acepta citas reales y deriva su locator real", async () => {
   const doc = await ingestText(ENTREVISTA);
   const result = verifyCandidates(doc, [
-    // cita real (con locator inventado por el "modelo": debe corregirse al real)
-    {
-      quote: "Me cansé de esperar el código y cerré la app",
-      locator: "párrafo 999",
-    },
+    // locator ya no lo devuelve el modelo; el código lo deriva de resolveLocator
+    { quote: "Me cansé de esperar el código y cerré la app" },
   ]);
   assert.equal(result.accepted.length, 1);
   assert.equal(result.rejected.length, 0);
@@ -42,7 +39,7 @@ test("acepta citas reales y deriva su locator real", async () => {
 test("rechaza una cita alucinada (no existe en la fuente)", async () => {
   const doc = await ingestText(ENTREVISTA);
   const result = verifyCandidates(doc, [
-    { quote: "la biometría falló tres veces seguidas", locator: "párrafo 2" },
+    { quote: "la biometría falló tres veces seguidas" },
   ]);
   assert.equal(result.accepted.length, 0);
   assert.equal(result.rejected.length, 1);
@@ -52,7 +49,7 @@ test("rechaza una cita alucinada (no existe en la fuente)", async () => {
 test("tolera diferencias de espacios en blanco al verificar", async () => {
   const doc = await ingestText(ENTREVISTA);
   const result = verifyCandidates(doc, [
-    { quote: "Me cansé   de esperar el código\n y cerré la app", locator: "x" },
+    { quote: "Me cansé   de esperar el código\n y cerré la app" },
   ]);
   assert.equal(result.accepted.length, 1);
 });
@@ -60,19 +57,16 @@ test("tolera diferencias de espacios en blanco al verificar", async () => {
 test("deduplica citas equivalentes", async () => {
   const doc = await ingestText(ENTREVISTA);
   const q = "Me cansé de esperar el código y cerré la app";
-  const result = verifyCandidates(doc, [
-    { quote: q, locator: "a" },
-    { quote: q, locator: "b" },
-  ]);
+  const result = verifyCandidates(doc, [{ quote: q }, { quote: q }]);
   assert.equal(result.accepted.length, 1);
 });
 
 test("extractTextEvidence: propone (stub) → verifica (separa real de alucinado)", async () => {
   const doc = await ingestText(ENTREVISTA);
   const proposer = stubProposer([
-    { quote: "El SMS con el código siempre demora", locator: "?" }, // no está en entrevista-01
-    { quote: "No sabía si el código había sido enviado o no", locator: "?" }, // sí está
-    { quote: "inventado que no aparece", locator: "?" },
+    { quote: "El SMS con el código siempre demora" }, // no está en entrevista-01
+    { quote: "No sabía si el código había sido enviado o no" }, // sí está
+    { quote: "inventado que no aparece" },
   ]);
   const result = await extractTextEvidence(doc, {
     topic: "abandono en la verificación OTP del onboarding",

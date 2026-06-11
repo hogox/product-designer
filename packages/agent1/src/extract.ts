@@ -10,7 +10,6 @@ import type { TextDocument, TextSegment } from "./ingest.js";
 
 export interface RawEvidenceCandidate {
   quote: string;
-  locator: string; // lo que el modelo afirma; se reemplaza por el locator real al verificar
 }
 
 /** Proveedor de candidatos de cita (inyectable: real = Anthropic, stub = tests offline). */
@@ -100,10 +99,9 @@ const EVIDENCE_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["quote", "locator"],
+        required: ["quote"],
         properties: {
           quote: { type: "string" },
-          locator: { type: "string" },
         },
       },
     },
@@ -114,7 +112,6 @@ const SYSTEM_PROMPT = `Eres un extractor de evidencia para research de producto.
 Tu única tarea es EXTRAER CITAS TEXTUALES VERBATIM relevantes al tópico, copiadas EXACTAMENTE del texto provisto (sin parafrasear, sin corregir ortografía, sin resumir).
 Reglas:
 - Copia la cita carácter por carácter desde un fragmento; debe poder encontrarse como substring exacto.
-- Devuelve el locator del fragmento del que proviene cada cita (el que aparece entre corchetes).
 - No inventes ni infieras. Si un fragmento no aporta evidencia relevante, omítelo.
 - Si no hay nada relevante, devuelve una lista vacía.
 No deduzcas conclusiones ni hallazgos: solo extrae las frases ancladas.`;
@@ -128,7 +125,11 @@ export interface AnthropicProposerOptions {
 export function createAnthropicProposer(
   opts: AnthropicProposerOptions = {},
 ): EvidenceProposer {
-  const model = opts.model ?? process.env["PDA_MODEL"] ?? "claude-opus-4-8";
+  const model =
+    opts.model ??
+    process.env["PDA_MODEL_EXTRACT"] ??
+    process.env["PDA_MODEL"] ??
+    "claude-opus-4-8";
   const maxTokens = opts.maxTokens ?? 4000;
   return {
     async propose({ source, topic, segments }) {
@@ -149,19 +150,22 @@ export function createAnthropicProposer(
         },
       } as Anthropic.MessageCreateParamsNonStreaming);
 
+      const { input_tokens, output_tokens } = res.usage;
+      process.stderr.write(
+        `[tokens:extract] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} source=${source} model=${model}\n`,
+      );
+
       const textBlock = res.content.find((b) => b.type === "text");
       const text = textBlock && "text" in textBlock ? textBlock.text : "{}";
-      let parsed: { evidence?: Array<{ quote?: unknown; locator?: unknown }> };
+      let parsed: { evidence?: Array<{ quote?: unknown }> };
       try {
         parsed = JSON.parse(text);
       } catch {
         return [];
       }
       return (parsed.evidence ?? [])
-        .filter(
-          (e) => typeof e.quote === "string" && typeof e.locator === "string",
-        )
-        .map((e) => ({ quote: String(e.quote), locator: String(e.locator) }));
+        .filter((e) => typeof e.quote === "string")
+        .map((e) => ({ quote: String(e.quote) }));
     },
   };
 }

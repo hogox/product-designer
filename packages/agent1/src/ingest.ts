@@ -96,14 +96,14 @@ export async function ingestPdf(path: string): Promise<TextDocument> {
   const pages = await readPdfPages(buffer);
   const segments: TextSegment[] = [];
   pages.forEach((pageText, p) => {
-    const lines = pageText
-      .split(/\n/)
-      .map((l) => l.replace(/\s+/g, " ").trim())
-      .filter((l) => l.length > 0);
-    lines.forEach((text, k) => {
+    const blocks = pageText
+      .split(/\n\s*\n/)
+      .map((b) => b.replace(/\s+/g, " ").trim())
+      .filter((b) => b.length > 0);
+    blocks.forEach((text, k) => {
       segments.push({
         index: segments.length,
-        locator: `p.${p + 1}, línea ${k + 1}`,
+        locator: `p.${p + 1}, bloque ${k + 1}`,
         text,
       });
     });

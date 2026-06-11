@@ -32,13 +32,13 @@ test("ingestText: entrevista .txt → párrafos con locator y cita verificable",
   assert.ok(doc.fullText.includes(quote));
 });
 
-test("ingestPdf: entrevista .pdf → líneas con locator de página", async () => {
+test("ingestPdf: entrevista .pdf → bloques con locator de página", async () => {
   const doc: TextDocument = await ingestPdf(
     join(SAMPLES, "entrevistas", "entrevista-03.pdf"),
   );
   assert.equal(doc.kind, "text");
   assert.ok(doc.segments.length > 0);
-  assert.match(doc.segments[0]!.locator, /^p\.\d+, línea \d+$/);
+  assert.match(doc.segments[0]!.locator, /^p\.\d+, bloque \d+$/);
   // contenido extraído (texto del PDF generado)
   assert.ok(doc.fullText.includes("Confuso"));
 });
