@@ -10,6 +10,7 @@ import type { Finding } from "@pda/spec";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EvidenceKindBadge, RealMockBadge } from "./badges";
+import { SectionIcon } from "./icons";
 
 interface AnchorItem {
   finding: string;
@@ -49,7 +50,7 @@ export function EvidenceList({ findings }: { findings: Finding[] }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <Anchor className="size-4 text-muted-foreground" />
+          <SectionIcon icon={Anchor} tone="sky" />
           Evidencia anclada
           <RealMockBadge real />
           <Badge variant="secondary">{bySource.size} fuentes</Badge>

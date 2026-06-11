@@ -4,9 +4,9 @@
 // W3.2: Card modular; la evidencia anclada sube de jerarquía (cita a text-sm, locator chip).
 
 import { useState } from "react";
-import { ClipboardCheck } from "lucide-react";
+import { ChevronRight, ClipboardCheck } from "lucide-react";
 
-import type { Finding } from "@pda/spec";
+import type { Finding, Job } from "@pda/spec";
 
 import {
   Card,
@@ -24,12 +24,15 @@ import {
 } from "@/components/ui/tooltip";
 import { reviewFinding, type ReviewStatus } from "../api";
 import { ReviewCommentModal } from "./ReviewCommentModal";
+import { FindingDrawer } from "./FindingDrawer";
 import {
   ConfidenceBadge,
+  FindingTypeBadge,
   RealMockBadge,
   ReviewStatusBadge,
   REVIEW_LABEL,
 } from "./badges";
+import { SectionIcon } from "./icons";
 
 const FILTERS: ("todos" | ReviewStatus)[] = [
   "todos",
@@ -42,10 +45,12 @@ const FILTERS: ("todos" | ReviewStatus)[] = [
 export function FindingsTriage({
   specId,
   findings,
+  jtbd,
   onChange,
 }: {
   specId: string | null;
   findings: Finding[];
+  jtbd: Job[];
   onChange: () => void;
 }) {
   const [filter, setFilter] = useState<"todos" | ReviewStatus>("todos");
@@ -53,6 +58,9 @@ export function FindingsTriage({
     fid: string;
     action: "rechazado" | "en_pausa";
   } | null>(null);
+  // Guardamos el id (no el objeto): tras un refetch, el drawer refleja el estado nuevo.
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detail = findings.find((f) => f.id === detailId) ?? null;
 
   const count = (s: ReviewStatus) =>
     findings.filter((f) => f.review_status === s).length;
@@ -98,7 +106,7 @@ export function FindingsTriage({
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <ClipboardCheck className="size-4 text-muted-foreground" />
+          <SectionIcon icon={ClipboardCheck} tone="primary" />
           Triage de hallazgos
           <RealMockBadge real />
           <Badge variant="secondary">{findings.length}</Badge>
@@ -135,6 +143,7 @@ export function FindingsTriage({
           <FindingCard
             key={f.id}
             finding={f}
+            onOpen={() => setDetailId(f.id)}
             onApprove={() => setStatus(f.id, "aprobado")}
             onReject={() => setModal({ fid: f.id, action: "rechazado" })}
             onPause={() => setModal({ fid: f.id, action: "en_pausa" })}
@@ -150,6 +159,13 @@ export function FindingsTriage({
             onSubmit={(comment) => setStatus(modal.fid, modal.action, comment)}
           />
         )}
+
+        <FindingDrawer
+          finding={detail}
+          jtbd={jtbd}
+          open={detailId !== null}
+          onOpenChange={(o) => !o && setDetailId(null)}
+        />
       </CardContent>
     </Card>
   );
@@ -157,12 +173,14 @@ export function FindingsTriage({
 
 function FindingCard({
   finding: f,
+  onOpen,
   onApprove,
   onReject,
   onPause,
   onResume,
 }: {
   finding: Finding;
+  onOpen: () => void;
   onApprove: () => void;
   onReject: () => void;
   onPause: () => void;
@@ -174,42 +192,38 @@ function FindingCard({
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <ConfidenceBadge confidence={f.confidence} />
-        <span className="min-w-40 flex-1 text-sm font-medium">
-          {f.statement}
-        </span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <ReviewStatusBadge status={f.review_status} />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-sm whitespace-pre-line">
-            {reviewedTip}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-      <div className="text-xs text-muted-foreground">
-        {f.id} · {f.type} · →{f.feeds}
-        {f.review_note ? ` · “${f.review_note}”` : ""}
-      </div>
-      {/* Evidencia anclada (invariante 5): cita/cálculo legible, locator como chip mono */}
-      <div className="space-y-2">
-        {f.evidence.map((e, i) => (
-          <div key={i} className="space-y-1 border-l-2 pl-3">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">{e.source}</span>
-              <Badge variant="outline" className="font-mono text-xs">
-                {e.locator}
-              </Badge>
-            </div>
-            <p className="text-sm">
-              {e.quote ? `"${e.quote}"` : e.computation}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Zona clickeable: abre el drawer con la cadena de evidencia completa (W4.1).
+          La tarjeta queda compacta — título + badges + acciones. */}
+      <button
+        type="button"
+        onClick={onOpen}
+        className="-m-1 block w-full rounded-md p-1 text-left transition-colors hover:bg-muted/50"
+      >
+        <div className="flex flex-wrap items-start gap-2">
+          <ConfidenceBadge confidence={f.confidence} />
+          <FindingTypeBadge type={f.type} />
+          <span className="min-w-40 flex-1 text-sm font-medium">
+            {f.statement}
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <ReviewStatusBadge status={f.review_status} />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-sm whitespace-pre-line">
+              {reviewedTip}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          {f.id} · →{f.feeds} · {f.evidence.length} evidencia
+          {f.evidence.length === 1 ? "" : "s"}
+          <span className="flex items-center text-primary">
+            Ver detalle <ChevronRight className="size-3" />
+          </span>
+        </div>
+      </button>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"

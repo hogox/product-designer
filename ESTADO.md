@@ -190,7 +190,78 @@ uploadedBy, uploadedAt, status(subido|ingerido|descartado), linkedStages[] }`. *
   legado envuelto en `@layer base` con vars remapeadas a los tokens — solo le quedan sidebar,
   home, fuentes, placeholder mock y modales.
 
-**Tests:** ~93 (spec 47 · agent1 21 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
+### Fase D2 · Sesión 8 (W3.3+W3.4+W4.1 + impulso visual) ✅ — chips cva, drawer y salto visual
+
+El sistema queda correcto Y se ve como producto (referencia Stratify), sin salir de shadcn-stock.
+
+- **W3.3 (chips):** 11 variantes cva en `ui/badge.tsx` (ÚNICA edición permitida de `ui/`):
+  `real|aprobado|mock|enPausa|rechazado|pendiente|cita|calculo|quantitative|qualitative|heart`.
+  Nombradas por semántica, no por color; par uniforme `border-{c}-200 bg-{c}-50 text-{c}-700`.
+  **Paleta final (contraste texto/fondo medido, AA ≥4.5):** real/aprobado=emerald (5.09), mock/
+  enPausa=amber (4.87), rechazado=red (5.88), pendiente=slate-token (6.51), cita=sky (5.49),
+  calculo=violet (6.64), quantitative=indigo (7.22), qualitative=teal (5.17), heart=rose (5.51).
+  `badges.tsx` delega TODO el color a las variantes (cero clases sueltas); agrega `FindingTypeBadge`,
+  `HeartBadge`, `SourceKindBadge`. **Mapa de iconos por concepto** en `icons.tsx`:
+  etapa (Compass/Target/Lightbulb/PenTool/FlaskConical/PackageCheck/GraduationCap), fuente
+  (FileText/Table2/MessageSquareQuote/File), evidencia (Quote/Calculator), HEART (Smile/Activity/
+  UserPlus/Repeat2/CircleCheck), agente (Bot). `<SectionIcon>` = icono en contenedor suave
+  (`bg-{c}-50 text-{c}-600`, AA 3:1 gráfico).
+- **Impulso visual (composición stock):** iconos tintados en todos los headers de Card/etapa;
+  fila de **stat-cards** en el overview (`StatCards`: versión, hallazgos con desglose por estado,
+  JTBD, métricas); cards interactivas (`hover:bg-muted/50` + `hover:border-primary/30`) en pipeline,
+  home y fuentes; **avatares de actor** en Auditoría (`ActorAvatar`: humano con iniciales de color
+  estable por hash, agente/sistema con icono Bot neutro); header de etapa expresivo (círculo
+  numerado size-12 + icono, título text-2xl, subtítulo muted).
+- **W3.4 (microcorrecciones):** el resumen de auditoría del overview muestra SOLO la actividad
+  desde la última `agent.proposed` ("Auditoría de la propuesta") + footer "Ver todo el log (N) →"
+  a `/auditoria`; leyenda real/mock vía el sidebar persistente; numeración/subtítulo de etapa se
+  mantienen.
+- **W4.1 (drawer):** `FindingDrawer` con **Sheet stock** (lado derecho): cadena completa
+  evidencia → cita/cálculo → fuente con locator, historial de revisión (estado/revisor/comentario/
+  fecha) y **trazabilidad inversa real** (JTBD que citan el hallazgo vía `supported_by`; las
+  métricas v0 NO ligan hallazgo→métrica, no se inventan links). La tarjeta del triage queda
+  compacta (badges + título + "Ver detalle →" + acciones) y abre el drawer; guarda el id (no el
+  objeto) para reflejar el estado nuevo tras un refetch. Esc + foco atrapado + click-afuera (stock).
+- **Migración legado:** sidebar, home, fuentes y placeholder pasaron a shadcn/Tailwind + shell grid
+  en Tailwind. `styles.css` quedó SOLO con los modales legados (`.modal*`, `button.primary`) —
+  mueren en la sesión 9 (W4.2 → Dialog stock). `git diff` de `ui/`: único modificado = `badge.tsx`;
+  `sheet.tsx`/`avatar.tsx` son stock nuevo SIN editar (sancionados por ANEXO §0.4 + W4.1/avatares).
+
+### Fase D2 · Sesión 11 (W6.1+W6.2 — intake de spec) ✅ — enmarcado del discovery + grounding
+
+Adelantada antes de W4.2/W5: la Fase 3 no arranca sin W6 (los agentes nuevos deben nacer leyendo
+el intake). Crear una spec deja de ser metadatos y pasa a enmarcar el discovery; su output alimenta
+al motor. Hoy: esquema + grounding + completitud (el wizard UI es la sesión 12).
+
+- **Esquema final del intake** (`schema.ts`, opcional → specs previas cargan sin migrar):
+  ```
+  intake: { researchQuestion (obligatoria), hypotheses[], productContext?,
+            discoveryPlan: { methods[], instruments[], expectedSourceKinds[] } } | null
+  methods     = entrevistas | encuestas | analitica | benchmark | soporte | otros
+  instruments = nps | ces | csat | isn | otros   (satisfacción; mapeo HEART = Agente 2, no hoy)
+  ```
+  `SourceKindSchema` se **movió a schema.ts** (vocabulario core compartido con el intake; evita
+  import circular) y ganó el kind **`persona`** (artefacto subible como EVIDENCIA citable, nunca
+  grounding; como `entrevista`, no se auto-infiere). `deriveExpectedSourceKinds(methods)` = mapa
+  determinista (entrevistas→entrevista; encuestas/analitica→datos; benchmark/soporte→documento;
+  otros→∅), unión deduplicada.
+- **Grounding del Agente 1 (W6.2a):** el intake (researchQuestion + productContext + hypotheses) se
+  inyecta SOLO en el prompt de **derivación** (`derive.ts`: regla de foco en el system + bloque en
+  el mensaje); la **extracción no se toca** (invariante 3: la evidencia se extrae sin sesgo, el
+  grounding solo orienta QUÉ derivar del pool ya fijo). `createDiscoveryRunner` lo deriva de
+  `current.intake`; sin intake → `undefined` → derivación idéntica a la previa (sin regresión).
+- **Completitud (W6.2b):** `computeSourceCompleteness` compara `expectedSourceKinds` (plan) vs. los
+  kinds subidos (no descartados); `PATCH /api/specs/:id/intake` (auditoría `intake.update`) +
+  `GET …/sources/completeness`. UI: indicador en el hub de Fuentes con chips "falta: <tipo>"
+  reusando variantes de Badge (cero edición de `ui/`).
+- **Resultado de la comparativa (real, samples OTP, mismo pool de 16 anclajes, aislando la variable
+  al grounding):** SIN intake = 10 hallazgos más planos y dispersos (biométrica como medium, reenvío
+  como medium/constraints). CON intake = 9 hallazgos ordenados por relevancia a la pregunta: el
+  **reenvío deficiente sube a high/hypothesis** (atado a la hipótesis 3), el **feedback en pantalla**
+  se nombra explícito, la **biométrica off-question baja a low/scope**. Sin inventar evidencia (mismas
+  citas/cálculos). Outputs en `/tmp/intake-ab/` + harness reproducible `scripts/intake-ab.mjs`.
+
+**Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
 routing, home, Fuentes y la triage plena (aprobar/pausar/rechazar/filtros) en el preview. La ingestión
@@ -214,9 +285,16 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
   hallazgos high `pendiente|en_pausa`. El demo es: revisar/aprobar los high en el triage → el gate
   se desbloquea → aprobar. (Ojo: el triage en vivo muta `findings.yaml`/`spec.proposed.yaml`/
   `audit.jsonl`; para resetear el demo, `git restore specs/`.)
-- **Piel nueva (sesión 7):** tema claro shadcn en todo el dashboard; overview y etapas reales en
-  Cards modulares con breadcrumb. Home, Fuentes, sidebar y modales aún con CSS legado re-tokenizado
-  (migran en sesiones 8–9). Home del dashboard: `http://localhost:5173`.
+- **Piel nueva (sesiones 7–8):** tema claro shadcn en TODO el dashboard. Sistema de chips = variantes
+  cva de Badge (AA verificado); iconos tintados por concepto; stat-cards y cards interactivas;
+  avatares de actor en auditoría; drawer de hallazgo (Sheet) con cadena de evidencia + trazabilidad
+  inversa. Sidebar, home y fuentes ya migrados; solo los **modales** quedan con CSS legado (migran en
+  la sesión 9). Home del dashboard: `http://localhost:5173`.
+- **Intake (sesión 11):** la spec puede llevar un `intake` (pregunta de discovery + plan); cuando
+  existe, el Agente 1 deriva hallazgos orientados a la pregunta (grounding solo en derivación) y el
+  hub de Fuentes muestra la completitud (esperado-vs-subido). `otp-onboarding` sigue **sin intake**
+  (carga con `intake: null`, demo-able). El wizard que lo carga desde la UI llega en la sesión 12;
+  hoy se setea por `PATCH /api/specs/:id/intake`.
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -329,7 +407,60 @@ cuando los haya (el motor corre igual).
   Tailwind de color (emerald/amber) y el canvas del preview tampoco lo parsea → da falsos "ratio 1".
   Saltar los oklch en el scan y medir esos badges a mano (emerald-700/-50 = 5.26:1, amber-700/-50 =
   4.82:1). Fondos `/50` (translúcidos, p. ej. `bg-amber-50/50`) también rompen el parser: blendear
-  sobre la tarjeta blanca antes de calcular.
+  sobre la tarjeta blanca antes de calcular. **W3.3:** para medir las 11 variantes de golpe se
+  implementó la conversión **oklch→sRGB lineal→luminancia** en JS dentro de `preview_eval` (matrices
+  estándar de oklab) y se computó el contraste WCAG — método repetible para auditar AA sin canvas.
+- **Variantes cva de Badge (D2·W3.3):** son la ÚNICA edición permitida de `components/ui/`. Nombrar
+  por SEMÁNTICA (no por color): `real/aprobado/mock/enPausa/...`. `aprobado`≈`real` (verde) y
+  `enPausa`≈`mock` (ámbar) comparten clases a propósito. Se separó **evidencia** (cita=sky/cálculo=
+  violet) de **tipo de hallazgo** (quantitative=indigo/qualitative=teal) para no confundirlos en la
+  misma tarjeta. Todo color semántico nuevo vive como variante acá, NO inline en componentes.
+- **Avatares de actor (D2·paso 2d):** `ActorAvatar` decide humano vs agente con un regex sobre el
+  nombre (`/agent|agente|ia|bot|modelo|orquestador|orchestrator|sistema|system/i`). Humano = iniciales
+  con tono `bg-{c}-100 text-{c}-700` (AA, amber el más justo a 4.54); agente/sistema = icono Bot sobre
+  `bg-muted`. Si un actor nuevo es máquina y no matchea, agregalo al regex o saldrá como humano.
+- **Sheet stock + React 18 (D2·W4.1):** el `sheet.tsx` de shadcn@latest está escrito para React 19
+  (refs como prop, sin `forwardRef`); el proyecto pinea **React 18.3** → emite el warning dev-only
+  `Function components cannot be given refs` en `SheetOverlay` en cada render del drawer. Es **inocuo**
+  (el overlay cierra al click-afuera, Esc y foco atrapado funcionan; el build de prod lo elimina) y se
+  dejó stock SIN editar para respetar la disciplina (solo `badge.tsx` se edita en `ui/`). Fix futuro:
+  envolver `SheetOverlay`/`SheetContent` en `forwardRef` (shim de compat) o subir a React 19.
+- **Resumen de auditoría del overview (D2·W3.4):** muestra solo la rebanada desde la última entrada
+  `agent.proposed` (`audit.lastIndexOf`), no el log completo — evita conteos confusos de iteraciones
+  viejas. El verbo que marca "propuesta nueva" es `agent.proposed` (lo escribe `stage.ts`); si cambia,
+  actualizar el filtro en `OverviewPage`. El log completo vive en `/auditoria` ("Ver todo el log").
+- **styles.css en la última milla (D2·W3.3):** ya solo quedan los **modales** (`.modal*`,
+  `button.primary`) — todo el resto es shadcn/Tailwind. Al migrar los modales a Dialog stock (sesión 9)
+  el archivo `styles.css` y su import en `main.tsx` se borran enteros (y con ellos `--legacy-muted`/
+  `--legacy-accent`). No agregar reglas nuevas acá: cualquier estilo va como utilidad Tailwind.
+- **Intake opcional, cero migración (D2·W6.1):** `intake` es `nullable + default(null)` → toda spec
+  previa (otp-onboarding incluida) carga con `intake: null` sin tocar el YAML. `createSpecV0` arranca
+  con `intake: null`. Al agregar `intake` a `SpecSchema` se rompió un fixture tipado (`: Spec`) en
+  `schema.test.ts` — el patrón de siempre: los literales tipados exigen el campo nuevo aunque tenga
+  default. Si extendés el intake, revisá esos fixtures.
+- **SourceKind movido a schema.ts (D2·W6.1):** el vocabulario `documento|datos|entrevista|persona|otro`
+  vive en `schema.ts` (lo comparte el intake); `sources.ts` lo **re-exporta** (`export { SourceKindSchema }`)
+  para no romper imports `from "@pda/spec"`. OJO con `export *`: funciona porque `sources.ts` re-exporta
+  el MISMO binding de `schema.ts` (no una redefinición) → sin conflicto de nombres. `persona`, como
+  `entrevista`, NO se infiere en `inferKind` (lo clasifica el humano). Al sumar un kind, tocá: `inferKind`
+  (si aplica), `SOURCE_KIND_ICON`, los arrays `SOURCE_KINDS`/`KINDS` (server + SourcesPage) y el mapa
+  `METHOD_TO_KINDS`.
+- **Grounding SOLO en derivación (D2·W6.2):** el intake entra en `derive.ts` (foco de QUÉ derivar),
+  NUNCA en `extract.ts` (la evidencia se extrae sin sesgo, invariante 3). El seam es
+  `FindingsProposer.propose({ ..., grounding? })`; `createDiscoveryRunner` lo arma de `current.intake`.
+  Para auditar el efecto sin que el modelo de extracción sea variable, `scripts/intake-ab.mjs` extrae
+  UNA vez y deriva dos veces (sin/con) sobre el mismo pool — repetir así cualquier A/B de prompts.
+- **updateIntake NO commitea ni reindexa (D2·W6.2):** espeja a `updateSpecMeta` (writeSpec + appendAudit),
+  pero NO regenera el índice (el intake no es campo del índice) ni hace `git commit` (el versionado real
+  es solo al aprobar compuerta). El server lee de disco, así que el cambio se ve sin commit. Si `intake`
+  pasara a influir el índice, agregar `regenerateIndex`.
+- **Completitud = manifest real (D2·W6.2b):** `computeSourceCompleteness` cuenta solo fuentes NO
+  descartadas; sin intake o sin `expectedSourceKinds` → `satisfied:true` (nada exigido) y el indicador no
+  se muestra. `expectedSourceKinds` se DERIVA en `updateIntake` cuando viene vacío + hay métodos, pero es
+  editable (si el cliente manda tipos explícitos, se respetan).
+- **Verificar API con RTK/curl (gotcha de tooling):** el hook RTK reformatea la salida de `curl` a una
+  vista tipo-esquema (no JSON crudo) → `python -m json.tool`/`jq` sobre ese output fallan. Para leer
+  respuestas crudas en verificación, usar `node -e "fetch(...).then(r=>r.json()).then(...)"` en vez de curl.
 
 ## 8. Qué falta — próximos pasos
 
@@ -350,17 +481,37 @@ Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experi
   - layout modular (Cards con header, breadcrumb, pipeline clickeable, jerarquía de evidencia §2).
     La skill `frontend-design` que menciona el plan NO existe en el entorno; la dirección la cubrió
     el ANEXO-D2 §1.
-- **PRÓXIMA = Sesión 8 (W3.3 + W3.4 + W4.1):**
-  - **W3.3 (chips):** variantes cva en `ui/badge.tsx` (ÚNICA edición permitida de `components/ui/`):
-    `real|mock|aprobado|rechazado|enPausa|pendiente|calculo|cita|quantitative|qualitative|heart`.
-    Migrar `badges.tsx` y los `.badge/.pill/.gate-tag/.proposal-tag` legados; idealmente matar
-    `styles.css` (quedan sidebar, home, fuentes, placeholder, modales).
-  - **W3.4 (microcorrecciones):** resumen de auditoría del overview solo con la última propuesta +
-    "ver todo"; leyenda real/mock en todas las vistas; numeración/subtítulo de etapa se mantienen.
-  - **W4.1 (drawer):** detalle de hallazgo en `Sheet` stock (cadena evidencia→fuente, historial de
-    revisión, trazabilidad inversa JTBD/métricas); la tarjeta del triage queda compacta.
-- **Luego:** W4.2–W4.3 (modales + accesibilidad), W5 (capa de usuario mock) + ensayo del guión
-  de demo (<12 min).
+- **Sesión 8 (W3.3+W3.4+W4.1 + impulso visual) — HECHA:** 11 variantes cva de Badge (AA verificado),
+  mapa de iconos lucide + `<SectionIcon>`, stat-cards, cards interactivas, avatares de actor, header
+  de etapa expresivo; auditoría del overview acotada a la última propuesta; drawer de hallazgo
+  (Sheet) con cadena evidencia→fuente + historial + trazabilidad inversa JTBD; migradas las últimas
+  superficies legadas (sidebar/home/fuentes/placeholder). `styles.css` quedó solo con los modales.
+- **Sesión 11 (W6.1+W6.2 — intake) — HECHA (adelantada antes de W4.2/W5):** esquema `intake` opcional
+  (researchQuestion + hypotheses + productContext + discoveryPlan con methods/instruments/
+  expectedSourceKinds) + kind `persona`; grounding del Agente 1 SOLO en la derivación; completitud de
+  fuentes + `PATCH …/intake` (auditoría `intake.update`) + indicador con chips "falta:" en Fuentes.
+  Comparativa real validó el efecto del grounding (ver Sesión 11 arriba). Falta el wizard UI (sesión 12).
+- **Sesión 9 (W4.2 + W4.3) — PENDIENTE:**
+  - **W4.2 (modales con propósito único):** migrar `NewSpecModal` y `ReviewCommentModal` a **Dialog
+    stock** + el modal de **confirmación de compuerta** (resumen de versión/conteos/criterios antes
+    del commit). Al migrarlos, **borrar `styles.css` entero** y su import en `main.tsx` (mueren
+    `--legacy-muted`/`--legacy-accent`). Regla: un modal = una decisión; lo exploratorio ya vive en
+    el drawer (W4.1).
+  - **W4.3 (accesibilidad mínima):** foco atrapado en modales (Dialog lo trae stock), cierre con Esc,
+    navegación por teclado en el triage. Pendiente menor: el warning dev-only del Sheet en React 18
+    (ver §7) — evaluar `forwardRef` shim o subir a React 19.
+- **Sesión 10 (W5) — PENDIENTE:** capa de usuario mock (login, avatar, perfil, settings; identidad
+  real firma la auditoría — `reviewedBy`/`uploadedBy`/`--by` y el actor del `intake.update`).
+- **PRÓXIMA = Sesión 12 (W6.3 + W6.4 — wizard + retrofit):**
+  - **W6.3 (wizard UI, 5 pasos):** stepper propio (shadcn no trae Stepper; números/checks, sin deps
+    nuevas): Identidad → Enmarcado (pregunta obligatoria, hipótesis, contexto) → Plan de discovery
+    (checklist de métodos; deriva `expectedSourceKinds` con `deriveExpectedSourceKinds`, editable;
+    **plantillas deterministas, SIN modelo**) → Fuentes (reusa el modal del hub W1) → Resumen→crear
+    (commit v0 con intake + `spec.create` enriquecida). El overview "Spec viva" muestra la
+    researchQuestion como encabezado de contexto. Usar el cliente `patchIntake` ya cableado.
+  - **W6.4 (retrofit):** pantalla "editar intake" (pasos 2–3 como formulario) para specs previas;
+    ya existe `PATCH …/intake` con auditoría `intake.update`.
+  - Cerrar con **re-ensayo del guión de demo** (paso 0 nuevo: crear por wizard; <12 min).
 
 ### Después de D2: Fase 3 — diamante Solución (del PRD §15)
 

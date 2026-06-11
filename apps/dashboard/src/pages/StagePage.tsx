@@ -12,6 +12,7 @@ import { Jtbd } from "../components/Jtbd";
 import { Metrics } from "../components/Metrics";
 import { StagePlaceholder } from "../components/StagePlaceholder";
 import { RealMockBadge } from "../components/badges";
+import { STAGE_ICON } from "../components/icons";
 import { useShell } from "../App";
 import { discoveryVerification, type SpecData } from "../api";
 
@@ -34,17 +35,35 @@ export function StagePage() {
   const shell = useShell();
   if (!stage) return <Navigate to={specPath(specId)} replace />;
 
+  const StageIcon = STAGE_ICON[stage.id];
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
-          {stage.n}. {stage.name}
-          <RealMockBadge real={stage.real} />
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {stage.diamante} · {stage.modo}
-          {stage.gate ? ` · gate: ${stage.gate}` : ""}
-        </p>
+      <div className="flex items-start gap-4">
+        <span
+          className={`relative flex size-12 shrink-0 items-center justify-center rounded-xl text-lg font-semibold ${
+            stage.real
+              ? "bg-primary/10 text-primary"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {stage.n}
+          {StageIcon && (
+            <span className="absolute -right-1.5 -bottom-1.5 flex size-6 items-center justify-center rounded-lg border bg-card text-foreground">
+              <StageIcon className="size-3.5" />
+            </span>
+          )}
+        </span>
+        <div className="min-w-0">
+          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold">
+            {stage.name}
+            <RealMockBadge real={stage.real} />
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {stage.diamante} · {stage.modo}
+            {stage.gate ? ` · gate: ${stage.gate}` : ""}
+          </p>
+        </div>
       </div>
 
       <SectionTabs stageId={stage.id} sections={stage.sections} />
@@ -71,6 +90,7 @@ function StageContent({
         <FindingsTriage
           specId={shell.specId}
           findings={shell.findings}
+          jtbd={(shell.proposed ?? shell.spec)?.jtbd ?? []}
           onChange={shell.refetch}
         />
       );

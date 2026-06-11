@@ -27,10 +27,20 @@ export interface RawFinding {
   evidence_ids: string[];
 }
 
+// Grounding del intake (Fase D2 · W6.2): orienta QUÉ hallazgos derivar del pool ya fijo.
+// Entra SOLO en la derivación, NUNCA en la extracción de evidencia (invariante 3): la
+// evidencia se extrae sin sesgo; la pregunta solo prioriza el foco al derivar.
+export interface DerivationGrounding {
+  researchQuestion: string;
+  productContext?: string | null;
+  hypotheses?: string[];
+}
+
 export interface FindingsProposer {
   propose(input: {
     topic: string;
     evidence: EvidenceItem[];
+    grounding?: DerivationGrounding;
   }): Promise<RawFinding[]>;
 }
 
@@ -105,11 +115,16 @@ export function assembleFindings(
 /** Deriva hallazgos: propone (modelo, solo desde el pool) → ensambla y valida (código). */
 export async function deriveFindings(
   pool: EvidenceItem[],
-  opts: { topic: string; proposer: FindingsProposer },
+  opts: {
+    topic: string;
+    proposer: FindingsProposer;
+    grounding?: DerivationGrounding;
+  },
 ): Promise<DerivationResult> {
   const raws = await opts.proposer.propose({
     topic: opts.topic,
     evidence: pool,
+    grounding: opts.grounding,
   });
   return assembleFindings(pool, raws);
 }
@@ -149,7 +164,10 @@ de un POOL DE EVIDENCIA ya anclada (citas textuales y cálculos deterministas). 
 - Un hallazgo "quantitative" debe citar al menos una evidencia de tipo cálculo (computation).
 - Un hallazgo "qualitative" debe citar al menos una evidencia de tipo cita (quote).
 - 'feeds' indica a qué parte de la spec alimentaría: outcomes, constraints, hypothesis o scope.
-- Sé conservador: si la evidencia no respalda una afirmación, no la generes.`;
+- Sé conservador: si la evidencia no respalda una afirmación, no la generes.
+- Si se provee una PREGUNTA DE DISCOVERY, prioriza derivar los hallazgos que la respondan
+  (relevancia y orden), pero SIN forzar: si la evidencia no toca la pregunta, deriva igual lo
+  que la evidencia sí respalde. La pregunta orienta el FOCO; nunca inventa ni sesga evidencia.`;
 
 function formatPool(pool: EvidenceItem[]): string {
   return pool
@@ -173,9 +191,22 @@ export function createAnthropicFindingsProposer(
   const model = opts.model ?? process.env["PDA_MODEL"] ?? "claude-opus-4-8";
   const maxTokens = opts.maxTokens ?? 4000;
   return {
-    async propose({ topic, evidence }) {
+    async propose({ topic, evidence, grounding }) {
       const client = opts.client ?? new Anthropic();
-      const user = `Tópico de descubrimiento: ${topic}\n\nPool de evidencia (cita por id):\n${formatPool(evidence)}`;
+      const groundingBlock = grounding
+        ? `Pregunta de discovery: ${grounding.researchQuestion}\n` +
+          (grounding.productContext
+            ? `Contexto de producto: ${grounding.productContext}\n`
+            : "") +
+          (grounding.hypotheses && grounding.hypotheses.length > 0
+            ? `Hipótesis a contrastar:\n${grounding.hypotheses.map((h) => ` - ${h}`).join("\n")}\n`
+            : "") +
+          "\n"
+        : "";
+      const user =
+        `Tópico de descubrimiento: ${topic}\n\n` +
+        groundingBlock +
+        `Pool de evidencia (cita por id):\n${formatPool(evidence)}`;
       const res = await client.messages.create({
         model,
         max_tokens: maxTokens,

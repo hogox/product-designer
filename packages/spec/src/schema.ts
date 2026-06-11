@@ -62,6 +62,19 @@ export const HeartCategorySchema = z.enum([
 ]);
 export type HeartCategory = z.infer<typeof HeartCategorySchema>;
 
+// Tipo de fuente (vocabulario core, compartido por el hub de Fuentes y el intake). Vive
+// acá —no en sources.ts— para que el intake lo reuse sin import circular. `persona` es un
+// artefacto de research subible como EVIDENCIA citable (nunca grounding, invariante 3);
+// como `entrevista`, no se auto-infiere por mime/extensión (lo clasifica el humano).
+export const SourceKindSchema = z.enum([
+  "documento",
+  "datos",
+  "entrevista",
+  "persona",
+  "otro",
+]);
+export type SourceKind = z.infer<typeof SourceKindSchema>;
+
 export const TaskOwnerSchema = z.enum(["agent", "human"]);
 export const TaskStatusSchema = z.enum([
   "todo",
@@ -223,6 +236,75 @@ export const HistoryEntrySchema = z.object({
   timestamp: isoDateTime,
 });
 
+// ---------- intake (Fase D2 · W6): enmarcado inicial del discovery ----------
+
+// El wizard configura DENTRO del proceso, no el proceso: las 7 etapas son invariante del
+// motor. Lo configurable es el plan de discovery (pregunta, métodos, instrumentos, fuentes
+// esperadas). El intake es OPCIONAL en la spec (nullable) → specs previas cargan sin migrar.
+
+export const DiscoveryMethodSchema = z.enum([
+  "entrevistas",
+  "encuestas",
+  "analitica",
+  "benchmark",
+  "soporte",
+  "otros",
+]);
+export type DiscoveryMethod = z.infer<typeof DiscoveryMethodSchema>;
+
+// Instrumentos de satisfacción (encuestas cuantitativas). Descriptivos: el plan declara qué
+// medirá; el Agente 2 los usará para anclar HEART (nps→happiness, ces→task_success,
+// csat/isn→happiness) — ese mapeo es trabajo de Definición, no del intake.
+export const DiscoveryInstrumentSchema = z.enum([
+  "nps",
+  "ces",
+  "csat",
+  "isn",
+  "otros",
+]);
+export type DiscoveryInstrument = z.infer<typeof DiscoveryInstrumentSchema>;
+
+export const DiscoveryPlanSchema = z.object({
+  methods: z.array(DiscoveryMethodSchema).default([]),
+  instruments: z.array(DiscoveryInstrumentSchema).default([]),
+  // Deriva de `methods` por el mapa determinista de abajo, pero es EDITABLE → se persiste
+  // explícito (la completitud de Fuentes compara esto vs. lo subido).
+  expectedSourceKinds: z.array(SourceKindSchema).default([]),
+});
+export type DiscoveryPlan = z.infer<typeof DiscoveryPlanSchema>;
+
+export const IntakeSchema = z.object({
+  researchQuestion: z.string().min(1), // obligatoria DENTRO del intake
+  hypotheses: z.array(z.string().min(1)).default([]),
+  productContext: z.string().min(1).nullable().default(null),
+  discoveryPlan: DiscoveryPlanSchema.default({
+    methods: [],
+    instruments: [],
+    expectedSourceKinds: [],
+  }),
+});
+export type Intake = z.infer<typeof IntakeSchema>;
+
+// Mapa determinista método → tipos de fuente esperados (default derivable, editable en el
+// wizard). `otros` no aporta un tipo específico. Las personas NO derivan de un método.
+const METHOD_TO_KINDS: Record<DiscoveryMethod, SourceKind[]> = {
+  entrevistas: ["entrevista"],
+  encuestas: ["datos"],
+  analitica: ["datos"],
+  benchmark: ["documento"],
+  soporte: ["documento"],
+  otros: [],
+};
+
+/** Tipos de fuente esperados (unión deduplicada) para un conjunto de métodos de discovery. */
+export function deriveExpectedSourceKinds(
+  methods: DiscoveryMethod[],
+): SourceKind[] {
+  const set = new Set<SourceKind>();
+  for (const m of methods) for (const k of METHOD_TO_KINDS[m]) set.add(k);
+  return [...set];
+}
+
 // ---------- la spec ----------
 
 export const SpecSchema = z.object({
@@ -248,6 +330,9 @@ export const SpecSchema = z.object({
   verification: z.array(VerificationCriterionSchema),
   findings: z.array(FindingSchema),
   jtbd: z.array(JobSchema).default([]), // Jobs To Be Done (Definición)
+  // Enmarcado inicial del discovery (Fase D2 · W6). Opcional: nullable + default(null) →
+  // specs previas (otp-onboarding) cargan sin migración; el retrofit lo llena (W6.4).
+  intake: IntakeSchema.nullable().default(null),
   history: z.array(HistoryEntrySchema),
 });
 export type Spec = z.infer<typeof SpecSchema>;
@@ -304,6 +389,7 @@ export function createSpecV0(input: {
     verification: [],
     findings: [],
     jtbd: [],
+    intake: null,
     history: [],
   };
 }

@@ -1,20 +1,45 @@
 // Página "Fuentes" (D2 · W1.4): subir documentación (drag&drop / picker), verla listada con
 // badge de tipo, tamaño, estado y etapas asociadas, reclasificar el tipo y descartar (lógico).
 // Las fuentes alimentan al Agente 1 (W1.3): el subir reemplaza a samples/ cuando existen.
+// Migrado a shadcn/Tailwind (impulso visual): dropzone + filas Card, chips como variantes.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { FolderUp, UploadCloud } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   getSources,
+  getSourceCompleteness,
   uploadSource,
   patchSource,
   discardSource,
   type SourceEntry,
   type SourceKind,
+  type SourceCompleteness,
 } from "../api";
+import { SourceKindBadge } from "../components/badges";
+import { SectionIcon, SOURCE_KIND_ICON } from "../components/icons";
 
-const KINDS: SourceKind[] = ["documento", "datos", "entrevista", "otro"];
+const KINDS: SourceKind[] = [
+  "documento",
+  "datos",
+  "entrevista",
+  "persona",
+  "otro",
+];
+
+const STATUS_VARIANT: Record<
+  string,
+  "aprobado" | "rechazado" | "pendiente"
+> = {
+  ingerido: "aprobado",
+  descartado: "rechazado",
+  subido: "pendiente",
+};
 
 function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -25,6 +50,9 @@ function humanSize(bytes: number): string {
 export function SourcesPage() {
   const { specId } = useParams();
   const [sources, setSources] = useState<SourceEntry[]>([]);
+  const [completeness, setCompleteness] = useState<SourceCompleteness | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -33,7 +61,12 @@ export function SourcesPage() {
   const refetch = useCallback(async () => {
     if (!specId) return;
     try {
-      setSources(await getSources(specId));
+      const [srcs, comp] = await Promise.all([
+        getSources(specId),
+        getSourceCompleteness(specId).catch(() => null),
+      ]);
+      setSources(srcs);
+      setCompleteness(comp);
       setError(null);
     } catch (e) {
       setError(String(e));
@@ -85,17 +118,25 @@ export function SourcesPage() {
   const discarded = sources.filter((s) => s.status === "descartado");
 
   return (
-    <div>
-      <div className="stage-head">
-        <h1>Fuentes</h1>
-        <div className="meta">
-          La documentación que subís alimenta al Agente 1 (Descubrimiento). Sin
-          fuentes, el agente usa el set de muestra.
+    <div className="space-y-4">
+      <div className="flex items-start gap-4">
+        <SectionIcon icon={FolderUp} tone="primary" className="size-11 [&>svg]:size-5" />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold">Fuentes</h1>
+          <p className="text-sm text-muted-foreground">
+            La documentación que subís alimenta al Agente 1 (Descubrimiento).
+            Sin fuentes, el agente usa el set de muestra.
+          </p>
         </div>
       </div>
 
+      <CompletenessIndicator completeness={completeness} />
+
       <div
-        className={`dropzone${dragOver ? " over" : ""}`}
+        className={cn(
+          "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/40",
+          dragOver && "border-primary bg-primary/5 text-foreground",
+        )}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -119,38 +160,88 @@ export function SourcesPage() {
             e.target.value = "";
           }}
         />
+        <UploadCloud className="size-6" />
         {busy ? "Subiendo…" : "Arrastrá archivos acá o hacé clic para subir"}
-        <div className="meta">PDF · XLSX · CSV · TXT · DOCX</div>
+        <div className="text-xs">PDF · XLSX · CSV · TXT · DOCX</div>
       </div>
 
-      {error && <div className="panel error">Error: {error}</div>}
-
-      {active.length === 0 && (
-        <div className="panel">
-          <p className="empty">Todavía no hay fuentes subidas.</p>
-        </div>
+      {error && (
+        <Card className="border-destructive/40 p-4 text-sm text-destructive">
+          Error: {error}
+        </Card>
       )}
 
-      {active.map((s) => (
-        <SourceRow
-          key={s.id}
-          source={s}
-          onReclassify={onReclassify}
-          onDiscard={onDiscard}
-        />
-      ))}
+      {active.length === 0 && (
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground italic">
+            Todavía no hay fuentes subidas.
+          </p>
+        </Card>
+      )}
+
+      <div className="space-y-2">
+        {active.map((s) => (
+          <SourceRow
+            key={s.id}
+            source={s}
+            onReclassify={onReclassify}
+            onDiscard={onDiscard}
+          />
+        ))}
+      </div>
 
       {discarded.length > 0 && (
-        <>
-          <div className="nav-group" style={{ padding: "16px 0 4px" }}>
+        <div className="space-y-2">
+          <div className="pt-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
             Descartadas ({discarded.length})
           </div>
           {discarded.map((s) => (
             <SourceRow key={s.id} source={s} discarded />
           ))}
-        </>
+        </div>
       )}
     </div>
+  );
+}
+
+// Completitud del plan de discovery (W6.2b): tipos esperados (del intake) vs. subidos.
+// Solo se muestra si hay un plan que exige tipos (sin intake → expected vacío → no aparece).
+function CompletenessIndicator({
+  completeness: c,
+}: {
+  completeness: SourceCompleteness | null;
+}) {
+  if (!c || c.expected.length === 0) return null;
+  return (
+    <Card className="gap-0 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium">Completitud del plan</span>
+        {c.satisfied ? (
+          <Badge variant="aprobado">plan cubierto</Badge>
+        ) : (
+          <Badge variant="enPausa">
+            faltan {c.missing.length} tipo{c.missing.length === 1 ? "" : "s"}
+          </Badge>
+        )}
+      </div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        {c.expected.map((kind) => {
+          const present = c.present.includes(kind);
+          const Icon = SOURCE_KIND_ICON[kind];
+          return present ? (
+            <Badge key={kind} variant="real" className="capitalize">
+              <Icon className="size-3" />
+              {kind}
+            </Badge>
+          ) : (
+            <Badge key={kind} variant="enPausa" className="capitalize">
+              <Icon className="size-3" />
+              falta: {kind}
+            </Badge>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 
@@ -166,26 +257,34 @@ function SourceRow({
   discarded?: boolean;
 }) {
   return (
-    <div className={`source-row${discarded ? " discarded" : ""}`}>
-      <div className="source-main">
-        <span className="source-name">{s.filename}</span>
-        <div className="source-tags">
-          <span className="badge kind">{s.kind}</span>
-          <span className="pill">{humanSize(s.size)}</span>
-          <span className={`badge status-${s.status}`}>{s.status}</span>
+    <Card
+      className={cn(
+        "flex flex-row items-center justify-between gap-3 p-3.5",
+        discarded && "opacity-60",
+      )}
+    >
+      <div className="min-w-0">
+        <div className="truncate font-medium">{s.filename}</div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <SourceKindBadge kind={s.kind} />
+          <Badge variant="secondary">{humanSize(s.size)}</Badge>
+          <Badge variant={STATUS_VARIANT[s.status] ?? "pendiente"}>
+            {s.status}
+          </Badge>
           {s.linkedStages.map((st) => (
-            <span key={st} className="pill">
+            <Badge key={st} variant="outline">
               {st}
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
       {!discarded && (
-        <div className="source-actions">
+        <div className="flex shrink-0 items-center gap-2">
           <select
             value={s.kind}
             onChange={(e) => onReclassify?.(s.id, e.target.value as SourceKind)}
             aria-label="Reclasificar tipo"
+            className="rounded-lg border bg-background px-2 py-1.5 text-xs"
           >
             {KINDS.map((k) => (
               <option key={k} value={k}>
@@ -193,15 +292,16 @@ function SourceRow({
               </option>
             ))}
           </select>
-          <button
+          <Button
             type="button"
-            className="link-button"
+            variant="ghost"
+            size="sm"
             onClick={() => onDiscard?.(s.id)}
           >
             Descartar
-          </button>
+          </Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

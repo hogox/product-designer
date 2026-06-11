@@ -22,7 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RealMockBadge } from "./badges";
+import { HeartBadge, RealMockBadge } from "./badges";
+import { SectionIcon } from "./icons";
 
 function EmptyNote() {
   return <p className="text-sm text-muted-foreground italic">Vacío.</p>;
@@ -34,7 +35,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-            <FileText className="size-4 text-muted-foreground" />
+            <SectionIcon icon={FileText} tone="primary" />
             Spec viva
             <RealMockBadge real />
           </CardTitle>
@@ -54,7 +55,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Target className="size-4 text-muted-foreground" />
+              <SectionIcon icon={Target} tone="primary" />
               Problem statement (Definición)
             </CardTitle>
           </CardHeader>
@@ -67,7 +68,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Gauge className="size-4 text-muted-foreground" />
+            <SectionIcon icon={Gauge} tone="violet" />
             Outcomes / métricas
             <Badge variant="secondary">{spec.outcomes.length}</Badge>
           </CardTitle>
@@ -80,7 +81,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
               {spec.outcomes.map((o, i) => (
                 <li key={i}>
                   <div className="flex flex-wrap items-center gap-2">
-                    {o.heart && <Badge variant="secondary">{o.heart}</Badge>}
+                    {o.heart && <HeartBadge category={o.heart} />}
                     <strong>{o.metric}</strong>
                   </div>
                   <div>
@@ -103,7 +104,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Briefcase className="size-4 text-muted-foreground" />
+              <SectionIcon icon={Briefcase} tone="sky" />
               JTBD — Jobs To Be Done
               <Badge variant="secondary">{spec.jtbd.length}</Badge>
             </CardTitle>
@@ -126,7 +127,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <ListChecks className="size-4 text-muted-foreground" />
+            <SectionIcon icon={ListChecks} tone="slate" />
             Alcance
           </CardTitle>
         </CardHeader>
@@ -147,7 +148,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <ListTodo className="size-4 text-muted-foreground" />
+            <SectionIcon icon={ListTodo} tone="slate" />
             Tareas (hipótesis)
             <Badge variant="secondary">{spec.tasks.length}</Badge>
           </CardTitle>
@@ -171,7 +172,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <History className="size-4 text-muted-foreground" />
+            <SectionIcon icon={History} tone="slate" />
             Historial (procedencia)
             <Badge variant="secondary">{spec.history.length}</Badge>
           </CardTitle>

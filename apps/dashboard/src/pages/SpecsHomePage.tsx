@@ -1,10 +1,14 @@
 // Home "Mis specs" (D2 · W0.4): specs agrupadas por producto, sin spec activa (sin
-// sidebar de etapas). Punto de entrada del dashboard multi-spec. La creación (modal) y
-// el badge de propuesta pendiente llegan en el paso 2.2.
+// sidebar de etapas). Punto de entrada del dashboard multi-spec. Migrado a shadcn/Tailwind
+// (impulso visual): tarjetas Card interactivas con hover, chips como variantes de Badge.
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { getSpecGroups, type SpecGroup, type SpecIndexEntry } from "../api";
 import { NewSpecModal } from "../components/NewSpecModal";
 import { specPath } from "../nav";
@@ -35,51 +39,58 @@ export function SpecsHomePage() {
     .filter((g) => g.specs.length > 0);
 
   return (
-    <div className="specs-home">
-      <header className="specs-home-head">
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1>Mis specs</h1>
-          <div className="meta">
+          <h1 className="text-2xl font-semibold">Mis specs</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             Cada spec es un contrato versionado, con sus propias fuentes,
             hallazgos y auditoría.
-          </div>
+          </p>
         </div>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => setShowModal(true)}
-        >
-          + Nueva spec
-        </button>
+        <Button onClick={() => setShowModal(true)}>
+          <Plus className="size-4" />
+          Nueva spec
+        </Button>
       </header>
 
       {showModal && (
         <NewSpecModal products={products} onClose={() => setShowModal(false)} />
       )}
 
-      {error && <div className="panel error">Error: {error}</div>}
-
-      {!error && groups.length === 0 && (
-        <div className="panel">
-          <p className="empty">Todavía no hay specs.</p>
-        </div>
+      {error && (
+        <Card className="border-destructive/40 p-4 text-sm text-destructive">
+          Error: {error}
+        </Card>
       )}
 
-      {visibleGroups.map((g) => (
-        <section key={g.product} className="product-group">
-          <h2 className="product-name">{g.product}</h2>
-          <div className="spec-cards">
-            {g.specs.map((s) => (
-              <SpecCard key={s.id} entry={s} />
-            ))}
-          </div>
-        </section>
-      ))}
+      {!error && groups.length === 0 && (
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground italic">
+            Todavía no hay specs.
+          </p>
+        </Card>
+      )}
+
+      <div className="space-y-6">
+        {visibleGroups.map((g) => (
+          <section key={g.product}>
+            <h2 className="mb-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              {g.product}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {g.specs.map((s) => (
+                <SpecCard key={s.id} entry={s} />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
 
       {archivedCount > 0 && (
         <button
           type="button"
-          className="link-button"
+          className="mt-6 text-sm text-primary underline-offset-4 hover:underline"
           onClick={() => setShowArchived((v) => !v)}
         >
           {showArchived
@@ -94,23 +105,30 @@ export function SpecsHomePage() {
 function SpecCard({ entry }: { entry: SpecIndexEntry }) {
   const archived = entry.status === "archivada";
   return (
-    <Link
-      to={specPath(entry.id)}
-      className={`spec-card${archived ? " archived" : ""}`}
-    >
-      <div className="spec-card-head">
-        <span className="spec-card-name">{entry.name}</span>
-        <span className={`badge ${archived ? "mock" : "real"}`}>
-          {entry.status}
-        </span>
-      </div>
-      <div className="meta">etapa: {entry.stage}</div>
-      {entry.hasProposal && (
-        <span className="proposal-tag">propuesta pendiente</span>
-      )}
-      <div className="spec-card-foot">
-        <span className="pill">{entry.id}</span>
-      </div>
+    <Link to={specPath(entry.id)} className="group">
+      <Card
+        className={`gap-0 p-4 transition-colors group-hover:border-primary/30 group-hover:bg-muted/50 ${
+          archived ? "opacity-60" : ""
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="font-medium">{entry.name}</span>
+          <Badge variant={archived ? "mock" : "real"}>{entry.status}</Badge>
+        </div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          etapa: {entry.stage}
+        </div>
+        {entry.hasProposal && (
+          <div className="mt-3">
+            <Badge variant="enPausa">propuesta pendiente</Badge>
+          </div>
+        )}
+        <div className="mt-3">
+          <Badge variant="outline" className="font-mono">
+            {entry.id}
+          </Badge>
+        </div>
+      </Card>
     </Link>
   );
 }

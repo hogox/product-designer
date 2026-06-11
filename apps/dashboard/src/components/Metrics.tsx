@@ -10,14 +10,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RealMockBadge } from "./badges";
+import { HeartBadge, RealMockBadge } from "./badges";
+import { SectionIcon } from "./icons";
 
 export function Metrics({ shown }: { shown: Spec }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <Gauge className="size-4 text-muted-foreground" />
+          <SectionIcon icon={Gauge} tone="violet" />
           Métricas (HEART / GSM)
           <RealMockBadge real />
           <Badge variant="secondary">{shown.outcomes.length}</Badge>
@@ -37,7 +38,7 @@ export function Metrics({ shown }: { shown: Spec }) {
             {shown.outcomes.map((o, i) => (
               <div className="space-y-1 py-3 first:pt-0 last:pb-0" key={i}>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  {o.heart && <Badge variant="secondary">{o.heart}</Badge>}
+                  {o.heart && <HeartBadge category={o.heart} />}
                   <strong>{o.metric}</strong>
                 </div>
                 <p className="text-sm">
