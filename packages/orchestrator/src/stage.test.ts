@@ -615,6 +615,34 @@ test("reviewConcept: reabrir audita concept.reopen", async () => {
 
 // ─── P1: coherencia de estado + sellado de versión ──────────────────────────────
 
+test("runExploration propaga los tokens del runner al resultado y a la auditoría (P3)", async () => {
+  const { root, id } = await tempRepoWithSpec();
+  try {
+    await writeSpec(root, approvedSpecWithJtbd(id));
+    const tokenRunner: ExplorationRunner = {
+      async run() {
+        return {
+          concepts: [concept("C-001")],
+          tokens: { input: 100, output: 50, total: 150 },
+        };
+      },
+    };
+    const r = await runExploration(root, id, {
+      runner: tokenRunner,
+      author: AUTHOR,
+    });
+    assert.deepEqual(r.tokens, { input: 100, output: 50, total: 150 });
+
+    const audit = await readAudit(root, id);
+    const proposed = audit.find(
+      (a) => a.action === "agent.proposed" && a.actor === "agent3",
+    );
+    assert.match(proposed?.reason ?? "", /150 tokens/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("runExploration sella spec_version en cada concepto", async () => {
   const { root, id } = await tempRepoWithSpec();
   try {

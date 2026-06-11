@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import type Anthropic from "@anthropic-ai/sdk";
 
-import { callStructured, resolveModel } from "./index.js";
+import { callStructured, resolveModel, makeUsageSink } from "./index.js";
 
 // ─── resolveModel: cadena de overrides ───────────────────────────────────────────
 
@@ -115,4 +115,29 @@ test("callStructured: omite thinking en modelos Haiku", async () => {
     client: fakeClient("{}", cap),
   });
   assert.equal(cap.params?.thinking, undefined);
+});
+
+test("makeUsageSink: acumula el usage de varias llamadas (Sesión 16)", async () => {
+  const cap: { params?: CapturedParams } = {};
+  const usage = makeUsageSink();
+  // dos llamadas con el mismo fake client (in=11, out=7 cada una)
+  await callStructured({
+    tag: "a",
+    model: "claude-opus-4-8",
+    system: "s",
+    user: "u",
+    schema: SCHEMA,
+    client: fakeClient("{}", cap),
+    onUsage: usage.onUsage,
+  });
+  await callStructured({
+    tag: "b",
+    model: "claude-opus-4-8",
+    system: "s",
+    user: "u",
+    schema: SCHEMA,
+    client: fakeClient("{}", cap),
+    onUsage: usage.onUsage,
+  });
+  assert.deepEqual(usage.totals(), { input: 22, output: 14, total: 36 });
 });

@@ -20,6 +20,7 @@
     "@pda/agent1": "workspace:*",
     "@pda/agent2": "workspace:*",
     "@pda/agent3": "workspace:*",
+    "@pda/llm": "workspace:*",
     "@pda/spec": "workspace:*"
   }
 }

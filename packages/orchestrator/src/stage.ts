@@ -34,14 +34,27 @@ import {
   blockingPasses,
 } from "./verify.js";
 
+/** Tokens consumidos por una corrida de agente (Sesión 16): suma de las llamadas + cache hits. */
+export interface AgentTokens {
+  input: number;
+  output: number;
+  total: number;
+  /** Fuentes resueltas desde el cache de evidencia (0 tokens de extracción). */
+  cacheHits?: number;
+}
+
 /** Agente 1 (Descubrimiento): produce hallazgos anclados. Inyectable (real o stub). */
 export interface DiscoveryRunner {
-  run(current: Spec): Promise<{ findings: Finding[] }>;
+  run(current: Spec): Promise<{ findings: Finding[]; tokens?: AgentTokens }>;
 }
 
 /** Agente 2 (Definición): produce la propuesta v+1 desde los hallazgos validados. */
 export interface DefinitionRunner {
-  run(current: Spec, findings: Finding[], feedback?: string): Promise<{ proposed: Spec }>;
+  run(
+    current: Spec,
+    findings: Finding[],
+    feedback?: string,
+  ): Promise<{ proposed: Spec; tokens?: AgentTokens }>;
 }
 
 /** Agente 3 (Exploración): produce conceptos de solución anclados a los JTBD. Inyectable. */
@@ -49,7 +62,7 @@ export interface ExplorationRunner {
   run(
     current: Spec,
     opts?: { discardedFeedback?: string; firstId?: number },
-  ): Promise<{ concepts: Concept[] }>;
+  ): Promise<{ concepts: Concept[]; tokens?: AgentTokens }>;
 }
 
 export interface DiscoveryResult {
@@ -57,12 +70,14 @@ export interface DiscoveryResult {
   stage: "descubrimiento";
   findings: Finding[];
   verification: VerificationCriterion[];
+  tokens?: AgentTokens;
 }
 
 export interface ExplorationResult {
   specId: string;
   stage: "exploracion";
   concepts: Concept[];
+  tokens?: AgentTokens;
 }
 
 export interface ExplorationCloseResult {
@@ -79,6 +94,7 @@ export interface PendingGate {
   proposed: Spec;
   verification: VerificationCriterion[];
   blocked: true;
+  tokens?: AgentTokens;
 }
 
 export interface StageState {
@@ -93,6 +109,13 @@ export interface StageState {
 }
 
 const now = (): string => new Date().toISOString();
+
+/** Sufijo de costo para el reason de auditoría (Sesión 16): "; 3457 tokens (2 fuentes en cache)". */
+function tokenSuffix(tokens?: AgentTokens): string {
+  if (!tokens || tokens.total === 0) return "";
+  const cache = tokens.cacheHits ? `, ${tokens.cacheHits} fuentes en cache` : "";
+  return `; ${tokens.total} tokens (in ${tokens.input}/out ${tokens.output}${cache})`;
+}
 
 /** Estado actual de la spec (derivado de los archivos del almacén). */
 export async function getState(
@@ -143,7 +166,7 @@ export async function runDiscovery(
     reason: "etapa descubrimiento",
   });
 
-  const { findings } = await opts.runner.run(current);
+  const { findings, tokens } = await opts.runner.run(current);
   await writeFindings(rootDir, specId, findings);
   const verification = automatedVerification(findings);
 
@@ -151,7 +174,7 @@ export async function runDiscovery(
     actor: "agent1",
     action: "agent.proposed",
     spec_id: specId,
-    reason: `${findings.length} hallazgos (descubrimiento); verificación ${blockingPasses(verification) ? "OK" : "FALLA"}`,
+    reason: `${findings.length} hallazgos (descubrimiento); verificación ${blockingPasses(verification) ? "OK" : "FALLA"}${tokenSuffix(tokens)}`,
   });
 
   await commitSpec(
@@ -161,7 +184,7 @@ export async function runDiscovery(
     opts.author,
   );
 
-  return { specId, stage: "descubrimiento", findings, verification };
+  return { specId, stage: "descubrimiento", findings, verification, tokens };
 }
 
 /**
@@ -213,7 +236,11 @@ export async function runDefinition(
       : "etapa definicion",
   });
 
-  const { proposed: raw } = await opts.runner.run(current, findings, lastFeedback);
+  const { proposed: raw, tokens } = await opts.runner.run(
+    current,
+    findings,
+    lastFeedback,
+  );
   const verification = verifyProposal(raw);
   const proposed: Spec = { ...raw, verification };
 
@@ -224,7 +251,7 @@ export async function runDefinition(
     actor: "agent2",
     action: "agent.proposed",
     spec_id: specId,
-    reason: `definición: ${proposed.jtbd.length} JTBD, ${proposed.outcomes.length} métricas; verificación ${blockingPasses(verification) ? "OK" : "FALLA"}`,
+    reason: `definición: ${proposed.jtbd.length} JTBD, ${proposed.outcomes.length} métricas; verificación ${blockingPasses(verification) ? "OK" : "FALLA"}${tokenSuffix(tokens)}`,
   });
 
   await commitSpec(
@@ -241,6 +268,7 @@ export async function runDefinition(
     proposed,
     verification,
     blocked: true,
+    tokens,
   };
 }
 
@@ -520,7 +548,7 @@ export async function runExploration(
       : "etapa exploracion",
   });
 
-  const { concepts: proposed } = await opts.runner.run(current, {
+  const { concepts: proposed, tokens } = await opts.runner.run(current, {
     discardedFeedback: discardedNotes || undefined,
     firstId,
   });
@@ -538,7 +566,7 @@ export async function runExploration(
     actor: "agent3",
     action: "agent.proposed",
     spec_id: specId,
-    reason: `${stamped.length} conceptos propuestos (exploracion)`,
+    reason: `${stamped.length} conceptos propuestos (exploracion)${tokenSuffix(tokens)}`,
   });
 
   await commitSpec(
@@ -548,7 +576,7 @@ export async function runExploration(
     opts.author,
   );
 
-  return { specId, stage: "exploracion", concepts };
+  return { specId, stage: "exploracion", concepts, tokens };
 }
 
 /**

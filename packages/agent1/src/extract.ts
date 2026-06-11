@@ -4,7 +4,7 @@
 // Una cita que no existe en la fuente se rechaza (anti back-fill).
 
 import type { Evidence } from "@pda/spec";
-import { callStructured, resolveModel } from "@pda/llm";
+import { callStructured, resolveModel, type CallUsage } from "@pda/llm";
 
 import type { TextDocument, TextSegment } from "./ingest.js";
 
@@ -119,6 +119,7 @@ No deduzcas conclusiones ni hallazgos: solo extrae las frases ancladas.`;
 export interface AnthropicProposerOptions {
   model?: string;
   maxTokens?: number;
+  onUsage?: (usage: CallUsage) => void;
 }
 
 export function createAnthropicProposer(
@@ -141,6 +142,7 @@ export function createAnthropicProposer(
         user,
         schema: EVIDENCE_SCHEMA as Record<string, unknown>,
         maxTokens: opts.maxTokens,
+        onUsage: opts.onUsage,
       });
 
       return (parsed.evidence ?? [])

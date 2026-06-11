@@ -4,6 +4,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
+export interface CallUsage {
+  input_tokens: number;
+  output_tokens: number;
+}
+
 export interface StructuredCallOptions {
   /** Etiqueta para el log [tokens:<tag>] */
   tag: string;
@@ -15,11 +20,39 @@ export interface StructuredCallOptions {
   maxTokens?: number;
   /** Inyectable para tests que mockean el cliente. */
   client?: Anthropic;
+  /** Sink opcional de tokens (Sesión 16): acumula el usage de cada llamada sin tocar el return. */
+  onUsage?: (usage: CallUsage) => void;
 }
 
 export interface StructuredCallResult<T> {
   parsed: T;
-  usage: { input_tokens: number; output_tokens: number };
+  usage: CallUsage;
+}
+
+/** Totales de tokens acumulados (suma de varias llamadas). */
+export interface TokenTotals {
+  input: number;
+  output: number;
+  total: number;
+}
+
+/**
+ * Crea un acumulador de tokens: `onUsage` se pasa a `callStructured` (cada llamada suma) y
+ * `totals()` devuelve el total. Threadea el costo sin cambiar el tipo de retorno de los proposers.
+ */
+export function makeUsageSink(): {
+  onUsage: (usage: CallUsage) => void;
+  totals: () => TokenTotals;
+} {
+  let input = 0;
+  let output = 0;
+  return {
+    onUsage: (u) => {
+      input += u.input_tokens;
+      output += u.output_tokens;
+    },
+    totals: () => ({ input, output, total: input + output }),
+  };
 }
 
 /**
@@ -52,6 +85,7 @@ export async function callStructured<T>(
   process.stderr.write(
     `[tokens:${opts.tag}] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} model=${opts.model}\n`,
   );
+  opts.onUsage?.({ input_tokens, output_tokens });
 
   const textBlock = res.content.find((b) => b.type === "text");
   const text = textBlock && "text" in textBlock ? textBlock.text : "{}";

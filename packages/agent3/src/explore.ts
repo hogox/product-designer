@@ -3,7 +3,7 @@
 // Invariante 3: el modelo propone solo ids de jobs; el código valida que existan y re-adjunta
 // el job real. Un concepto sin jobs reales se rechaza.
 
-import { callStructured, resolveModel } from "@pda/llm";
+import { callStructured, resolveModel, type CallUsage } from "@pda/llm";
 import { ConceptSchema, type Concept, type Job } from "@pda/spec";
 
 export interface RawConcept {
@@ -181,6 +181,7 @@ function formatContext(ctx?: ConceptContext): string {
 export interface AnthropicExplorerOptions {
   model?: string;
   maxTokens?: number;
+  onUsage?: (usage: CallUsage) => void;
 }
 
 export function createAnthropicExplorer(
@@ -213,6 +214,7 @@ export function createAnthropicExplorer(
         user,
         schema: CONCEPTS_SCHEMA as Record<string, unknown>,
         maxTokens: opts.maxTokens,
+        onUsage: opts.onUsage,
       });
 
       return (parsed.concepts ?? []).map((c) => ({

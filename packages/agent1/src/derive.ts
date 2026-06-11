@@ -4,7 +4,7 @@
 // REAL (no la que el modelo reproduzca) y valida cada hallazgo contra FindingSchema:
 // quantitative exige computation, qualitative exige quote, y sin evidencia se rechaza.
 
-import { callStructured, resolveModel } from "@pda/llm";
+import { callStructured, resolveModel, type CallUsage } from "@pda/llm";
 import {
   FindingSchema,
   type Evidence,
@@ -182,6 +182,7 @@ function formatPool(pool: EvidenceItem[]): string {
 export interface AnthropicFindingsOptions {
   model?: string;
   maxTokens?: number;
+  onUsage?: (usage: CallUsage) => void;
 }
 
 export function createAnthropicFindingsProposer(
@@ -212,6 +213,7 @@ export function createAnthropicFindingsProposer(
         user,
         schema: FINDINGS_SCHEMA as Record<string, unknown>,
         maxTokens: opts.maxTokens,
+        onUsage: opts.onUsage,
       });
 
       return (parsed.findings ?? []).map((f) => ({

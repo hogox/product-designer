@@ -31,6 +31,7 @@ import {
   exploreConceptsFromJobs,
   createAnthropicExplorer,
 } from "@pda/agent3";
+import { makeUsageSink } from "@pda/llm";
 
 import {
   runDiscovery,
@@ -61,7 +62,8 @@ export function createDiscoveryRunner(
   return {
     async run(current: Spec) {
       const evidence: Evidence[] = [];
-      const proposer = createAnthropicProposer();
+      const usage = makeUsageSink();
+      const proposer = createAnthropicProposer({ onUsage: usage.onUsage });
       const model =
         process.env["PDA_MODEL_EXTRACT"] ??
         process.env["PDA_MODEL"] ??
@@ -154,10 +156,10 @@ export function createDiscoveryRunner(
       const pool = buildEvidencePool(evidence);
       const { accepted: findings } = await deriveFindings(pool, {
         topic: opts.topic,
-        proposer: createAnthropicFindingsProposer(),
+        proposer: createAnthropicFindingsProposer({ onUsage: usage.onUsage }),
         grounding,
       });
-      return { findings };
+      return { findings, tokens: { ...usage.totals(), cacheHits } };
     },
   };
 }
@@ -330,12 +332,13 @@ export function createDefinitionRunner(opts: {
 }): DefinitionRunner {
   return {
     async run(current: Spec, findings: Finding[], feedback?: string) {
+      const usage = makeUsageSink();
       const { proposed } = await defineProblem(current, findings, {
         topic: opts.topic,
-        definer: createAnthropicDefiner(),
+        definer: createAnthropicDefiner({ onUsage: usage.onUsage }),
         feedback,
       });
-      return { proposed };
+      return { proposed, tokens: usage.totals() };
     },
   };
 }
@@ -354,12 +357,13 @@ export function createExplorationRunner(opts: {
 }): ExplorationRunner {
   return {
     async run(current: Spec, runOpts) {
+      const usage = makeUsageSink();
       const { accepted: concepts } = await exploreConceptsFromJobs(
         current.jtbd,
         {
           topic: opts.topic,
           problemStatement: current.problem_statement ?? opts.topic,
-          proposer: createAnthropicExplorer(),
+          proposer: createAnthropicExplorer({ onUsage: usage.onUsage }),
           discardedFeedback: runOpts?.discardedFeedback,
           firstId: runOpts?.firstId,
           context: {
@@ -370,7 +374,7 @@ export function createExplorationRunner(opts: {
           },
         },
       );
-      return { concepts };
+      return { concepts, tokens: usage.totals() };
     },
   };
 }

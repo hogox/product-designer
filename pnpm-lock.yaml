@@ -151,6 +151,9 @@ importers:
       '@pda/agent3':
         specifier: workspace:*
         version: link:../agent3
+      '@pda/llm':
+        specifier: workspace:*
+        version: link:../llm
       '@pda/spec':
         specifier: workspace:*
         version: link:../spec

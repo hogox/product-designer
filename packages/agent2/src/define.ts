@@ -4,7 +4,7 @@
 // re-valida que esos ids existan (un job sin sustento real se rechaza). El modelo redacta;
 // los baselines provienen solo de la evidencia computada; los targets los fija el humano.
 
-import { callStructured, resolveModel } from "@pda/llm";
+import { callStructured, resolveModel, type CallUsage } from "@pda/llm";
 import {
   parseSpec,
   type Finding,
@@ -190,6 +190,7 @@ function formatFindings(findings: Finding[]): string {
 export interface AnthropicDefinerOptions {
   model?: string;
   maxTokens?: number;
+  onUsage?: (usage: CallUsage) => void;
 }
 
 export function createAnthropicDefiner(
@@ -210,6 +211,7 @@ export function createAnthropicDefiner(
         user,
         schema: DEFINITION_SCHEMA as Record<string, unknown>,
         maxTokens: opts.maxTokens,
+        onUsage: opts.onUsage,
       });
 
       return parsed;

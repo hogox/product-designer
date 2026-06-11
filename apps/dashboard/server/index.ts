@@ -635,7 +635,10 @@ async function runAgent(
       author,
       actor: by,
     });
-    return { result: { agent, counts: { hallazgos: r.findings.length } } };
+    return {
+      result: { agent, counts: { hallazgos: r.findings.length } },
+      tokens: r.tokens,
+    };
   }
   if (agent === "define") {
     const gate = await runDefinition(REPO_ROOT, specId, {
@@ -651,6 +654,7 @@ async function runAgent(
           metricas: gate.proposed.outcomes.length,
         },
       },
+      tokens: gate.tokens,
     };
   }
   const r = await runExploration(REPO_ROOT, specId, {
@@ -658,7 +662,10 @@ async function runAgent(
     author,
     actor: by,
   });
-  return { result: { agent, counts: { conceptos: r.concepts.length } } };
+  return {
+    result: { agent, counts: { conceptos: r.concepts.length } },
+    tokens: r.tokens,
+  };
 }
 
 // preflight: costo estimado de la corrida ANTES de gastar tokens (P2)
