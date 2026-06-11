@@ -470,6 +470,42 @@ DEC-001 con rationale, avanza a etapa `diseno` y consume `concepts.yaml`. Sin er
 
 **Tests totales: 143** (llm 8 · spec 60 · agent1 23 · agent2 3 · agent3 9 · orchestrator 40). Todos pasan.
 
+### Sesión 16 — correr agentes desde la UI (token-aware, sin doble corrida) ✅
+
+El equipo ya no necesita la terminal: discover/define/explore se disparan desde el dashboard, con la
+key SOLO en el server. Plan: [PLAN-SESION-16-correr-agentes-ui.md](PLAN-SESION-16-correr-agentes-ui.md).
+
+- **P1 — infra (server):** `agentJobs.ts` = registro de jobs en memoria + **lock por (spec, agente)**.
+  `startAgentJob` corre en background (no bloquea la request). Endpoints `POST/GET /api/specs/:id/run/
+  :agent`: `assertCanRun` da **400 de precondición síncrono** (sin gastar tokens) antes de arrancar;
+  **409 si ya hay una corrida en curso**. La `ANTHROPIC_API_KEY` se carga vía
+  `--env-file-if-exists=../../.env` (dev + server); el browser nunca la ve.
+- **P2 — preflight cache-aware + guarda:** `discoverPreflight` (orquestador) resuelve fuentes y, SIN
+  llamar al modelo, cuenta texto/tabular y detecta cache hits por sha256 → `{textSources, cached,
+  toExtract, tabular, alreadyRan}`. `GET …/run/:agent/preflight`. Permite mostrar el costo antes de
+  gastar y la advertencia "nada cambió" (toExtract=0).
+- **P3 — contabilidad de tokens completa:** `callStructured` emite `onUsage`; `makeUsageSink` acumula.
+  Los 4 proposers + los 3 runners threadean el `usage` real hasta el endpoint y la UI; el reason de
+  `agent.proposed` registra el costo. Discover suma los cache hits.
+- **P4 — UI de Descubrimiento:** `RunAgentButton` (reusable): preflight → confirmación si ya corrió →
+  POST → **polling** (idle/running/done/error). "Correr Descubrimiento" arriba del triage; el empty
+  state apunta al botón (adiós hint de CLI).
+- **P5 — Definición + Exploración:** mismos botones (Correr Definición / Correr Exploración) reusando
+  `RunAgentButton`. explore re-corre en modo merge (mensaje propio).
+- **P6 — rol operador + tests:** `canRunAgents(user)` (gancho RBAC-lite, hoy `true`) deshabilita el
+  botón si el usuario no puede. Tests del lock/preflight/tokens (dashboard 4 · orchestrator +preflight
+  +tokens · llm +sink).
+
+**Fix colateral:** `GET /api/specs` regenera el índice antes de servir → el home ya no muestra
+etapa/propuesta viejas (las acciones del orquestador no regeneran el índice cache).
+
+**Verificación live (spec sandbox):** primer discover desde la UI = 10 hallazgos / **6.349 tokens**;
+re-correr → el Dialog detecta **3 fuentes en cache (0 tokens de extracción)** + "nada cambió" →
+"Correr igual" → corriendo… → **3.109 tokens / 3 en cache** (solo derivación). El ahorro por cache
+queda visible en el costo. Lock (409), preflight y guarda verificados.
+
+**Tests totales: 150** (llm 9 · spec 60 · agent1 23 · agent2 3 · agent3 9 · orchestrator 42 · dashboard 4).
+
 ## 5. Estado actual del repo
 
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa **`diseno`** (Exploración
@@ -525,6 +561,10 @@ DEC-001 con rationale, avanza a etapa `diseno` y consume `concepts.yaml`. Sin er
 pnpm install && pnpm build          # compila todos los paquetes
 pnpm typecheck && pnpm -r test      # gates de calidad
 pnpm dev                            # dashboard http://localhost:5173 (+ API :8791)
+                                    # el server carga .env solo → los agentes corren DESDE LA UI
+
+# Desde la UI (Sesión 16): botones "Correr Descubrimiento/Definición/Exploración" en cada etapa,
+# con preflight de costo, guarda de re-corrida y costo en tokens. El CLI sigue disponible:
 
 # CLI del orquestador (desde la raíz; las que llaman al modelo necesitan --env-file=.env):
 node --env-file=.env packages/orchestrator/dist/cli.js discover otp-onboarding
@@ -743,6 +783,39 @@ cuando los haya (el motor corre igual).
 - **Topic derivado de la spec (15c·P0):** `resolveTopic(spec)` = `intake.researchQuestion ?? title`.
   Ya no hay constante `TOPIC` en `cli.ts`; cualquier comando que llame a un agente lee la spec y
   deriva el topic. Si agregás un agente nuevo, derivá su topic igual (no hardcodees el dominio).
+
+- **El server AHORA corre agentes y carga `.env` (16·P1):** dejó de ser solo-lectura. Los scripts
+  `dev`/`server` usan `--env-file-if-exists=../../.env` (la key vive en el server, nunca en el browser).
+  Si el server no encuentra la key, las corridas fallan con error del SDK (capturado en el job, status
+  `error`) — no tumban el server. El registro de jobs es **en memoria**: si el server reinicia a mitad
+  de corrida, el job se pierde (la corrida es idempotente sobre el store → se re-dispara).
+- **Imports relativos `.ts` en el server (16·P1 — Node v25):** el server corre `.ts` crudo con el type
+  stripping nativo de Node, que **exige la extensión real `.ts`** en imports relativos (`./agentJobs.ts`,
+  NO `.js` ni sin extensión — ambos dan `ERR_MODULE_NOT_FOUND`). Por eso el tsconfig del dashboard tiene
+  `allowImportingTsExtensions: true` (lo permite con `moduleResolution: Bundler` + `noEmit`). Los imports
+  de packages (`@pda/*`) siguen resolviendo por node_modules, sin extensión.
+- **Lock de corridas por (spec, agente) (16·P1):** `startAgentJob` lanza `JobConflictError` (→ 409) si
+  ya hay un job `running` para ese par. Un agente distinto en la misma spec NO se bloquea. La precondición
+  se chequea ANTES (sync, 400) para no arrancar un job destinado a fallar. Si agregás un agente, sumalo a
+  `AGENT_NAMES`/`isAgentName` y a `assertCanRun`/`runAgent`/`discoverPreflight` (o su preflight liviano).
+- **Cache de evidencia y el topic (16·P2 — sutil):** el cache se indexa por `(sha256, topic)`. Como el
+  topic ahora se deriva de la spec (15c·P0), cambiar el título/researchQuestion **invalida la cache
+  vieja** (key distinta) → la primera corrida tras el cambio re-extrae. Es correcto (no es bug). El
+  preflight lo refleja: `cached` cae a 0 hasta que se re-puebla. La derivación SIEMPRE gasta tokens
+  (no se cachea); solo la extracción de texto aprovecha el cache.
+- **Token accounting vía sink (16·P3):** `callStructured` emite `onUsage`; `makeUsageSink()` acumula
+  sin cambiar el tipo de retorno de los proposers (cero churn en los stubs de tests). Los runners
+  reales crean un sink y lo pasan a sus proposers; devuelven `tokens {input,output,total,cacheHits}`.
+  Un runner stub que no setea `tokens` → `undefined` → la UI no muestra costo (no rompe). Si agregás
+  un proposer, pasale `onUsage: opts.onUsage` o su costo no se contará.
+- **RunAgentButton (16·P4) es el patrón de disparo:** preflight → confirmación si `alreadyRan` → POST →
+  **polling** del GET cada 1.5s hasta done/error. Reusado por los 3 agentes (solo cambia `agent`+`label`).
+  El gancho de permiso es `canRunAgents(user)` (hoy `true`; Fase 5 lo restringe). Para un agente nuevo,
+  reusá el botón; no dupliques la lógica de polling.
+- **Índice regenerado en `GET /api/specs` (16):** las acciones del orquestador (close-exploration,
+  discard-proposal, explore, y las corridas desde la UI) NO regeneran `specs/index.yaml` (es cache).
+  Por eso el handler del home lo regenera antes de servir. Si agregás una vista que liste specs desde
+  el índice, regeneralo o mostrará etapa/propuesta viejas.
 
 - **Cache de evidencia (O1·P3):** se guarda en `specs/<id>/evidence-cache/<sha256[:16]>-<topic>.json`.
   El cache se versiona en git (trazabilidad de procedencia). Para forzar re-extracción:

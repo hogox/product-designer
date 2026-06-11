@@ -13,7 +13,7 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: F0+F1+F2 (hechas) · Fase D2 (COMPLETA) · F3-A Exploración (CERRADA) · F3-B (siguiente)
+## Alcance actual: F0+F1+F2 · D2 · F3-A Exploración (CERRADA) · corridas desde la UI (HECHO) · F3-B (siguiente)
 
 - HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
   mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
@@ -53,9 +53,16 @@
   Decision y avanza la etapa a `diseno`. Topic/grounding derivados de la spec; re-explore no
   destructivo; estado coherente (sin propuesta colgada + explore). 143 tests.
   `otp-onboarding` quedó en etapa `diseno` con 3 conceptos promovidos — **entrada lista para el A4**.
+- HECHO (Sesión 16 — correr agentes desde la UI): los 3 agentes (discover/define/explore) se disparan
+  desde el dashboard, sin terminal. Server con la key vía `--env-file` (nunca en el browser), jobs
+  async con **lock por (spec, agente)** (409), **preflight cache-aware** (muestra el costo y "nada
+  cambió" antes de gastar), **guarda de re-corrida** (Dialog de confirmación) y **contabilidad de
+  tokens real** (threadeada hasta la UI + auditoría). `RunAgentButton` es el patrón reusable. El
+  stakeholder opera 100% en la UI (revisar/aprobar); el operador ya no necesita CLI. 150 tests.
+  Detalle: ESTADO.md §Sesión 16.
 - SIGUIENTE (F3-B/C/D/E): **Agente 4 Diseño** (lee `spec.concepts`, produce artefactos de diseño
-  anclados a los conceptos) → Validación (A5) → gate curar → Entrega (A6) → Aprendizaje (A7).
-  También: config real MCP/conectores, RBAC, multi-agente paralelo.
+  anclados a los conceptos; nace con su botón "Correr Diseño" en la UI) → Validación (A5) → gate curar
+  → Entrega (A6) → Aprendizaje (A7). También: config real MCP/conectores, RBAC, multi-agente paralelo.
 
 ## Metodología de trabajo
 

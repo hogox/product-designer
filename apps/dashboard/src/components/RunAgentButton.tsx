@@ -24,7 +24,7 @@ import {
   type AgentRunSummary,
   type TokenUsage,
 } from "../api";
-import { actorLabel, useSession } from "../session";
+import { actorLabel, canRunAgents, useSession } from "../session";
 
 type Phase = "idle" | "confirming" | "running" | "done" | "error";
 
@@ -173,10 +173,15 @@ export function RunAgentButton({
   }
 
   const running = phase === "running";
+  const allowed = canRunAgents(user);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button onClick={onClick} disabled={running || !specId}>
+      <Button
+        onClick={onClick}
+        disabled={running || !specId || !allowed}
+        title={allowed ? undefined : "Necesitás rol de operador para correr agentes"}
+      >
         {running ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (

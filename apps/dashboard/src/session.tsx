@@ -100,6 +100,16 @@ export function actorLabel(user: SessionUser | null): string {
   return `${user.name} (${user.role})`;
 }
 
+/**
+ * ¿Puede el usuario disparar corridas de agente (acción con costo en tokens)? (Sesión 16)
+ * Gancho a RBAC: HOY devuelve true para cualquier usuario logueado — el control real de roles
+ * (operador vs. revisor) llega con la Fase 5. Distinto de aprobar una compuerta (eso lo hace
+ * cualquier revisor). Centralizar el check acá permite restringirlo después sin tocar la UI.
+ */
+export function canRunAgents(user: SessionUser | null): boolean {
+  return user !== null;
+}
+
 /** Iniciales para el avatar (1–2 letras). */
 export function userInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
