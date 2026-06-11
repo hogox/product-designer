@@ -4,7 +4,7 @@
 // REAL (no la que el modelo reproduzca) y valida cada hallazgo contra FindingSchema:
 // quantitative exige computation, qualitative exige quote, y sin evidencia se rechaza.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { callStructured, resolveModel } from "@pda/llm";
 import {
   FindingSchema,
   type Evidence,
@@ -180,7 +180,6 @@ function formatPool(pool: EvidenceItem[]): string {
 }
 
 export interface AnthropicFindingsOptions {
-  client?: Anthropic;
   model?: string;
   maxTokens?: number;
 }
@@ -188,11 +187,9 @@ export interface AnthropicFindingsOptions {
 export function createAnthropicFindingsProposer(
   opts: AnthropicFindingsOptions = {},
 ): FindingsProposer {
-  const model = opts.model ?? process.env["PDA_MODEL"] ?? "claude-opus-4-8";
-  const maxTokens = opts.maxTokens ?? 4000;
+  const model = resolveModel("PDA_MODEL", opts.model);
   return {
     async propose({ topic, evidence, grounding }) {
-      const client = opts.client ?? new Anthropic();
       const groundingBlock = grounding
         ? `Pregunta de discovery: ${grounding.researchQuestion}\n` +
           (grounding.productContext
@@ -207,30 +204,16 @@ export function createAnthropicFindingsProposer(
         `Tópico de descubrimiento: ${topic}\n\n` +
         groundingBlock +
         `Pool de evidencia (cita por id):\n${formatPool(evidence)}`;
-      const res = await client.messages.create({
+
+      const { parsed } = await callStructured<{ findings?: RawFinding[] }>({
+        tag: "derive",
         model,
-        max_tokens: maxTokens,
-        thinking: { type: "adaptive" },
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: user }],
-        output_config: {
-          format: { type: "json_schema", schema: FINDINGS_SCHEMA },
-        },
-      } as Anthropic.MessageCreateParamsNonStreaming);
+        user,
+        schema: FINDINGS_SCHEMA as Record<string, unknown>,
+        maxTokens: opts.maxTokens,
+      });
 
-      const { input_tokens, output_tokens } = res.usage;
-      process.stderr.write(
-        `[tokens:derive] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} model=${model}\n`,
-      );
-
-      const textBlock = res.content.find((b) => b.type === "text");
-      const text = textBlock && "text" in textBlock ? textBlock.text : "{}";
-      let parsed: { findings?: RawFinding[] };
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        return [];
-      }
       return (parsed.findings ?? []).map((f) => ({
         statement: String(f.statement),
         type: f.type,

@@ -326,6 +326,16 @@ declarado** (sin contraseñas ni sesión de servidor: el riesgo sería parecer s
 - **Commit de esta sesión:** `f652389` (W6.3+W6.4). **D2 COMPLETA** — las 12 sesiones de W0–W6 están
   cerradas.
 
+### O1·P0.5 — `@pda/llm` + migración de los 3 proposers (Sesión 14 — parte 1) ✅
+
+- **`packages/llm`:** nuevo paquete `@pda/llm` que centraliza la llamada estructurada a Claude:
+  `callStructured<T>(opts)` (cliente, adaptive thinking, `output_config.json_schema`, token logging,
+  JSON parse con fallback) + `resolveModel(envVar, override?)` (cadena `envVar > PDA_MODEL > opus-4-8`).
+  Un agente nuevo = ~30 líneas de prompt+schema en lugar de ~80.
+- **`extract.ts`, `derive.ts`, `define.ts`** migrados a `callStructured`/`resolveModel`: eliminado el
+  cliente Anthropic local, el token-logging manual y el JSON.parse repetido en los 3 proposers.
+  `client?: Anthropic` removido de las interfaces públicas.
+
 ### O1 — Optimización de tokens del motor (Sesión 13) ✅
 
 Sin tocar `derive.ts`/`define.ts` en lo sustantivo (la inteligencia del producto queda en Opus).
@@ -364,6 +374,35 @@ Sin tocar `derive.ts`/`define.ts` en lo sustantivo (la inteligencia del producto
   - **Gate de adopción:** ≥90% cobertura y rechazo no sube >10% → cambiar default a Haiku.
   - Outputs en `/tmp/extract-ab/{opus,haiku}.json`. Correr con: `node --env-file=.env scripts/extract-ab.mjs`.
   - Pendiente: correr el A/B cuando haya `.env` disponible y decidir si adoptar Haiku como default.
+
+### F3-A — Agente 3 (Exploración) (Sesión 14 — parte 2) ✅
+
+Primer agente del diamante Solución. Genera conceptos de solución divergentes anclados a los JTBD.
+
+- **Schema (`packages/spec/src/schema.ts`):** `ConceptReviewStatusSchema (propuesto|seleccionado|descartado)`,
+  `ConceptSchema` (id/title/description/rationale/addresses_jtbd + review_status/note/by/at), campo
+  `concepts: z.array(ConceptSchema).default([])` en `SpecSchema`. Store: `writeConcepts`/`readConcepts`
+  → `specs/<id>/concepts.yaml` (archivo de trabajo; NO es `spec.proposed.yaml`).
+
+- **`packages/agent3` (`@pda/agent3`):** `explore.ts` con `ConceptProposer` (inyectable),
+  `assembleConcepts` (valida que los JTBD citados existan → rechaza sin procedencia, igual que F2),
+  `exploreConceptsFromJobs`, `createAnthropicExplorer` (modelo `PDA_MODEL_EXPLORE > PDA_MODEL > opus-4-8`).
+  Prompt: 3–6 conceptos divergentes, cita ids J-xxx exactos, feedback de descartados previos.
+
+- **Orquestador (`stage.ts`):** `runExploration` (precondición: `status=approved` + `jtbd.length > 0`;
+  lee notas de descartados previos y las pasa al runner; audita `stage.start`/`agent.proposed`;
+  commitea). `reviewConcept` (select/discard/reopen; `descartado` exige nota, invariante 7;
+  audita `concept.select|discard|reopen`). **`runner.ts`:** `createExplorationRunner`.
+  **`cli.ts`:** `explore`, `select-concept`, `discard-concept`.
+
+- **Dashboard — server (`server/index.ts`):** pipeline `exploracion` marcado `real:true`;
+  `GET /api/specs/:id/concepts` + `PATCH /api/specs/:id/concepts/:cid/review`;
+  `readConcepts` y `reviewConcept` importados.
+
+- **Dashboard — frontend:** `stages.ts` `exploracion` → `real:true`, sección `conceptos`.
+  `api.ts`: `concepts: Concept[]` en `SpecData`/`useSpecData` (fetch paralelo).
+  `badges.tsx`: `ConceptReviewStatusBadge`. `ConceptsTriage.tsx`: cards con filtros, botones
+  Seleccionar/Descartar/Reabrir, modal de nota de descarte. `StagePage.tsx` enruta la sección `conceptos`.
 
 **Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
@@ -409,6 +448,11 @@ verificaron live en el preview (sesión 12).
 - **O1 COMPLETA (sesión 13):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
   P3 cache por sha256, P4 feedback de iterate, P5 script A/B. Pendiente: correr el A/B
   (`node --env-file=.env scripts/extract-ab.mjs`) y decidir si adoptar Haiku como default de extracción.
+- **F3-A COMPLETA (sesión 14):** `@pda/llm` (callStructured + resolveModel), migración de los 3
+  proposers, `@pda/agent3` (Exploración), orquestador con `runExploration`/`reviewConcept`/CLI,
+  dashboard `exploracion` real (ConceptsTriage + endpoints). Demo en
+  `http://localhost:5173/spec/otp-onboarding/etapa/exploracion/conceptos`.
+  Correr el agente: `node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding`
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -423,6 +467,11 @@ node           packages/orchestrator/dist/cli.js reject  otp-onboarding F-009 --
 node --env-file=.env packages/orchestrator/dist/cli.js define   otp-onboarding
 node           packages/orchestrator/dist/cli.js approve otp-onboarding --by "Lead PM"
 node           packages/orchestrator/dist/cli.js status  otp-onboarding
+
+# Agente 3 — Exploración (spec debe estar approved con JTBD):
+node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding
+node           packages/orchestrator/dist/cli.js select-concept  otp-onboarding C-001
+node           packages/orchestrator/dist/cli.js discard-concept otp-onboarding C-002 --reason "..."
 
 # Demos por agente (corrida real, muestran el output):
 node --env-file=.env packages/agent1/dist/demo-derive.js     # documentos → hallazgos anclados
@@ -638,11 +687,14 @@ Ver el resumen de cada sesión en la sección 4 de este documento.
 ## 9. Mapa rápido (dónde tocar qué)
 
 - Esquema de la spec → `packages/spec/src/schema.ts`. Store/auditoría → `store.ts`/`audit.ts`.
+- Llamada a Claude (shared) → `packages/llm/src/index.ts` (`callStructured`/`resolveModel`).
 - Loop del Agente 1 → `packages/agent1/src/{ingest,compute,extract,derive}.ts`.
 - Agente 2 (Definición) → `packages/agent2/src/define.ts`.
+- Agente 3 (Exploración) → `packages/agent3/src/explore.ts`.
 - Routing/estado/gate/verificación → `packages/orchestrator/src/{stage,verify,runner,cli}.ts`.
 - Endpoints del dashboard → `apps/dashboard/server/index.ts`. UI → `apps/dashboard/src/{App,api,stages}.ts`,
   `src/pages/*`, `src/components/*`.
-- Para un **agente nuevo** (Fase 3+): copiar el patrón de `agent2` (proposer inyectable + structured
-  outputs + ensamblado determinista que valida y re-ancla), agregar el runner y el routing en el
-  orquestador, y la página de etapa en el dashboard (ya existe el placeholder con su plan).
+- Para un **agente nuevo** (Fase 3+): crear `packages/agentN/src/` con proposer inyectable +
+  `callStructured` + ensamblado determinista que valida y re-ancla (ver agente 3 como plantilla),
+  agregar el runner y el routing en el orquestador, la sección en `stages.ts` y la página/componente
+  de triage en el dashboard.

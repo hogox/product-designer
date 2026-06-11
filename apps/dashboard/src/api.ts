@@ -5,12 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   Spec,
   Finding,
+  Concept,
   AuditEntry,
   SourceEntry,
   SourceKind,
 } from "@pda/spec";
 
-export type { SourceEntry, SourceKind } from "@pda/spec";
+export type { Concept, SourceEntry, SourceKind } from "@pda/spec";
 
 export async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -156,6 +157,7 @@ export interface SpecData {
   spec: Spec | null;
   proposed: Spec | null;
   findings: Finding[];
+  concepts: Concept[];
   audit: AuditEntry[];
   state: StageState | null;
   error: string | null;
@@ -166,6 +168,7 @@ export function useSpecData(specId: string | null): SpecData {
   const [spec, setSpec] = useState<Spec | null>(null);
   const [proposed, setProposed] = useState<Spec | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
+  const [concepts, setConcepts] = useState<Concept[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [state, setState] = useState<StageState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -173,16 +176,18 @@ export function useSpecData(specId: string | null): SpecData {
   const refetch = useCallback(async () => {
     if (!specId) return;
     try {
-      const [s, p, f, a, st] = await Promise.all([
+      const [s, p, f, co, a, st] = await Promise.all([
         getJson<Spec>(`/api/spec/${specId}`),
         getJson<Spec | null>(`/api/proposed/${specId}`),
         getJson<Finding[]>(`/api/findings/${specId}`).catch(() => []),
+        getJson<Concept[]>(`/api/specs/${specId}/concepts`).catch(() => []),
         getJson<AuditEntry[]>(`/api/audit/${specId}`).catch(() => []),
         getJson<StageState>(`/api/state/${specId}`).catch(() => null),
       ]);
       setSpec(s);
       setProposed(p);
       setFindings(f);
+      setConcepts(co);
       setAudit(a);
       setState(st);
       setError(null);
@@ -195,7 +200,23 @@ export function useSpecData(specId: string | null): SpecData {
     void refetch();
   }, [refetch]);
 
-  return { specId, spec, proposed, findings, audit, state, error, refetch };
+  return { specId, spec, proposed, findings, concepts, audit, state, error, refetch };
+}
+
+// --- triage de conceptos (Exploración, F3-A) ---
+
+export type ConceptReviewStatus = "propuesto" | "seleccionado" | "descartado";
+
+export function reviewConcept(
+  specId: string,
+  cid: string,
+  body: { status: ConceptReviewStatus; note?: string; by?: string },
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/concepts/${cid}/review`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 // Verificación de Descubrimiento (espejo cliente de los 3 chequeos del orquestador):

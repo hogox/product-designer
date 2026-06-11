@@ -44,10 +44,13 @@
     Crear); creación atómica con intake + fuentes al commit; `IntakeEditPage` (retrofit para specs
     previas en `/spec/:id/intake`); `NewSpecModal` eliminado (subsumed por wizard). Overview muestra
     la `researchQuestion` como encabezado de contexto (o CTA para definirla). **D2 COMPLETA.**
-- HECHO (O1 — optimización de tokens, Sesión 13): 5 pasos implementados sobre el motor de
-  extracción/derivación/definición sin tocar la calidad. Ver sección O1 en ESTADO.md.
-- SIGUIENTE (F3): los 5 agentes restantes (Exploración→Aprendizaje) están desbloqueados.
-  También fuera de F3: config real de MCP/conectores, RBAC, multi-agente paralelo.
+- HECHO (O1 — optimización de tokens, Sesión 13): 5 pasos sobre el motor. Ver ESTADO.md.
+- HECHO (F3-A — Agente 3 Exploración, Sesión 14): `@pda/llm` (callStructured/resolveModel),
+  migración de los 3 proposers, `@pda/agent3`, orquestador (`explore`/`select-concept`/
+  `discard-concept`), dashboard `exploracion` real (ConceptsTriage). Demo:
+  `node --env-file=.env packages/orchestrator/dist/cli.js explore otp-onboarding`
+- SIGUIENTE (F3-B/C/D/E): Agentes Diseño (A4) → Validación (A5) → gate curar → Entrega (A6) →
+  Aprendizaje (A7). También: config real MCP/conectores, RBAC, multi-agente paralelo.
 
 ## Metodología de trabajo
 
@@ -56,15 +59,19 @@ No avanzar a la etapa N+1 sin que la compuerta de la etapa N funcione. Etiquetar
 
 ## Stack
 
-TS monorepo (pnpm). Spec en YAML+git (zod). Agente 1 = @anthropic-ai/sdk (claude-opus-4-8, ANTHROPIC_API_KEY).
-Cómputo tabular determinista en TS. Dashboard Vite+React + server delgado que lee el almacén de spec.
+TS monorepo (pnpm). Spec en YAML+git (zod). Agentes = `@pda/llm` + `@anthropic-ai/sdk`
+(claude-opus-4-8, ANTHROPIC_API_KEY). Cómputo tabular determinista en TS.
+Dashboard Vite+React + server delgado que lee el almacén de spec.
 
 ## Layout
 
 - `packages/spec` — esquema (zod) + spec store (read/write YAML, git, audit).
-- `packages/agent1` — Descubrimiento: ingestión, extracción de evidencia, cómputo, derivación, síntesis.
-- `packages/orchestrator` — estado + routing de 1 etapa + verificación + gate + auditoría (CLI).
-- `apps/dashboard` — Vite+React (visor spec, triage findings, gate) + server delgado. (Se construye en el paso 0.4.)
+- `packages/llm` — `callStructured`/`resolveModel`: shared helper para llamadas a Claude.
+- `packages/agent1` — Descubrimiento: ingestión, extracción de evidencia, cómputo, derivación.
+- `packages/agent2` — Definición: problem statement, JTBD, métricas HEART.
+- `packages/agent3` — Exploración: conceptos de solución anclados a los JTBD.
+- `packages/orchestrator` — estado + routing + gate + auditoría (CLI).
+- `apps/dashboard` — Vite+React (visor spec, triage findings/conceptos, gate) + server Express.
 - `specs/` — almacén de spec versionado en git. `samples/` — set de muestra del Agente 1.
 
 ## Comandos

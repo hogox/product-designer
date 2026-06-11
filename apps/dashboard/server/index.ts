@@ -11,6 +11,7 @@ import {
   readSpec,
   readProposedSpec,
   readFindings,
+  readConcepts,
   readSpecGroups,
   regenerateIndex,
   createSpec,
@@ -33,6 +34,7 @@ import {
   rejectFinding,
   reviewFinding,
   iterateGate,
+  reviewConcept,
 } from "@pda/orchestrator";
 
 const REVIEW_STATUSES = [
@@ -77,8 +79,8 @@ const PIPELINE = [
     diamante: "Solución",
     modo: "se reduce",
     gate: null,
-    status: "mock",
-    real: false,
+    status: "real",
+    real: true,
   },
   {
     n: 4,
@@ -469,6 +471,44 @@ app.post("/api/gate/:id/iterate", async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });
+  }
+});
+
+// --- conceptos de solución (Exploración, F3-A) ---
+
+// listar conceptos de trabajo de la spec (concepts.yaml)
+app.get("/api/specs/:id/concepts", async (req, res) => {
+  try {
+    res.json(await readConcepts(REPO_ROOT, req.params.id));
+  } catch {
+    res.json([]);
+  }
+});
+
+// triage de un concepto: seleccionar / descartar / reabrir
+// PATCH /api/specs/:id/concepts/:cid/review  { status, note?, by? }
+app.patch("/api/specs/:id/concepts/:cid/review", async (req, res) => {
+  const status = String(req.body?.status ?? "");
+  const validStatuses = ["seleccionado", "descartado", "propuesto"];
+  if (!validStatuses.includes(status))
+    return res.status(400).json({ error: `status inválido: ${status}` });
+  const note =
+    req.body?.note != null ? String(req.body.note) : undefined;
+  const actor = String(req.body?.by ?? "human").trim() || "human";
+  try {
+    const concept = await reviewConcept(
+      REPO_ROOT,
+      req.params.id,
+      req.params.cid,
+      {
+        status: status as "seleccionado" | "descartado" | "propuesto",
+        note,
+        actor,
+      },
+    );
+    res.json(concept);
+  } catch (err) {
+    res.status(400).json({ error: String(err) });
   }
 });
 

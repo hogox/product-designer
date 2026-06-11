@@ -99,6 +99,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.102.0
         version: 0.102.0(zod@3.25.76)
+      '@pda/llm':
+        specifier: workspace:*
+        version: link:../llm
       '@pda/spec':
         specifier: workspace:*
         version: link:../spec
@@ -121,9 +124,27 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.102.0
         version: 0.102.0(zod@3.25.76)
+      '@pda/llm':
+        specifier: workspace:*
+        version: link:../llm
       '@pda/spec':
         specifier: workspace:*
         version: link:../spec
+
+  packages/agent3:
+    dependencies:
+      '@pda/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@pda/spec':
+        specifier: workspace:*
+        version: link:../spec
+
+  packages/llm:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.102.0
+        version: 0.102.0(zod@3.25.76)
 
   packages/orchestrator:
     dependencies:
@@ -133,6 +154,9 @@ importers:
       '@pda/agent2':
         specifier: workspace:*
         version: link:../agent2
+      '@pda/agent3':
+        specifier: workspace:*
+        version: link:../agent3
       '@pda/spec':
         specifier: workspace:*
         version: link:../spec

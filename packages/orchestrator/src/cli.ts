@@ -23,8 +23,14 @@ import {
   iterateGate,
   rejectFinding,
   reviewFinding,
+  runExploration,
+  reviewConcept,
 } from "./stage.js";
-import { runDiscoveryWithSources, createDefinitionRunner } from "./runner.js";
+import {
+  runDiscoveryWithSources,
+  createDefinitionRunner,
+  createExplorationRunner,
+} from "./runner.js";
 
 const ROOT = process.cwd();
 const TOPIC = "abandono en la verificación OTP del onboarding";
@@ -90,7 +96,7 @@ async function main() {
 
   if (!cmd || !specId) {
     console.log(
-      "Uso: orchestrator <discover|define|status|approve|iterate|list-specs|create-spec|update-spec|archive-spec> <specId> [flags]",
+      "Uso: orchestrator <discover|define|explore|select-concept|discard-concept|status|approve|iterate|list-specs|create-spec|update-spec|archive-spec> <specId> [flags]",
     );
     process.exit(cmd ? 1 : 0);
   }
@@ -231,6 +237,53 @@ async function main() {
     const feedback = flag("feedback") ?? "(sin feedback)";
     await iterateGate(ROOT, specId, { feedback, actor: flag("by") ?? "human" });
     console.log(`↺ Iteración registrada: "${feedback}"`);
+    return;
+  }
+
+  if (cmd === "explore") {
+    const runner = createExplorationRunner({ topic: TOPIC });
+    const r = await runExploration(ROOT, specId, { runner, author: AUTHOR });
+    console.log(`\n▸ Exploración: ${r.concepts.length} conceptos propuestos.`);
+    for (const c of r.concepts) {
+      console.log(`\n  [${c.id}] ${c.title}`);
+      console.log(`         ${c.description}`);
+      console.log(`         JTBD: ${c.addresses_jtbd.join(", ")}`);
+    }
+    console.log(`\n  Triá los conceptos:`);
+    console.log(`  orchestrator select-concept ${specId} <id>`);
+    console.log(`  orchestrator discard-concept ${specId} <id> --reason "..."`);
+    return;
+  }
+
+  if (cmd === "select-concept") {
+    const cid = process.argv[4];
+    if (!cid) {
+      console.error("Uso: select-concept <specId> <conceptId> [--by Nombre]");
+      process.exit(1);
+    }
+    const c = await reviewConcept(ROOT, specId, cid, {
+      status: "seleccionado",
+      actor: flag("by") ?? "Lead de diseño",
+    });
+    console.log(`✓ Concepto ${c.id} seleccionado: ${c.title}`);
+    return;
+  }
+
+  if (cmd === "discard-concept") {
+    const cid = process.argv[4];
+    const reason = flag("reason");
+    if (!cid || !reason) {
+      console.error(
+        'Uso: discard-concept <specId> <conceptId> --reason "motivo" [--by Nombre]',
+      );
+      process.exit(1);
+    }
+    const c = await reviewConcept(ROOT, specId, cid, {
+      status: "descartado",
+      note: reason,
+      actor: flag("by") ?? "Lead de diseño",
+    });
+    console.log(`✗ Concepto ${c.id} descartado: ${c.title}`);
     return;
   }
 

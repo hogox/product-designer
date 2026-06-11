@@ -3,8 +3,8 @@
 // fuente y su locator se DERIVA de dónde aparece de verdad (no se confía en el modelo).
 // Una cita que no existe en la fuente se rechaza (anti back-fill).
 
-import Anthropic from "@anthropic-ai/sdk";
 import type { Evidence } from "@pda/spec";
+import { callStructured, resolveModel } from "@pda/llm";
 
 import type { TextDocument, TextSegment } from "./ingest.js";
 
@@ -117,7 +117,6 @@ Reglas:
 No deduzcas conclusiones ni hallazgos: solo extrae las frases ancladas.`;
 
 export interface AnthropicProposerOptions {
-  client?: Anthropic;
   model?: string;
   maxTokens?: number;
 }
@@ -125,44 +124,25 @@ export interface AnthropicProposerOptions {
 export function createAnthropicProposer(
   opts: AnthropicProposerOptions = {},
 ): EvidenceProposer {
-  const model =
-    opts.model ??
-    process.env["PDA_MODEL_EXTRACT"] ??
-    process.env["PDA_MODEL"] ??
-    "claude-opus-4-8";
-  const maxTokens = opts.maxTokens ?? 4000;
+  const model = resolveModel("PDA_MODEL_EXTRACT", opts.model);
   return {
     async propose({ source, topic, segments }) {
-      const client = opts.client ?? new Anthropic(); // lee ANTHROPIC_API_KEY del entorno
       const fragments = segments
         .map((s) => `[${s.locator}] ${s.text}`)
         .join("\n");
       const user = `Tópico de descubrimiento: ${topic}\nFuente: ${source}\n\nFragmentos (cada uno precedido por su [locator]):\n${fragments}`;
 
-      const res = await client.messages.create({
+      const { parsed } = await callStructured<{
+        evidence?: Array<{ quote?: unknown }>;
+      }>({
+        tag: `extract:${source}`,
         model,
-        max_tokens: maxTokens,
-        thinking: { type: "adaptive" },
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: user }],
-        output_config: {
-          format: { type: "json_schema", schema: EVIDENCE_SCHEMA },
-        },
-      } as Anthropic.MessageCreateParamsNonStreaming);
+        user,
+        schema: EVIDENCE_SCHEMA as Record<string, unknown>,
+        maxTokens: opts.maxTokens,
+      });
 
-      const { input_tokens, output_tokens } = res.usage;
-      process.stderr.write(
-        `[tokens:extract] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} source=${source} model=${model}\n`,
-      );
-
-      const textBlock = res.content.find((b) => b.type === "text");
-      const text = textBlock && "text" in textBlock ? textBlock.text : "{}";
-      let parsed: { evidence?: Array<{ quote?: unknown }> };
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        return [];
-      }
       return (parsed.evidence ?? [])
         .filter((e) => typeof e.quote === "string")
         .map((e) => ({ quote: String(e.quote) }));

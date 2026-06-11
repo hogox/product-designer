@@ -1,5 +1,5 @@
 {
-  "name": "@pda/agent2",
+  "name": "@pda/llm",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,12 +10,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\""
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.102.0",
-    "@pda/spec": "workspace:*",
-    "@pda/llm": "workspace:*"
+    "@anthropic-ai/sdk": "^0.102.0"
   }
 }

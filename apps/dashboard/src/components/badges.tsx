@@ -4,6 +4,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import type {
+  ConceptReviewStatus,
   FindingType,
   HeartCategory,
   ReviewStatus,
@@ -67,6 +68,22 @@ export function HeartBadge({ category }: { category: HeartCategory }) {
       {category}
     </Badge>
   );
+}
+
+const CONCEPT_REVIEW_LABEL: Record<ConceptReviewStatus, string> = {
+  propuesto: "Propuesto",
+  seleccionado: "Seleccionado",
+  descartado: "Descartado",
+};
+const CONCEPT_REVIEW_VARIANT: Record<ConceptReviewStatus, "pendiente" | "aprobado" | "rechazado"> = {
+  propuesto: "pendiente",
+  seleccionado: "aprobado",
+  descartado: "rechazado",
+};
+
+/** Estado de revisión de un concepto de solución (Exploración, F3-A). */
+export function ConceptReviewStatusBadge({ status }: { status: ConceptReviewStatus }) {
+  return <Badge variant={CONCEPT_REVIEW_VARIANT[status]}>{CONCEPT_REVIEW_LABEL[status]}</Badge>;
 }
 
 /** Tipo de fuente con su icono (página Fuentes). */

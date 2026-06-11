@@ -11,6 +11,7 @@ import { Framing } from "../components/Framing";
 import { Jtbd } from "../components/Jtbd";
 import { Metrics } from "../components/Metrics";
 import { StagePlaceholder } from "../components/StagePlaceholder";
+import { ConceptsTriage } from "../components/ConceptsTriage";
 import { RealMockBadge } from "../components/badges";
 import { STAGE_ICON } from "../components/icons";
 import { useShell } from "../App";
@@ -132,6 +133,18 @@ function StageContent({
             title="Verificación de la propuesta"
           />
         </div>
+      );
+  }
+
+  if (stage.id === "exploracion") {
+    if (section === "conceptos")
+      return (
+        <ConceptsTriage
+          specId={shell.specId}
+          concepts={shell.concepts}
+          jobs={shell.spec?.jtbd ?? []}
+          onChange={shell.refetch}
+        />
       );
   }
 

@@ -12,10 +12,13 @@ import {
   readProposedSpec,
   writeFindings,
   readFindings,
+  writeConcepts,
+  readConcepts,
   commitSpec,
   appendAudit,
   readAudit,
   specPaths,
+  type Concept,
   type Finding,
   type GitAuthor,
   type ReviewStatus,
@@ -39,11 +42,25 @@ export interface DefinitionRunner {
   run(current: Spec, findings: Finding[], feedback?: string): Promise<{ proposed: Spec }>;
 }
 
+/** Agente 3 (Exploración): produce conceptos de solución anclados a los JTBD. Inyectable. */
+export interface ExplorationRunner {
+  run(
+    current: Spec,
+    discardedFeedback?: string,
+  ): Promise<{ concepts: Concept[] }>;
+}
+
 export interface DiscoveryResult {
   specId: string;
   stage: "descubrimiento";
   findings: Finding[];
   verification: VerificationCriterion[];
+}
+
+export interface ExplorationResult {
+  specId: string;
+  stage: "exploracion";
+  concepts: Concept[];
 }
 
 export interface PendingGate {
@@ -367,4 +384,120 @@ export async function iterateGate(
     spec_id: specId,
     reason: opts.feedback,
   });
+}
+
+/**
+ * Etapa 3 — EXPLORACIÓN (Agente 3): precondición spec `approved` con al menos 1 JTBD.
+ * Genera conceptos de solución divergentes anclados a los jobs, los persiste en
+ * `concepts.yaml` (archivo de trabajo; no es spec.proposed). Audita y commitea.
+ */
+export async function runExploration(
+  rootDir: string,
+  specId: string,
+  opts: { runner: ExplorationRunner; actor?: string; author?: GitAuthor },
+): Promise<ExplorationResult> {
+  const current = await readSpec(rootDir, specId);
+
+  if (current.status !== "approved") {
+    throw new Error(
+      `la spec '${specId}' debe estar en estado 'approved' para explorar (estado actual: ${current.status})`,
+    );
+  }
+  if (current.jtbd.length === 0) {
+    throw new Error(
+      `la spec '${specId}' no tiene JTBD; ejecuta Definición y apruébala antes de explorar`,
+    );
+  }
+
+  // Feedback de conceptos descartados: notas de los conceptos con status `descartado`.
+  const existing = await readConcepts(rootDir, specId).catch(() => [] as Concept[]);
+  const discardedNotes = existing
+    .filter((c) => c.review_status === "descartado" && c.review_note)
+    .map((c) => `[${c.id}] ${c.title}: ${c.review_note}`)
+    .join("\n");
+
+  await appendAudit(rootDir, {
+    actor: opts.actor ?? "orchestrator",
+    action: "stage.start",
+    spec_id: specId,
+    reason: discardedNotes
+      ? `etapa exploracion (con ${existing.filter((c) => c.review_status === "descartado").length} conceptos descartados previos)`
+      : "etapa exploracion",
+  });
+
+  const { concepts } = await opts.runner.run(
+    current,
+    discardedNotes || undefined,
+  );
+  await writeConcepts(rootDir, specId, concepts);
+
+  await appendAudit(rootDir, {
+    actor: "agent3",
+    action: "agent.proposed",
+    spec_id: specId,
+    reason: `${concepts.length} conceptos propuestos (exploracion)`,
+  });
+
+  await commitSpec(
+    rootDir,
+    specId,
+    `Agente 3 (Exploración) propone ${concepts.length} conceptos para '${specId}'`,
+    opts.author,
+  );
+
+  return { specId, stage: "exploracion", concepts };
+}
+
+/**
+ * Triage de conceptos (humano): seleccionar / descartar / reabrir.
+ * `descartado` exige review_note (invariante 7). Escribe en `concepts.yaml`.
+ */
+export async function reviewConcept(
+  rootDir: string,
+  specId: string,
+  conceptId: string,
+  opts: {
+    status: "seleccionado" | "descartado" | "propuesto";
+    note?: string;
+    actor: string;
+  },
+): Promise<Concept> {
+  const { status, note } = opts;
+  const trimmedNote = note?.trim() || null;
+
+  if (status === "descartado" && !trimmedNote) {
+    throw new Error("'descartado' exige una nota (invariante 7)");
+  }
+
+  const concepts = await readConcepts(rootDir, specId);
+  const idx = concepts.findIndex((c) => c.id === conceptId);
+  if (idx < 0) throw new Error(`concepto no encontrado: ${conceptId}`);
+
+  const updated: Concept = {
+    ...concepts[idx]!,
+    review_status: status,
+    review_note: trimmedNote,
+    reviewed_by: opts.actor,
+    reviewed_at: now(),
+  };
+  const next = [...concepts];
+  next[idx] = updated;
+  await writeConcepts(rootDir, specId, next);
+
+  const verb =
+    status === "seleccionado"
+      ? "concept.select"
+      : status === "descartado"
+        ? "concept.discard"
+        : "concept.reopen";
+
+  await appendAudit(rootDir, {
+    actor: opts.actor,
+    action: verb,
+    spec_id: specId,
+    target: conceptId,
+    reason: trimmedNote,
+  });
+
+  return updated;
 }

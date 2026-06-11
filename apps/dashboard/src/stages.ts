@@ -55,13 +55,8 @@ export const STAGES: StageDef[] = [
     diamante: "Solución",
     modo: "se reduce",
     gate: null,
-    real: false,
-    sections: [{ id: "plan", label: "Plan" }],
-    planned: [
-      "Ideación divergente (skills de ideación)",
-      "Wireframes lo-fi",
-      "Exploración de alternativas de solución",
-    ],
+    real: true,
+    sections: [{ id: "conceptos", label: "Conceptos" }],
   },
   {
     n: 4,

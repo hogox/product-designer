@@ -4,7 +4,7 @@
 // re-valida que esos ids existan (un job sin sustento real se rechaza). El modelo redacta;
 // los baselines provienen solo de la evidencia computada; los targets los fija el humano.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { callStructured, resolveModel } from "@pda/llm";
 import {
   parseSpec,
   type Finding,
@@ -188,7 +188,6 @@ function formatFindings(findings: Finding[]): string {
 }
 
 export interface AnthropicDefinerOptions {
-  client?: Anthropic;
   model?: string;
   maxTokens?: number;
 }
@@ -196,34 +195,24 @@ export interface AnthropicDefinerOptions {
 export function createAnthropicDefiner(
   opts: AnthropicDefinerOptions = {},
 ): Definer {
-  const model = opts.model ?? process.env["PDA_MODEL"] ?? "claude-opus-4-8";
-  const maxTokens = opts.maxTokens ?? 4000;
+  const model = resolveModel("PDA_MODEL", opts.model);
   return {
     async define({ topic, title, findings, feedback }) {
-      const client = opts.client ?? new Anthropic();
       const feedbackBlock = feedback
         ? `\nFeedback de iteración (a incorporar en esta propuesta):\n${feedback}\n`
         : "";
       const user = `Tópico: ${topic}\nTítulo de la spec: ${title}\n\nHallazgos validados (con su evidencia anclada):\n${formatFindings(findings)}${feedbackBlock}`;
-      const res = await client.messages.create({
+
+      const { parsed } = await callStructured<RawDefinition>({
+        tag: "define",
         model,
-        max_tokens: maxTokens,
-        thinking: { type: "adaptive" },
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: user }],
-        output_config: {
-          format: { type: "json_schema", schema: DEFINITION_SCHEMA },
-        },
-      } as Anthropic.MessageCreateParamsNonStreaming);
+        user,
+        schema: DEFINITION_SCHEMA as Record<string, unknown>,
+        maxTokens: opts.maxTokens,
+      });
 
-      const { input_tokens, output_tokens } = res.usage;
-      process.stderr.write(
-        `[tokens:define] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} model=${model}\n`,
-      );
-
-      const textBlock = res.content.find((b) => b.type === "text");
-      const text = textBlock && "text" in textBlock ? textBlock.text : "{}";
-      return JSON.parse(text) as RawDefinition;
+      return parsed;
     },
   };
 }

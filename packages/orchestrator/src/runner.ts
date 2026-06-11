@@ -21,11 +21,16 @@ import {
   writeEvidenceCache,
 } from "@pda/agent1";
 import { defineProblem, createAnthropicDefiner } from "@pda/agent2";
+import {
+  exploreConceptsFromJobs,
+  createAnthropicExplorer,
+} from "@pda/agent3";
 
 import {
   runDiscovery,
   type DiscoveryRunner,
   type DefinitionRunner,
+  type ExplorationRunner,
   type DiscoveryResult,
 } from "./stage.js";
 
@@ -264,6 +269,25 @@ export function createDefinitionRunner(opts: {
         feedback,
       });
       return { proposed };
+    },
+  };
+}
+
+export function createExplorationRunner(opts: {
+  topic: string;
+}): ExplorationRunner {
+  return {
+    async run(current: Spec, discardedFeedback?: string) {
+      const { accepted: concepts } = await exploreConceptsFromJobs(
+        current.jtbd,
+        {
+          topic: opts.topic,
+          problemStatement: current.problem_statement ?? opts.topic,
+          proposer: createAnthropicExplorer(),
+          discardedFeedback,
+        },
+      );
+      return { concepts };
     },
   };
 }
