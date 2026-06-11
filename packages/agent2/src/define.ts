@@ -38,6 +38,7 @@ export interface Definer {
     topic: string;
     title: string;
     findings: Finding[];
+    feedback?: string;
   }): Promise<RawDefinition>;
 }
 
@@ -97,12 +98,13 @@ export function assembleDefinition(
 export async function defineProblem(
   current: Spec,
   findings: Finding[],
-  opts: { topic: string; definer: Definer },
+  opts: { topic: string; definer: Definer; feedback?: string },
 ): Promise<DefinitionResult> {
   const raw = await opts.definer.define({
     topic: opts.topic,
     title: current.title,
     findings,
+    feedback: opts.feedback,
   });
   return assembleDefinition(current, findings, raw);
 }
@@ -197,9 +199,12 @@ export function createAnthropicDefiner(
   const model = opts.model ?? process.env["PDA_MODEL"] ?? "claude-opus-4-8";
   const maxTokens = opts.maxTokens ?? 4000;
   return {
-    async define({ topic, title, findings }) {
+    async define({ topic, title, findings, feedback }) {
       const client = opts.client ?? new Anthropic();
-      const user = `Tópico: ${topic}\nTítulo de la spec: ${title}\n\nHallazgos validados (con su evidencia anclada):\n${formatFindings(findings)}`;
+      const feedbackBlock = feedback
+        ? `\nFeedback de iteración (a incorporar en esta propuesta):\n${feedback}\n`
+        : "";
+      const user = `Tópico: ${topic}\nTítulo de la spec: ${title}\n\nHallazgos validados (con su evidencia anclada):\n${formatFindings(findings)}${feedbackBlock}`;
       const res = await client.messages.create({
         model,
         max_tokens: maxTokens,
@@ -210,6 +215,11 @@ export function createAnthropicDefiner(
           format: { type: "json_schema", schema: DEFINITION_SCHEMA },
         },
       } as Anthropic.MessageCreateParamsNonStreaming);
+
+      const { input_tokens, output_tokens } = res.usage;
+      process.stderr.write(
+        `[tokens:define] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} model=${model}\n`,
+      );
 
       const textBlock = res.content.find((b) => b.type === "text");
       const text = textBlock && "text" in textBlock ? textBlock.text : "{}";

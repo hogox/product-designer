@@ -218,6 +218,11 @@ export function createAnthropicFindingsProposer(
         },
       } as Anthropic.MessageCreateParamsNonStreaming);
 
+      const { input_tokens, output_tokens } = res.usage;
+      process.stderr.write(
+        `[tokens:derive] in=${input_tokens} out=${output_tokens} total=${input_tokens + output_tokens} model=${model}\n`,
+      );
+
       const textBlock = res.content.find((b) => b.type === "text");
       const text = textBlock && "text" in textBlock ? textBlock.text : "{}";
       let parsed: { findings?: RawFinding[] };
