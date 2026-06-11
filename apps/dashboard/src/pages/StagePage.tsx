@@ -130,7 +130,21 @@ function StageContent({
       );
     if (section === "enmarcado")
       return (
-        <Framing shown={shown} current={shell.spec} isProposal={isProposal} />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3">
+            <div className="text-sm text-muted-foreground">
+              El Agente 2 toma los hallazgos validados y propone el enmarcado
+              (problem statement, JTBD y métricas) para la compuerta.
+            </div>
+            <RunAgentButton
+              specId={shell.specId}
+              agent="define"
+              label="Correr Definición"
+              onDone={shell.refetch}
+            />
+          </div>
+          <Framing shown={shown} current={shell.spec} isProposal={isProposal} />
+        </div>
       );
     if (section === "jtbd") return <Jtbd shown={shown} />;
     if (section === "metricas") return <Metrics shown={shown} />;
@@ -154,14 +168,28 @@ function StageContent({
   if (stage.id === "exploracion") {
     if (section === "conceptos")
       return (
-        <ConceptsTriage
-          specId={shell.specId}
-          concepts={shell.concepts}
-          jobs={shell.spec?.jtbd ?? []}
-          stage={shell.spec?.current_stage ?? null}
-          promoted={shell.spec?.concepts ?? []}
-          onChange={shell.refetch}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3">
+            <div className="text-sm text-muted-foreground">
+              El Agente 3 genera conceptos de solución divergentes anclados a los
+              JTBD. Re-correr conserva los ya triados (merge).
+            </div>
+            <RunAgentButton
+              specId={shell.specId}
+              agent="explore"
+              label="Correr Exploración"
+              onDone={shell.refetch}
+            />
+          </div>
+          <ConceptsTriage
+            specId={shell.specId}
+            concepts={shell.concepts}
+            jobs={shell.spec?.jtbd ?? []}
+            stage={shell.spec?.current_stage ?? null}
+            promoted={shell.spec?.concepts ?? []}
+            onChange={shell.refetch}
+          />
+        </div>
       );
   }
 
