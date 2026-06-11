@@ -10,6 +10,17 @@ import { FolderUp, UploadCloud } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
   getSources,
@@ -53,6 +64,7 @@ export function SourcesPage() {
   const [completeness, setCompleteness] = useState<SourceCompleteness | null>(
     null,
   );
+  const [discardSid, setDiscardSid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -106,11 +118,10 @@ export function SourcesPage() {
     await refetch();
   }
 
-  async function onDiscard(sid: string) {
+  async function confirmDiscard(sid: string, reason?: string) {
     if (!specId) return;
-    const reason =
-      window.prompt("Motivo del descarte (opcional):") ?? undefined;
-    await discardSource(specId, sid, { reason });
+    await discardSource(specId, sid, { reason: reason?.trim() || undefined });
+    setDiscardSid(null);
     await refetch();
   }
 
@@ -185,7 +196,7 @@ export function SourcesPage() {
             key={s.id}
             source={s}
             onReclassify={onReclassify}
-            onDiscard={onDiscard}
+            onDiscard={setDiscardSid}
           />
         ))}
       </div>
@@ -200,7 +211,71 @@ export function SourcesPage() {
           ))}
         </div>
       )}
+
+      {discardSid && (
+        <DiscardSourceDialog
+          filename={sources.find((s) => s.id === discardSid)?.filename ?? ""}
+          onConfirm={(reason) => confirmDiscard(discardSid, reason)}
+          onClose={() => setDiscardSid(null)}
+        />
+      )}
     </div>
+  );
+}
+
+// Descartar una fuente (soft delete): motivo opcional, queda en auditoría. W4.2: Dialog stock.
+function DiscardSourceDialog({
+  filename,
+  onConfirm,
+  onClose,
+}: {
+  filename: string;
+  onConfirm: (reason?: string) => void;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Descartar fuente</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-foreground">{filename}</span> deja
+            de alimentar al Agente 1. Es un soft delete: el binario se conserva y
+            queda en el log.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onConfirm(reason);
+          }}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="discard-reason">Motivo (opcional)</Label>
+            <Textarea
+              id="discard-reason"
+              autoFocus
+              rows={2}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Duplicada / fuera de alcance…"
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button type="submit" variant="destructive">
+              Descartar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
