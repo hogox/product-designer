@@ -368,12 +368,15 @@ Sin tocar `derive.ts`/`define.ts` en lo sustantivo (la inteligencia del producto
     "Feedback de iteración (a incorporar)". El modelo ajusta la propuesta sin re-descubrimiento.
   - `DefinitionRunner.run` acepta `feedback?: string` (backward compat: sin feedback = igual a antes).
 
-- **P5 — A/B Opus vs Haiku (`scripts/extract-ab.mjs`):**
+- **P5 — A/B Opus vs Haiku (`scripts/extract-ab.mjs`) — CORRIDO ✅:**
   - Extrae el corpus 2 veces con distinto modelo (`PDA_MODEL_EXTRACT`), deriva ambas con Opus
     (variable aislada). Compara: citas aceptadas, tasa de rechazo, cobertura de hallazgos.
-  - **Gate de adopción:** ≥90% cobertura y rechazo no sube >10% → cambiar default a Haiku.
-  - Outputs en `/tmp/extract-ab/{opus,haiku}.json`. Correr con: `node --env-file=.env scripts/extract-ab.mjs`.
-  - Pendiente: correr el A/B cuando haya `.env` disponible y decidir si adoptar Haiku como default.
+  - **Resultado (otp-onboarding, 3 fuentes txt/pdf):** Opus 10 citas/0% alucinación → 8 hallazgos.
+    Haiku 12 citas/0% alucinación → 8 hallazgos. **Solapamiento: 21.4%** (< gate 90%).
+  - **Decisión:** Haiku NO pasa el gate. Extrae citas divergentes (diferentes, no las mismas) →
+    riesgo de perder evidencia clave. **Opus se mantiene como default de extracción** (`PDA_MODEL_EXTRACT`).
+  - Fix colateral: `callStructured` omite `thinking: adaptive` para modelos sin soporte (Haiku).
+    Detección por regex `/haiku/i` en el model id → robusto sin lista de allowlist.
 
 ### F3-A — Agente 3 (Exploración) (Sesión 14 — parte 2) ✅
 
@@ -460,9 +463,9 @@ verificaron live en el preview (sesión 12).
   **retrofit** (`/spec/:id/intake`) edita el intake de specs existentes. `otp-onboarding` sigue
   **sin intake** (carga con `intake: null`); se puede definir desde Overview → "Definir enmarcado".
 - **D2 COMPLETA (sesión 12):** todas las wonders W0–W6 están cerradas. La Fase 3 está desbloqueada.
-- **O1 COMPLETA (sesión 13):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
-  P3 cache por sha256, P4 feedback de iterate, P5 script A/B. Pendiente: correr el A/B
-  (`node --env-file=.env scripts/extract-ab.mjs`) y decidir si adoptar Haiku como default de extracción.
+- **O1 COMPLETA (sesiones 13–15b):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
+  P3 cache por sha256, P4 feedback de iterate, P5 A/B corrido → **Opus se mantiene** (solapamiento Haiku
+  21.4%, gate 90%). Fix: `callStructured` omite thinking en modelos Haiku.
 - **F3-A COMPLETA (sesiones 14–15a):** `@pda/llm` (callStructured + resolveModel), migración de los 3
   proposers, `@pda/agent3` (Exploración), orquestador con `runExploration`/`reviewConcept`/CLI,
   dashboard `exploracion` real (ConceptsTriage + endpoints). 122 tests (todos pasan). Demo en
@@ -659,9 +662,13 @@ cuando los haya (el motor corre igual).
 
 - **PDA_MODEL_EXTRACT (O1·P1):** configura el modelo de extracción independientemente del resto.
   Cadena de resolución: `PDA_MODEL_EXTRACT` → `PDA_MODEL` → `claude-opus-4-8`. Derivación y
-  Definición siempre siguen `PDA_MODEL` (default Opus). Para testear Haiku:
-  `PDA_MODEL_EXTRACT=claude-haiku-4-5 node --env-file=.env packages/orchestrator/dist/cli.js discover ...`
+  Definición siempre siguen `PDA_MODEL` (default Opus). **A/B corrido: Haiku no pasa el gate
+  (solapamiento 21.4%)** → Opus es el default y la recomendación operativa.
+  Si se quiere probar de todos modos: `PDA_MODEL_EXTRACT=claude-haiku-4-5 node --env-file=.env ...`
   Con `--no-cache` si querés comparar contra una extracción Opus previa (evita el cache hit).
+- **`callStructured` (O1·P5 fix):** Haiku no soporta `thinking: adaptive`; el helper lo detecta
+  por regex `/haiku/i` en el model id y omite el bloque `thinking` automáticamente. No hace falta
+  configurar nada extra al usar Haiku como modelo alternativo.
 
 - **Cache de evidencia (O1·P3):** se guarda en `specs/<id>/evidence-cache/<sha256[:16]>-<topic>.json`.
   El cache se versiona en git (trazabilidad de procedencia). Para forzar re-extracción:

@@ -32,12 +32,15 @@ export async function callStructured<T>(
   const client = opts.client ?? new Anthropic();
   const maxTokens = opts.maxTokens ?? 4000;
 
+  // Haiku no soporta adaptive thinking; solo Opus/Sonnet/Fable lo soportan.
+  const supportsThinking = !/haiku/i.test(opts.model);
+
   const res = await (client.messages.create as (
     p: Anthropic.MessageCreateParamsNonStreaming,
   ) => Promise<Anthropic.Message>)({
     model: opts.model,
     max_tokens: maxTokens,
-    thinking: { type: "adaptive" },
+    ...(supportsThinking ? { thinking: { type: "adaptive" } } : {}),
     system: opts.system,
     messages: [{ role: "user", content: opts.user }],
     output_config: {
