@@ -2,8 +2,8 @@
 // etiqueta muted, patrón de tarjetas-métrica de Stratify. Lee de la spec viva + el working
 // set de hallazgos (para el desglose por estado de revisión).
 
-import { Briefcase, GitBranch, Gauge, ListChecks } from "lucide-react";
-import type { Spec, Finding, ReviewStatus } from "@pda/spec";
+import { Briefcase, GitBranch, Gauge, Lightbulb, ListChecks } from "lucide-react";
+import type { Spec, Finding, Concept, ReviewStatus } from "@pda/spec";
 
 import { Card } from "@/components/ui/card";
 import { SectionIcon, type IconTone } from "./icons";
@@ -40,9 +40,11 @@ function Stat({
 export function StatCards({
   spec,
   findings,
+  concepts = [],
 }: {
   spec: Spec;
   findings: Finding[];
+  concepts?: Concept[];
 }) {
   // El working set (findings) trae el estado de revisión vivo; si está vacío (spec ya
   // aprobada sin propuesta), cae a los hallazgos consolidados en la spec.
@@ -50,8 +52,15 @@ export function StatCards({
   const by = (s: ReviewStatus) =>
     fs.filter((f) => f.review_status === s).length;
 
+  // Conceptos en triage (concepts.yaml) o ya promovidos a la spec (post-cierre).
+  const cs = concepts.length > 0 ? concepts : spec.concepts;
+  const selected = cs.filter((c) => c.review_status === "seleccionado").length;
+  const showConcepts = cs.length > 0;
+
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div
+      className={`grid grid-cols-2 gap-3 ${showConcepts ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
+    >
       <Stat
         icon={GitBranch}
         tone="primary"
@@ -82,6 +91,15 @@ export function StatCards({
         value={spec.outcomes.length}
         label="Métricas"
       />
+      {showConcepts && (
+        <Stat
+          icon={Lightbulb}
+          tone="amber"
+          value={cs.length}
+          label="Conceptos"
+          hint={`${selected} seleccionado${selected === 1 ? "" : "s"}`}
+        />
+      )}
     </div>
   );
 }

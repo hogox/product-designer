@@ -7,6 +7,7 @@ import {
   FileText,
   Gauge,
   History,
+  Lightbulb,
   ListChecks,
   ListTodo,
   Target,
@@ -116,6 +117,30 @@ export function SpecOverview({ spec }: { spec: Spec }) {
                   {j.statement}{" "}
                   <span className="text-muted-foreground">
                     ({j.id} ← {j.supported_by.join(", ")})
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {spec.concepts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <SectionIcon icon={Lightbulb} tone="amber" />
+              Conceptos de solución
+              <Badge variant="secondary">{spec.concepts.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm">
+              {spec.concepts.map((c) => (
+                <li key={c.id}>
+                  <span className="font-medium">{c.title}</span>{" "}
+                  <span className="text-muted-foreground">
+                    ({c.id} → {c.addresses_jtbd.join(", ")})
                   </span>
                 </li>
               ))}

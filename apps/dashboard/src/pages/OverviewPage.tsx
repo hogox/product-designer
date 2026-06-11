@@ -23,7 +23,7 @@ import { STAGES } from "../stages";
 import { specPath } from "../nav";
 
 export function OverviewPage() {
-  const { specId, spec, findings, audit, state } = useShell();
+  const { specId, spec, findings, concepts, audit, state } = useShell();
 
   if (!spec) {
     return (
@@ -40,7 +40,7 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-4">
-      <StatCards spec={spec} findings={findings} />
+      <StatCards spec={spec} findings={findings} concepts={concepts} />
 
       {/* W6.3: encabezado de contexto — pregunta de investigación o CTA para definirla */}
       {spec.intake?.researchQuestion ? (

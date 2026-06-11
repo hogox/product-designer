@@ -143,6 +143,8 @@ function StageContent({
           specId={shell.specId}
           concepts={shell.concepts}
           jobs={shell.spec?.jtbd ?? []}
+          stage={shell.spec?.current_stage ?? null}
+          promoted={shell.spec?.concepts ?? []}
           onChange={shell.refetch}
         />
       );

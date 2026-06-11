@@ -35,6 +35,8 @@ import {
   reviewFinding,
   iterateGate,
   reviewConcept,
+  closeExploration,
+  explorationVerification,
 } from "@pda/orchestrator";
 
 const REVIEW_STATUSES = [
@@ -509,6 +511,39 @@ app.patch("/api/specs/:id/concepts/:cid/review", async (req, res) => {
     res.json(concept);
   } catch (err) {
     res.status(400).json({ error: String(err) });
+  }
+});
+
+// verificación de cierre de Exploración (¿se puede cerrar?)
+app.get("/api/specs/:id/exploration/verification", async (req, res) => {
+  try {
+    const spec = await readSpec(REPO_ROOT, req.params.id);
+    const concepts = await readConcepts(REPO_ROOT, req.params.id).catch(
+      () => spec.concepts,
+    );
+    res.json(explorationVerification(concepts, spec.jtbd));
+  } catch (err) {
+    res.status(404).json({ error: String(err) });
+  }
+});
+
+// cerrar Exploración: promueve los seleccionados a la spec + Decision + etapa diseno
+// POST /api/specs/:id/exploration/close  { rationale, by }
+app.post("/api/specs/:id/exploration/close", async (req, res) => {
+  const rationale = String(req.body?.rationale ?? "").trim();
+  const by = String(req.body?.by ?? "").trim();
+  if (!rationale)
+    return res.status(400).json({ error: "falta el rationale del cierre" });
+  if (!by) return res.status(400).json({ error: "falta el responsable (by)" });
+  try {
+    const r = await closeExploration(REPO_ROOT, req.params.id, {
+      rationale,
+      by,
+      author: { name: by, email: "exploration@pda.local" },
+    });
+    res.json(r);
+  } catch (err) {
+    res.status(409).json({ error: String(err) });
   }
 });
 

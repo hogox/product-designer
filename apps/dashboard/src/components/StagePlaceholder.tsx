@@ -4,10 +4,17 @@
 
 import { Construction } from "lucide-react";
 
-import type { StageDef } from "../stages";
+import { STAGES, type StageDef } from "../stages";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SectionIcon } from "./icons";
+
+// Lista de etapas reales, derivada de los datos (no hardcodeada): así no vuelve a quedar vieja.
+function realStagesLabel(): string {
+  const names = STAGES.filter((s) => s.real).map((s) => s.name);
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+}
 
 export function StagePlaceholder({ stage }: { stage: StageDef }) {
   return (
@@ -20,8 +27,8 @@ export function StagePlaceholder({ stage }: { stage: StageDef }) {
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           Esta etapa todavía no está implementada (llega en Fase 3+). El motor
-          real son por ahora Descubrimiento y Definición. Abajo, el plan de esta
-          etapa según el PRD.
+          real son por ahora {realStagesLabel()}. Abajo, el plan de esta etapa
+          según el PRD.
         </p>
       </CardHeader>
       <CardContent className="space-y-5 text-sm">

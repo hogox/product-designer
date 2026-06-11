@@ -219,6 +219,34 @@ export function reviewConcept(
   });
 }
 
+// Criterio de verificación del orquestador (cierre de Exploración).
+export interface GateCriterion {
+  criterion: string;
+  type: "automated" | "human";
+  blocking: boolean;
+  status: "pending" | "pass" | "fail";
+  evidence: string | null;
+}
+
+export function getExplorationVerification(
+  specId: string,
+): Promise<GateCriterion[]> {
+  return getJson<GateCriterion[]>(
+    `/api/specs/${specId}/exploration/verification`,
+  );
+}
+
+export function closeExploration(
+  specId: string,
+  body: { rationale: string; by: string },
+): Promise<Response> {
+  return fetch(`/api/specs/${specId}/exploration/close`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 // Verificación de Descubrimiento (espejo cliente de los 3 chequeos del orquestador):
 // toda evidencia anclada, lo cuantitativo computado, lo cualitativo con cita.
 export interface DiscoveryCriterion {
