@@ -14,6 +14,7 @@ import {
   readFindings,
   commitSpec,
   appendAudit,
+  readAudit,
   specPaths,
   type Finding,
   type GitAuthor,
@@ -35,7 +36,7 @@ export interface DiscoveryRunner {
 
 /** Agente 2 (Definición): produce la propuesta v+1 desde los hallazgos validados. */
 export interface DefinitionRunner {
-  run(current: Spec, findings: Finding[]): Promise<{ proposed: Spec }>;
+  run(current: Spec, findings: Finding[], feedback?: string): Promise<{ proposed: Spec }>;
 }
 
 export interface DiscoveryResult {
@@ -144,14 +145,34 @@ export async function runDefinition(
     );
   }
 
+  // Feedback de iteración: el último gate.iterate posterior al último agent.proposed.
+  const auditLog = await readAudit(rootDir, specId);
+  let lastProposedIdx = -1;
+  for (let i = auditLog.length - 1; i >= 0; i--) {
+    if (auditLog[i]!.action === "agent.proposed") {
+      lastProposedIdx = i;
+      break;
+    }
+  }
+  let lastFeedback: string | undefined;
+  for (let i = auditLog.length - 1; i > lastProposedIdx; i--) {
+    const e = auditLog[i]!;
+    if (e.action === "gate.iterate" && e.reason) {
+      lastFeedback = e.reason;
+      break;
+    }
+  }
+
   await appendAudit(rootDir, {
     actor: opts.actor ?? "orchestrator",
     action: "stage.start",
     spec_id: specId,
-    reason: "etapa definicion",
+    reason: lastFeedback
+      ? `etapa definicion (con feedback: "${lastFeedback.slice(0, 80)}")`
+      : "etapa definicion",
   });
 
-  const { proposed: raw } = await opts.runner.run(current, findings);
+  const { proposed: raw } = await opts.runner.run(current, findings, lastFeedback);
   const verification = verifyProposal(raw);
   const proposed: Spec = { ...raw, verification };
 
