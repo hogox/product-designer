@@ -146,9 +146,12 @@ const SOURCE_STATUSES: SourceStatus[] = ["subido", "ingerido", "descartado"];
 
 // --- gestión multi-spec (D2 · W0): índice agrupado por producto + CRUD ---
 
-// lista de specs agrupadas por producto (el índice es cache regenerable)
+// lista de specs agrupadas por producto. El índice es cache regenerable y las acciones del
+// orquestador (close-exploration, discard-proposal, explore…) NO lo regeneran — así que el
+// home lo refresca aquí (escaneo del filesystem, barato) para no mostrar etapa/propuesta viejas.
 app.get("/api/specs", async (_req, res) => {
   try {
+    await regenerateIndex(REPO_ROOT);
     res.json(await readSpecGroups(REPO_ROOT));
   } catch (err) {
     res.status(500).json({ error: String(err) });
