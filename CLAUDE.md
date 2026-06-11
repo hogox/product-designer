@@ -13,85 +13,39 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: F0+F1+F2 (hechas) · Fase D2 (en curso) · Fase 3 (bloqueada por D2)
+## Alcance actual: F0+F1+F2 (hechas) · Fase D2 (COMPLETA) · Fase 3 (desbloqueada)
 
 - HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
   mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
 - HECHO (F2): Agente 2 (Definición completo) — problem statement, JTBD y métricas HEART/GSM
   anclados a los hallazgos; routing de dos etapas (Descubrimiento → Definición → gate enmarcar);
   cierre del diamante Problema.
-- EN CURSO (D2 — experiencia del dashboard, ver [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md)):
-  se ejecuta COMPLETA antes de la Fase 3.
-  - Sesión 1 hecha (W0.1+W0.2): gestión multi-spec — metadatos `product`/`description`/`archived`,
-    índice `specs/index.yaml` (cache regenerable), CRUD de specs (API + CLI) con auditoría
-    `spec.create|update|archive`.
-  - Sesión 2 hecha (W0.3+W0.4): routing spec-scoped `/spec/:id` (el specId vive en la URL → refresh
-    conserva, pestañas independientes; aislamiento de contexto), home "Mis specs" (tarjetas por
-    producto, badge de propuesta pendiente, "Nueva spec" por modal) y switcher de spec en el sidebar.
-  - Sesión 3 hecha (W1.1+W1.2): hub de Fuentes — modelo `sources/manifest.yaml` + binarios en
-    `sources/files/<id>/<filename>` por spec; API multipart (multer) `GET/POST/PATCH/DELETE(lógico)
-/api/specs/:id/sources` con auditoría `source.upload|update|discard` (size/sha256 computados).
-  - Sesión 4 hecha (W1.3+W1.4): ingestión — `discover` lee `sources/files/` (cae a `samples/` si no
-    hay) y marca `ingerido`; ruteo por tipo ingerido (text→citas, tabular→métricas). UI página
-    "Fuentes" (subir drag&drop/picker, listar con badges, reclasificar, descartar). Diferido: modal
-    selector + botón "Correr Descubrimiento desde la UI" (no se movieron llamadas al modelo al server).
-  - Sesión 5 hecha (W2.1+W2.2): estados de revisión por hallazgo — `review_status`
-    (pendiente|aprobado|rechazado|en_pausa) + `reviewed_at` (reusa `reviewed_by`/`review_note`).
-    `reviewFinding` no-destructivo (rechazar/pausar exigen comentario, audita
-    `finding.approve|reject|pause|resume`); `rejectFinding` ya NO borra. API `PATCH …/findings/:fid/review`
-    - CLI `review`. Migrado otp-onboarding (spec.findings → aprobado).
-  - Sesión 6 hecha (W2.3+W2.4): el gate respeta los estados — criterio bloqueante "Sin hallazgos de
-    impacto alto pendientes ni en pausa" (high bloquea; medium/low en pausa = advertencia); `reviewFinding`
-    recomputa `proposed.verification` (bloquea/desbloquea en vivo). UI de triage plena (aprobar/pausar/
-    rechazar con modal de comentario, badges semánticos, filtros, contadores). otp-onboarding: su gate
-    arranca bloqueado (5 high pendientes) hasta revisar.
-  - Sesión 7 hecha (W3.1+W3.2): bootstrap shadcn/ui + Tailwind v4 (no existía; 7 componentes stock
-    SIN editar: card/badge/breadcrumb/tabs/separator/tooltip/button) y tokens en `globals.css` como
-    ÚNICO punto de personalización (fondo gris-azulado claro, cards blancas, primary azul, radius
-    0.75rem; TEMA OSCURO ELIMINADO — claro único). Layout modular: breadcrumb persistente, max-w-5xl
-    centrado, overview y etapas Descubrimiento/Definición como pila de Cards con header propio
-    (icono+título+badge+contador); pipeline clickeable; jerarquía de la evidencia corregida (cita a
-    text-sm, locator chip outline mono). `styles.css` quedó como legado en retirada (@layer base);
-    chips semánticos provisorios en `badges.tsx` hasta las variantes cva de la sesión 8.
-  - Sesión 8 hecha (W3.3+W3.4+W4.1 + impulso visual): sistema de chips = 11 variantes cva en
-    `ui/badge.tsx` (real/aprobado/mock/enPausa/rechazado/pendiente/cita/calculo/quantitative/
-    qualitative/heart, todas AA ≥4.5:1, par -700 sobre -50); `badges.tsx` delega TODO el color a
-    las variantes (cero clases sueltas) + mapa lucide por concepto en `icons.tsx` y `<SectionIcon>`
-    (contenedor de icono suave). IMPULSO VISUAL (composición stock): iconos tintados en headers,
-    fila de stat-cards en el overview, cards interactivas (hover), avatares de actor en Auditoría
-    (humano iniciales / agente Bot), header de etapa expresivo. W3.4: resumen de auditoría del
-    overview acotado a la última propuesta + "ver todo". W4.1: drawer de hallazgo (Sheet stock,
-    derecha) con cadena evidencia→fuente + historial de revisión + trazabilidad inversa (JTBD que
-    lo citan); la tarjeta del triage queda compacta. Migradas a shadcn las últimas superficies
-    legadas (sidebar, home, fuentes, placeholder); `styles.css` quedó solo con los modales
-    (W4.2 → sesión 9). Único editado en `ui/`: `badge.tsx` (sheet/avatar son stock nuevo).
-  - Sesión 11 hecha (W6.1+W6.2 — intake de spec, ADELANTADA antes de W4.2/W5): sección `intake`
-    opcional en la spec (nullable → specs previas cargan sin migrar): `researchQuestion`
-    (obligatoria), `hypotheses`, `productContext`, `discoveryPlan { methods, instruments
-    (nps/ces/csat/isn), expectedSourceKinds }`. `SourceKindSchema` movido a schema.ts (vocabulario
-    core) + nuevo kind `persona` (evidencia citable, nunca grounding). GROUNDING del Agente 1: el
-    intake (pregunta + contexto + hipótesis) se inyecta SOLO en la derivación (`derive.ts`), la
-    extracción queda sin sesgo (invariante 3); el runner lo deriva de `current.intake`. Completitud
-    de fuentes (esperado-vs-subido) + `PATCH /api/specs/:id/intake` (auditoría `intake.update`) +
-    `GET …/sources/completeness`; indicador con chips "falta: <tipo>" en el hub de Fuentes (reusa
-    variantes de Badge; cero edición de ui/). Corrida comparativa real: con intake los hallazgos
-    se ordenan por relevancia a la pregunta (reenvío sube a high, biométrica off-question baja a low).
-  - Sesión 9 hecha (W4.2+W4.3 — modales Dialog + accesibilidad): `NewSpecModal`/`ReviewCommentModal`
-    migrados a Dialog stock; modal de **confirmación de compuerta** (resumen versión/conteos/criterios)
-    + modal de iterar + descarte de fuente — adiós a TODOS los `window.prompt`. `styles.css` ELIMINADO
-    entero (cero CSS legado; todo shadcn/Tailwind). Shim de compat React 18 (forwardRef en los Overlay
-    de dialog.tsx/sheet.tsx) → se va el warning dev-only de refs (cierra la deuda de W4.1). A11y: foco
-    atrapado + Esc (stock) + navegación por teclado en el triage (botones nativos), verificado.
-    Stock nuevo: dialog/input/label/textarea.
-  - Sesión 10 hecha (W5 — capa de usuario mock): `session.tsx` (SessionProvider en localStorage +
-    `useSession` + `actorLabel`/`userInitials`); login MOCK declarado (gate en `main.tsx`: sin usuario
-    → LoginPage); menú de cuenta (`AccountMenu`, DropdownMenu stock) en sidebar y home; página
-    `/settings` (perfil real editable + placeholders `mock · Fase 5` de conectores/RBAC/equipo). W5.4:
-    la IDENTIDAD es real — el usuario de sesión firma reviewFinding / gate / fuentes / crear spec
-    (verificado: aprobar registra "Hugo Muñoz (Lead PM)"). Lo único real de W5; el resto es mock.
-  - Faltan: W6.3+W6.4 (wizard de intake + retrofit) + re-ensayo del guión de demo (<12 min).
-- BLOQUEADO (F3): los 5 agentes restantes (Exploración→Aprendizaje) NO se arrancan hasta cerrar D2
-  (W0–W5 + guión de demo). También fuera: config real de MCP/conectores, RBAC, multi-agente paralelo.
+- HECHO (D2 — experiencia del dashboard, ver [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md)):
+  12 sesiones completadas (W0–W6); D2 CERRADA. Resumen de sesiones:
+  - Sesión 1 (W0.1+W0.2): gestión multi-spec — metadatos, índice `specs/index.yaml`, CRUD + auditoría.
+  - Sesión 2 (W0.3+W0.4): routing spec-scoped `/spec/:id`, home "Mis specs", switcher de spec.
+  - Sesión 3 (W1.1+W1.2): hub de Fuentes — modelo `sources/manifest.yaml` + API multipart auditada.
+  - Sesión 4 (W1.3+W1.4): ingestión desde fuentes + UI página "Fuentes" (drag&drop/picker).
+  - Sesión 5 (W2.1+W2.2): estados de revisión por hallazgo (pendiente/aprobado/rechazado/en_pausa),
+    API/CLI no-destructiva.
+  - Sesión 6 (W2.3+W2.4): gate respeta estados de revisión + UI de triage plena con modal de comentario.
+  - Sesión 7 (W3.1+W3.2): bootstrap shadcn/ui + Tailwind v4 + tokens claros (oscuro eliminado),
+    layout modular con breadcrumb/Cards/pipeline clickeable.
+  - Sesión 8 (W3.3+W3.4+W4.1 + impulso visual): 11 variantes cva Badge (AA), mapa de iconos,
+    stat-cards, drawer de hallazgo (Sheet) con cadena evidencia→fuente + historial + trazabilidad JTBD.
+  - Sesión 11 (W6.1+W6.2 — intake, ADELANTADA): esquema `intake` opcional (researchQuestion +
+    hypotheses + productContext + discoveryPlan), kind `persona`, grounding del Agente 1 SOLO en
+    derivación (invariante 3), completitud de fuentes + `PATCH …/intake` auditado.
+  - Sesión 9 (W4.2+W4.3): modales Dialog stock + confirmación de compuerta + a11y (foco/Esc/teclado);
+    `styles.css` ELIMINADO entero (cero CSS legado).
+  - Sesión 10 (W5): capa de usuario mock — login/SessionProvider/AccountMenu/settings; identidad REAL
+    firma la auditoría (`actorLabel`).
+  - Sesión 12 (W6.3+W6.4): wizard de creación de spec (5 pasos: Identidad→Enmarcado→Plan→Fuentes→
+    Crear); creación atómica con intake + fuentes al commit; `IntakeEditPage` (retrofit para specs
+    previas en `/spec/:id/intake`); `NewSpecModal` eliminado (subsumed por wizard). Overview muestra
+    la `researchQuestion` como encabezado de contexto (o CTA para definirla). **D2 COMPLETA.**
+- SIGUIENTE (F3): los 5 agentes restantes (Exploración→Aprendizaje) están desbloqueados.
+  También fuera de F3: config real de MCP/conectores, RBAC, multi-agente paralelo.
 
 ## Metodología de trabajo
 

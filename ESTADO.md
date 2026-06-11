@@ -299,11 +299,39 @@ declarado** (sin contraseñas ni sesión de servidor: el riesgo sería parecer s
   descartar fuentes y de crear spec. **Verificado live:** aprobar un hallazgo registra actor
   "Hugo Muñoz (Lead PM)" en el log. Stock nuevo SIN editar: dropdown-menu.
 
+### Fase D2 · Sesión 12 (W6.3+W6.4 — wizard de creación + retrofit de intake) ✅ — D2 COMPLETA
+
+- **W6.3 — Wizard de creación de spec (5 pasos, ruta `/nueva`):** página completa fuera del App
+  shell (sin sidebar de etapas). Pasos: **1 Identidad** (nombre + producto requeridos, datalist para
+  autocompletar producto existente) → **2 Enmarcado** (researchQuestion requerida, hipótesis opcionales,
+  contexto de producto) → **3 Plan de discovery** (checklist de métodos → deriva `expectedSourceKinds`;
+  instrumentos de satisfacción; fuentes esperadas editables) → **4 Fuentes** (drag&drop + picker, preview
+  de archivos staged) → **5 Resumen + Crear** (muestra todo, botón "Crear spec").
+  Stepper propio (números + check-marks, líneas conectoras); sin deps nuevas.
+  Creación **atómica**: `POST /api/specs` → `PATCH …/intake` (si hay pregunta) → `POST …/sources ×N`
+  (en serie); todo firmado con `actorLabel(useSession().user)`. `NewSpecModal` eliminado (subsumed).
+- **Lógica smart del plan (W6.3 paso 3):** agregar un método uniona sus kinds derivados;
+  quitarlo solo remueve sus kinds si ningún otro método activo los deriva (preserva los que el
+  humano agregó manualmente o que vienen de otro método).
+- **W6.4 — Retrofit de intake para specs previas (ruta `/spec/:id/intake`):** `IntakeEditPage`
+  dentro del App shell; muestra los mismos formularios `EnmarcadoFields` + `PlanFields` del wizard.
+  Se inicializa UNA vez al cargar la spec (flag `useRef(false)`), sin sobrescribir edits del usuario
+  ante un refetch. Guarda con `PATCH …/intake` (auditoría `intake.update`) y muestra toast.
+- **Overview:** la `researchQuestion` se muestra como encabezado de contexto (card tintada primary)
+  con chips de hipótesis y botón "Editar enmarcado"; si no hay intake, CTA dashed "Definir enmarcado".
+- **Componente compartido `IntakeFormSteps.tsx`:** exporta `IntakeDraft`, `EnmarcadoFields`,
+  `PlanFields`, `draftFromIntake`. **TODOS los imports de `@pda/spec` son `import type`** — el
+  package incluye `store.ts` (usa `node:child_process`) que Vite bundlearía para el browser y
+  dejaría la app en blanco. `deriveExpectedSourceKinds` se inlinea localmente.
+- **Commit de esta sesión:** `f652389` (W6.3+W6.4). **D2 COMPLETA** — las 12 sesiones de W0–W6 están
+  cerradas.
+
 **Tests:** ~109 (spec 60 · agent1 23 · agent2 3 · orchestrator 22). Lógica anti-alucinación testeada
 offline (stubs) + verificada con corridas reales contra la API. El CRUD multi-spec, el hub de Fuentes,
 los estados de revisión y el bloqueo del gate (block→unblock) se verificaron además live por curl/CLI;
 routing, home, Fuentes y la triage plena (aprobar/pausar/rechazar/filtros) en el preview. La ingestión
-W1.3 se verificó **offline** (runner stub, sin tokens).
+W1.3 se verificó **offline** (runner stub, sin tokens). El wizard y el retrofit de intake se
+verificaron live en el preview (sesión 12).
 
 ## 5. Estado actual del repo
 
@@ -332,11 +360,13 @@ W1.3 se verificó **offline** (runner stub, sin tokens).
 - **Capa de usuario (sesión 10):** login mock (gate en `main.tsx`), menú de cuenta (avatar HM) en
   sidebar y home, página `/settings` (perfil real + roadmap mock de Fase 5). La identidad de sesión
   firma la auditoría (verificado: "Hugo Muñoz (Lead PM)"). El login se limpia con `localStorage.removeItem('pda.session.user')`.
-- **Intake (sesión 11):** la spec puede llevar un `intake` (pregunta de discovery + plan); cuando
-  existe, el Agente 1 deriva hallazgos orientados a la pregunta (grounding solo en derivación) y el
-  hub de Fuentes muestra la completitud (esperado-vs-subido). `otp-onboarding` sigue **sin intake**
-  (carga con `intake: null`, demo-able). El wizard que lo carga desde la UI llega en la sesión 12;
-  hoy se setea por `PATCH /api/specs/:id/intake`.
+- **Intake + wizard (sesiones 11–12):** la spec puede llevar un `intake` (pregunta de discovery +
+  plan); cuando existe, el Agente 1 deriva hallazgos orientados a la pregunta (grounding solo en
+  derivación) y el hub de Fuentes muestra la completitud (esperado-vs-subido). El **wizard de
+  creación** (`/nueva`, 5 pasos) permite crear spec + intake + fuentes en un solo flujo; el
+  **retrofit** (`/spec/:id/intake`) edita el intake de specs existentes. `otp-onboarding` sigue
+  **sin intake** (carga con `intake: null`); se puede definir desde Overview → "Definir enmarcado".
+- **D2 COMPLETA (sesión 12):** todas las wonders W0–W6 están cerradas. La Fase 3 está desbloqueada.
 
 ## 6. Cómo correr / demostrar / iterar
 
@@ -511,55 +541,24 @@ cuando los haya (el motor corre igual).
 - **Verificar API con RTK/curl (gotcha de tooling):** el hook RTK reformatea la salida de `curl` a una
   vista tipo-esquema (no JSON crudo) → `python -m json.tool`/`jq` sobre ese output fallan. Para leer
   respuestas crudas en verificación, usar `node -e "fetch(...).then(r=>r.json()).then(...)"` en vez de curl.
+- **`import type` de `@pda/spec` en el dashboard (D2·W6.3 — CRÍTICO):** `@pda/spec` expone
+  `store.ts` que usa `node:child_process`; si se hace un import de VALOR (no `import type`) desde
+  cualquier módulo del dashboard, Vite lo bundlea para el browser y la app queda en blanco (React
+  root vacío, sin error de consola, porque el módulo falla antes de que React monte). **Regla:**
+  todos los imports del dashboard desde `@pda/spec` deben ser `import type`. Las funciones de
+  utilidad seguras para el browser (como `deriveExpectedSourceKinds`) se **inline** en el cliente.
+  Los imports de valor pre-existentes del dashboard ya respetaban esto; la sesión 12 lo documentó
+  formalmente. Si agregás un helper en `@pda/spec` que NO use Node.js, podés re-exportarlo desde
+  un módulo sin side effects separado — pero por defecto asumí siempre `import type`.
 
 ## 8. Qué falta — próximos pasos
 
-### Inmediato: Fase D2 (experiencia del dashboard) — bloquea la Fase 3
+### Fase D2 — COMPLETA ✅
 
-Se ejecuta COMPLETA antes de arrancar agentes nuevos. Plan: [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md).
+Todas las sesiones (1–12, W0–W6) están cerradas. Plan: [PLAN-FASE-D2-experiencia-dashboard.md](PLAN-FASE-D2-experiencia-dashboard.md).
+Ver el resumen de cada sesión en la sección 4 de este documento.
 
-- **Sesión 1 (W0.1+W0.2) — HECHA:** índice + CRUD multi-spec (API/CLI).
-- **Sesión 2 (W0.3+W0.4) — HECHA:** routing `/spec/:id` con aislamiento de contexto + home
-  "Mis specs" + modal "Nueva spec" + switcher.
-- **Sesión 3 (W1.1+W1.2) — HECHA:** modelo + API del hub de Fuentes (multipart, auditado).
-- **Sesión 4 (W1.3+W1.4) — HECHA:** ingestión desde fuentes (cae a samples) + UI página "Fuentes".
-- **Sesión 5 (W2.1+W2.2) — HECHA:** estados de revisión por hallazgo + API/CLI (no-destructivo).
-- **Sesión 6 (W2.3+W2.4) — HECHA:** gate respeta estados + UI de triage plena. **Diferido:** "Iterar"
-  con comentarios por ítem (JTBD/métrica) en la compuerta de Definición (el iterate de texto libre ya
-  funciona) — follow-up acotado de W2.3.
-- **Sesión 7 (W3.1+W3.2) — HECHA:** bootstrap shadcn/Tailwind v4 + tokens claros (oscuro eliminado)
-  - layout modular (Cards con header, breadcrumb, pipeline clickeable, jerarquía de evidencia §2).
-    La skill `frontend-design` que menciona el plan NO existe en el entorno; la dirección la cubrió
-    el ANEXO-D2 §1.
-- **Sesión 8 (W3.3+W3.4+W4.1 + impulso visual) — HECHA:** 11 variantes cva de Badge (AA verificado),
-  mapa de iconos lucide + `<SectionIcon>`, stat-cards, cards interactivas, avatares de actor, header
-  de etapa expresivo; auditoría del overview acotada a la última propuesta; drawer de hallazgo
-  (Sheet) con cadena evidencia→fuente + historial + trazabilidad inversa JTBD; migradas las últimas
-  superficies legadas (sidebar/home/fuentes/placeholder). `styles.css` quedó solo con los modales.
-- **Sesión 11 (W6.1+W6.2 — intake) — HECHA (adelantada antes de W4.2/W5):** esquema `intake` opcional
-  (researchQuestion + hypotheses + productContext + discoveryPlan con methods/instruments/
-  expectedSourceKinds) + kind `persona`; grounding del Agente 1 SOLO en la derivación; completitud de
-  fuentes + `PATCH …/intake` (auditoría `intake.update`) + indicador con chips "falta:" en Fuentes.
-  Comparativa real validó el efecto del grounding (ver Sesión 11 arriba). Falta el wizard UI (sesión 12).
-- **Sesión 9 (W4.2 + W4.3) — HECHA:** modales a Dialog stock + confirmación de compuerta + iterar +
-  descarte (cero `window.prompt`); `styles.css` eliminado entero; a11y (foco atrapado/Esc/teclado) +
-  shim React 18 que cierra el warning de refs de W4.1.
-- **Sesión 10 (W5) — HECHA:** capa de usuario mock (login mock + menú de cuenta + settings) con
-  identidad REAL que firma la auditoría (`actorLabel` en reviewFinding/gate/fuentes/crear spec).
-- **PRÓXIMA = Sesión 12 (W6.3 + W6.4 — wizard + retrofit):**
-  - **W6.3 (wizard UI, 5 pasos):** stepper propio (shadcn no trae Stepper; números/checks, sin deps
-    nuevas): Identidad → Enmarcado (pregunta obligatoria, hipótesis, contexto) → Plan de discovery
-    (checklist de métodos; deriva `expectedSourceKinds` con `deriveExpectedSourceKinds`, editable;
-    **plantillas deterministas, SIN modelo**) → Fuentes (reusa el modal del hub W1) → Resumen→crear
-    (commit v0 con intake + `spec.create` enriquecida). El overview "Spec viva" muestra la
-    researchQuestion como encabezado de contexto. Usar el cliente `patchIntake` ya cableado.
-  Nota: el `by`/actor del wizard (crear spec + intake) debe salir de `actorLabel(useSession().user)`
-  (W5.4), no de un string fijo. La home y el sidebar ya montan el menú de cuenta.
-  - **W6.4 (retrofit):** pantalla "editar intake" (pasos 2–3 como formulario) para specs previas;
-    ya existe `PATCH …/intake` con auditoría `intake.update`.
-  - Cerrar con **re-ensayo del guión de demo** (paso 0 nuevo: crear por wizard; <12 min).
-
-### Después de D2: Fase 3 — diamante Solución (del PRD §15)
+### Siguiente: Fase 3 — diamante Solución (del PRD §15) — DESBLOQUEADA
 
 - **Fase 3 — diamante Solución:** Agentes Exploración, Diseño, Validación + **gate curar**; integración
   real del **design system** (los 3 roles §D10: restricción/fuente/validador) y chequeos automatizables
