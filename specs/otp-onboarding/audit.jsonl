@@ -27,3 +27,7 @@
 {"timestamp":"2026-06-11T17:03:45.409Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"otp-onboarding","target":"C-002","reason":null}
 {"timestamp":"2026-06-11T18:03:30.822Z","actor":"Hugo Muñoz (Lead PM)","action":"proposal.discard","spec_id":"otp-onboarding","target":null,"reason":"Propuesta de Definición previa a F3-A; los conceptos vigentes citan los JTBD de v3. Se saneа el estado para cerrar Exploración."}
 {"timestamp":"2026-06-11T18:03:48.563Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa exploracion (saneo: conceptos ya en triage)"}
+{"timestamp":"2026-06-11T18:14:22.394Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"otp-onboarding","target":"C-003","reason":null}
+{"timestamp":"2026-06-11T18:14:22.400Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.discard","spec_id":"otp-onboarding","target":"C-004","reason":"Verificación multicanal: alcance mayor, lo dejamos para una fase posterior"}
+{"timestamp":"2026-06-11T18:14:22.405Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.discard","spec_id":"otp-onboarding","target":"C-005","reason":"Solapa con C-001 en la experiencia de espera"}
+{"timestamp":"2026-06-11T18:15:35.543Z","actor":"Hugo Muñoz (Lead PM)","action":"exploration.close","spec_id":"otp-onboarding","target":null,"reason":"3 conceptos promovidos a la spec → etapa diseno"}

@@ -5,7 +5,7 @@ description: null
 archived: false
 version: 3
 status: approved
-current_stage: exploracion
+current_stage: diseno
 problem_statement: El 43.2% de los usuarios que llegan a la verificación OTP del
   onboarding la abandonan sin completarla, sin diferencias por segmento. Las
   causas principales son la demora en la llegada del SMS, la falta de
@@ -101,7 +101,15 @@ constraints:
     version: ""
     link: ""
   technical: []
-decisions: []
+decisions:
+  - id: DEC-001
+    date: 2026-06-11
+    decision: "Selección de conceptos de solución: C-001, C-002, C-003"
+    rationale: C-001 y C-002 atacan el feedback de espera y el reenvío con el menor
+      costo; C-003 cubre las fallas de entrega del SMS. Descartamos multicanal
+      (alcance mayor) y verificación alternativa (solapa con C-001).
+    author: Hugo Muñoz (Lead PM)
+    supersedes: null
 tasks:
   - id: H-001
     description: Si reducimos la latencia de entrega del SMS OTP, entonces
@@ -355,7 +363,58 @@ jtbd:
       definitivamente de crear mi cuenta.
     supported_by:
       - F-008
-concepts: []
+concepts:
+  - id: C-001
+    title: Pantalla de espera con feedback en vivo
+    description: Una pantalla de verificación rediseñada que muestra confirmación
+      inmediata de envío, el número de teléfono enmascarado al que llega el
+      código y un contador visual de cuenta regresiva. Incluye estados claros
+      (enviando, enviado, reintentando) y mensajes que indican el tiempo
+      estimado de llegada del SMS.
+    rationale: Aborda directamente la falta de retroalimentación en pantalla dando
+      certeza sobre el envío, el destino y el tiempo de espera, reduciendo la
+      frustración y la desconfianza durante la espera.
+    addresses_jtbd:
+      - J-001
+      - J-002
+    spec_version: 3
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: 2026-06-11T16:17:50.767Z
+  - id: C-002
+    title: Reenvío inteligente y autodetección del código
+    description: Mecanismo que habilita el botón de reenvío de forma temprana y
+      progresiva, con un temporizador transparente que comunica cuándo estará
+      disponible. Si la plataforma lo permite, autocompleta el código al
+      detectar el SMS entrante para eliminar el paso manual.
+    rationale: Ataca el problema del botón de reenvío que tarda en activarse y la
+      demora percibida, ofreciendo control y rapidez para reintentar sin esperas
+      prolongadas.
+    addresses_jtbd:
+      - J-001
+      - J-003
+    spec_version: 3
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: 2026-06-11T17:03:45.403Z
+  - id: C-003
+    title: Verificación multicanal con alternativas
+    description: Cuando el SMS falla o tarda demasiado, se ofrecen métodos
+      alternativos de verificación como huella digital, llamada de voz con el
+      código o correo electrónico. El usuario puede elegir el canal que prefiera
+      para no depender exclusivamente del SMS.
+    rationale: Responde a las fallas de entrega del SMS dando rutas alternativas
+      para completar el onboarding, eliminando el punto único de falla que causa
+      abandono permanente.
+    addresses_jtbd:
+      - J-004
+    spec_version: 3
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: 2026-06-11T18:14:22.390Z
 intake: null
 history:
   - version: 1
