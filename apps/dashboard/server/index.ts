@@ -25,11 +25,13 @@ import {
   discardSource,
   updateIntake,
   computeSourceCompleteness,
+  deriveExpectedSourceKinds,
   StageSchema,
   type SourceKind,
   type SourceStatus,
   type Stage,
 } from "@pda/spec";
+import { suggestIntake } from "./suggestIntake.ts";
 import {
   getState,
   approveGate,
@@ -46,6 +48,7 @@ import {
   runDefinition,
   runExploration,
   discoverPreflight,
+  resultCacheDirFor,
 } from "@pda/orchestrator";
 
 import {
@@ -263,6 +266,37 @@ app.patch("/api/specs/:id/intake", async (req, res) => {
   } catch (err) {
     // researchQuestion faltante / enum inválido → 400; spec inexistente → cae acá también
     res.status(400).json({ error: String(err) });
+  }
+});
+
+// --- sugerencia de intake con IA (Sesión 17): borrador editable, no persiste nada ---
+
+// POST /api/intake/suggest: recibe nombre/producto/descripción, devuelve {draft, usage}.
+// No requiere specId: se llama ANTES de crear la spec (paso 2 del wizard) o desde IntakeEditPage.
+// La ANTHROPIC_API_KEY vive solo en el server (cargada vía --env-file). Invariante 4: los
+// expectedSourceKinds se derivan determinísticamente de los methods; el modelo no los propone.
+app.post("/api/intake/suggest", async (req, res) => {
+  const { name, product, description } = req.body ?? {};
+  if (!name || !product) {
+    return res.status(400).json({ error: "name y product son requeridos" });
+  }
+  try {
+    const { suggestion, usage } = await suggestIntake({
+      name: String(name).trim(),
+      product: String(product).trim(),
+      description: description ? String(description).trim() : null,
+    });
+    const expectedSourceKinds = deriveExpectedSourceKinds(suggestion.methods);
+    res.json({
+      draft: { ...suggestion, expectedSourceKinds },
+      usage: {
+        input: usage.input_tokens,
+        output: usage.output_tokens,
+        total: usage.input_tokens + usage.output_tokens,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
   }
 });
 
@@ -640,9 +674,10 @@ async function runAgent(
       tokens: r.tokens,
     };
   }
+  const cacheDir = resultCacheDirFor(REPO_ROOT, specId);
   if (agent === "define") {
     const gate = await runDefinition(REPO_ROOT, specId, {
-      runner: createDefinitionRunner({ topic }),
+      runner: createDefinitionRunner({ topic, cacheDir }),
       author,
       actor: by,
     });
@@ -658,7 +693,7 @@ async function runAgent(
     };
   }
   const r = await runExploration(REPO_ROOT, specId, {
-    runner: createExplorationRunner({ topic }),
+    runner: createExplorationRunner({ topic, cacheDir }),
     author,
     actor: by,
   });

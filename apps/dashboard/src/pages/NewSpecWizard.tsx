@@ -40,6 +40,7 @@ import {
   INTAKE_DRAFT_EMPTY,
   type IntakeDraft,
 } from "../components/IntakeFormSteps";
+import { IntakeSuggestBanner } from "../components/IntakeSuggestBanner";
 
 const STEP_LABELS = ["Identidad", "Enmarcado", "Plan", "Fuentes", "Crear"];
 
@@ -246,10 +247,18 @@ export function NewSpecWizard() {
             />
           )}
           {step === 2 && (
-            <EnmarcadoFields
-              draft={state.intake}
-              onChange={patchIntakeDraft}
-            />
+            <div className="space-y-4">
+              <IntakeSuggestBanner
+                name={state.name}
+                product={state.product}
+                description={state.description || null}
+                onFill={patchIntakeDraft}
+              />
+              <EnmarcadoFields
+                draft={state.intake}
+                onChange={patchIntakeDraft}
+              />
+            </div>
           )}
           {step === 3 && (
             <PlanFields draft={state.intake} onChange={patchIntakeDraft} />
@@ -345,9 +354,10 @@ function Step1Identidad({
         </Label>
         <Textarea
           id="spec-desc"
-          rows={2}
+          rows={3}
           value={state.description}
           onChange={(e) => onChange({ description: e.target.value })}
+          placeholder="Describí el problema, el contexto y lo que ya sabés. Se usará para sugerir el enmarcado en el siguiente paso."
         />
       </div>
     </div>

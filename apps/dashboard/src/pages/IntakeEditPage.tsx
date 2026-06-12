@@ -24,6 +24,7 @@ import {
   draftFromIntake,
   type IntakeDraft,
 } from "../components/IntakeFormSteps";
+import { IntakeSuggestBanner } from "../components/IntakeSuggestBanner";
 
 export function IntakeEditPage() {
   const { specId, spec, refetch } = useShell();
@@ -106,7 +107,13 @@ export function IntakeEditPage() {
           <CardHeader>
             <CardTitle className="text-base">Enmarcado</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <IntakeSuggestBanner
+              name={spec.title}
+              product={spec.product}
+              description={spec.description ?? null}
+              onFill={onChange}
+            />
             <EnmarcadoFields draft={draft} onChange={onChange} />
           </CardContent>
         </Card>

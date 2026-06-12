@@ -9,6 +9,8 @@ import type {
   AuditEntry,
   SourceEntry,
   SourceKind,
+  DiscoveryMethod,
+  DiscoveryInstrument,
 } from "@pda/spec";
 
 export type { Concept, SourceEntry, SourceKind } from "@pda/spec";
@@ -104,6 +106,32 @@ export function patchIntake(
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ ...(intake as object), by }),
   });
+}
+
+// --- sugerencia de intake con IA (Sesión 17) ---
+
+/** Borrador de intake sugerido por el modelo (expectedSourceKinds derivado server-side). */
+export interface IntakeDraftResult {
+  researchQuestion: string;
+  hypotheses: string[];
+  productContext: string | null;
+  methods: DiscoveryMethod[];
+  instruments: DiscoveryInstrument[];
+  expectedSourceKinds: SourceKind[];
+}
+
+/** Pide al server una sugerencia de intake basada en el nombre/producto/descripción. */
+export async function suggestIntakeDraft(
+  name: string,
+  product: string,
+  description: string | null,
+): Promise<{ draft: IntakeDraftResult; usage: TokenUsage }> {
+  const res = await postJson("/api/intake/suggest", { name, product, description });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Error ${res.status}`);
+  }
+  return res.json() as Promise<{ draft: IntakeDraftResult; usage: TokenUsage }>;
 }
 
 // --- revisión humana por hallazgo (D2 · W2.4) ---

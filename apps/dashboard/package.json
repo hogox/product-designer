@@ -13,6 +13,8 @@
     "test": "node --test \"server/**/*.test.ts\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0",
+    "@pda/llm": "workspace:*",
     "@pda/orchestrator": "workspace:*",
     "@pda/spec": "workspace:*",
     "class-variance-authority": "^0.7.1",
