@@ -65,11 +65,14 @@ export function buildEvidencePool(parts: Evidence[]): EvidenceItem[] {
 export function assembleFindings(
   pool: EvidenceItem[],
   raws: RawFinding[],
+  opts: { firstId?: number } = {},
 ): DerivationResult {
   const byId = new Map(pool.map((e) => [e.id, e.evidence]));
   const accepted: Finding[] = [];
   const rejected: Array<{ raw: RawFinding; reason: string }> = [];
-  let counter = 0;
+  // Los ids arrancan en firstId (default 1): los hallazgos cuantitativos generados por
+  // script (quant-findings, O2 · P1) ocupan los primeros y el modelo continúa la numeración.
+  let counter = (opts.firstId ?? 1) - 1;
 
   for (const raw of raws) {
     const ids = [...new Set(raw.evidence_ids)];
@@ -119,6 +122,8 @@ export async function deriveFindings(
     topic: string;
     proposer: FindingsProposer;
     grounding?: DerivationGrounding;
+    /** Primer id a asignar (los quant por script ocupan los anteriores, O2 · P1). */
+    firstId?: number;
   },
 ): Promise<DerivationResult> {
   const raws = await opts.proposer.propose({
@@ -126,11 +131,14 @@ export async function deriveFindings(
     evidence: pool,
     grounding: opts.grounding,
   });
-  return assembleFindings(pool, raws);
+  return assembleFindings(pool, raws, { firstId: opts.firstId });
 }
 
 // ---------- proposer real: Claude API ----------
 
+// El schema del proposer real NO incluye 'type': los hallazgos quantitative ya los genera
+// el código desde las métricas computadas (quant-findings, O2 · P1); al modelo solo se le
+// piden cualitativos. Menos output tokens y cero riesgo de que re-enuncie números.
 const FINDINGS_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -141,10 +149,9 @@ const FINDINGS_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["statement", "type", "confidence", "feeds", "evidence_ids"],
+        required: ["statement", "confidence", "feeds", "evidence_ids"],
         properties: {
           statement: { type: "string" },
-          type: { type: "string", enum: ["qualitative", "quantitative"] },
           confidence: { type: "string", enum: ["high", "medium", "low"] },
           feeds: {
             type: "string",
@@ -157,12 +164,13 @@ const FINDINGS_SCHEMA = {
   },
 } as const;
 
-const SYSTEM_PROMPT = `Eres un analista de research de producto. Derivas HALLAZGOS a partir
-de un POOL DE EVIDENCIA ya anclada (citas textuales y cálculos deterministas). Reglas:
+const SYSTEM_PROMPT = `Eres un analista de research de producto. Derivas HALLAZGOS CUALITATIVOS
+a partir de un POOL DE EVIDENCIA ya anclada (citas textuales y cálculos deterministas). Reglas:
 - Cada hallazgo se deriva ÚNICAMENTE de la evidencia provista; cita sus evidence_ids.
 - No inventes evidencia ni números. No uses información fuera del pool.
-- Un hallazgo "quantitative" debe citar al menos una evidencia de tipo cálculo (computation).
-- Un hallazgo "qualitative" debe citar al menos una evidencia de tipo cita (quote).
+- Cada hallazgo debe citar al menos una evidencia de tipo cita (quote); puede citar además
+  cálculos del pool como refuerzo, pero NO re-enuncies un cálculo como hallazgo propio:
+  los hallazgos cuantitativos ya fueron generados por código a partir de las métricas.
 - 'feeds' indica a qué parte de la spec alimentaría: outcomes, constraints, hypothesis o scope.
 - Sé conservador: si la evidencia no respalda una afirmación, no la generes.
 - Si se provee una PREGUNTA DE DISCOVERY, prioriza derivar los hallazgos que la respondan
@@ -206,7 +214,9 @@ export function createAnthropicFindingsProposer(
         groundingBlock +
         `Pool de evidencia (cita por id):\n${formatPool(evidence)}`;
 
-      const { parsed } = await callStructured<{ findings?: RawFinding[] }>({
+      const { parsed } = await callStructured<{
+        findings?: Array<Omit<RawFinding, "type">>;
+      }>({
         tag: "derive",
         model,
         system: SYSTEM_PROMPT,
@@ -216,9 +226,10 @@ export function createAnthropicFindingsProposer(
         onUsage: opts.onUsage,
       });
 
+      // type fijo en el código: el proposer real solo emite cualitativos (O2 · P1)
       return (parsed.findings ?? []).map((f) => ({
         statement: String(f.statement),
-        type: f.type,
+        type: "qualitative" as const,
         confidence: f.confidence,
         feeds: f.feeds,
         evidence_ids: Array.isArray(f.evidence_ids)

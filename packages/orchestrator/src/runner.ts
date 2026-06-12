@@ -20,19 +20,31 @@ import {
   computeFunnelMetrics,
   metricToEvidence,
   buildEvidencePool,
+  buildQuantitativeFindings,
   deriveFindings,
   createAnthropicFindingsProposer,
   computeFileSha256,
   readEvidenceCache,
   writeEvidenceCache,
+  type ComputedMetric,
+  type FindingsProposer,
+  type RawFinding,
 } from "@pda/agent1";
-import { defineProblem, createAnthropicDefiner } from "@pda/agent2";
+import {
+  defineProblem,
+  createAnthropicDefiner,
+  type Definer,
+  type RawDefinition,
+} from "@pda/agent2";
 import {
   exploreConceptsFromJobs,
   createAnthropicExplorer,
+  type ConceptProposer,
+  type RawConcept,
 } from "@pda/agent3";
-import { makeUsageSink } from "@pda/llm";
+import { makeUsageSink, resolveModel } from "@pda/llm";
 
+import { cachedModelCall } from "./result-cache.js";
 import {
   runDiscovery,
   type DiscoveryRunner,
@@ -47,7 +59,9 @@ export interface DiscoveryRunnerOptions {
   topic: string;
   /** Directorio donde persistir/leer el cache de evidencia por sha256. */
   cacheDir?: string;
-  /** Si true, fuerza re-extracción aunque haya hit en el cache (útil para A/B). */
+  /** Directorio del cache de resultados de derivación (O2 · P2). */
+  resultCacheDir?: string;
+  /** Si true, fuerza re-extracción/re-derivación aunque haya hit (útil para A/B). */
   noCache?: boolean;
 }
 
@@ -62,6 +76,7 @@ export function createDiscoveryRunner(
   return {
     async run(current: Spec) {
       const evidence: Evidence[] = [];
+      const metrics: ComputedMetric[] = [];
       const usage = makeUsageSink();
       const proposer = createAnthropicProposer({ onUsage: usage.onUsage });
       const model =
@@ -69,6 +84,14 @@ export function createDiscoveryRunner(
         process.env["PDA_MODEL"] ??
         "claude-opus-4-8";
       let cacheHits = 0;
+
+      // Métricas tabulares: cómputo determinista (0 tokens), van al pool como evidencia
+      // Y a `metrics` para generar sus hallazgos por script (O2 · P1).
+      const addTabular = (doc: Parameters<typeof computeFunnelMetrics>[0]) => {
+        const ms = computeFunnelMetrics(doc).slice(0, 4);
+        metrics.push(...ms);
+        evidence.push(...ms.map(metricToEvidence));
+      };
 
       // La EXTRACCIÓN se hace sin sesgo (invariante 3): solo el topic neutral, nunca el
       // intake. El grounding del intake entra recién en la DERIVACIÓN (abajo).
@@ -101,9 +124,7 @@ export function createDiscoveryRunner(
               evidence.push(...accepted);
               fileEvidence.push(...accepted);
             } else if (doc.kind === "tabular") {
-              evidence.push(
-                ...computeFunnelMetrics(doc).slice(0, 4).map(metricToEvidence),
-              );
+              addTabular(doc);
             }
           }
           if (fileEvidence.length > 0) {
@@ -129,9 +150,7 @@ export function createDiscoveryRunner(
               });
               evidence.push(...accepted);
             } else if (doc.kind === "tabular") {
-              evidence.push(
-                ...computeFunnelMetrics(doc).slice(0, 4).map(metricToEvidence),
-              );
+              addTabular(doc);
             }
           }
         }
@@ -142,6 +161,10 @@ export function createDiscoveryRunner(
           `[cache] ${cacheHits}/${opts.files.length} fuentes desde cache (0 tokens de extracción)\n`,
         );
       }
+
+      // Hallazgos cuantitativos por SCRIPT (O2 · P1, invariante 4): se emiten directo
+      // desde las métricas computadas; el modelo no re-redacta números.
+      const quantFindings = buildQuantitativeFindings(metrics);
 
       // Grounding derivado del intake de la spec (W6.2): orienta QUÉ derivar del pool ya
       // fijo. Sin intake → undefined → derivación idéntica a la de antes (sin regresión).
@@ -154,12 +177,40 @@ export function createDiscoveryRunner(
         : undefined;
 
       const pool = buildEvidencePool(evidence);
-      const { accepted: findings } = await deriveFindings(pool, {
+
+      // Derivación a través del cache de resultados (O2 · P2): el hash cubre exactamente
+      // lo que entra al prompt (topic + grounding + pool + modelo). Se cachea el output
+      // crudo; el ensamblado/validación se re-ejecuta siempre.
+      const deriveModel = resolveModel("PDA_MODEL");
+      const inner = createAnthropicFindingsProposer({ onUsage: usage.onUsage });
+      const cachedProposer: FindingsProposer = {
+        propose: async (input) => {
+          const { payload } = await cachedModelCall<RawFinding[]>({
+            cacheDir: opts.resultCacheDir,
+            noCache: opts.noCache,
+            kind: "derive",
+            model: deriveModel,
+            inputs: {
+              topic: input.topic,
+              grounding: input.grounding ?? null,
+              pool: input.evidence,
+            },
+            call: () => inner.propose(input),
+          });
+          return payload;
+        },
+      };
+
+      const { accepted: modelFindings } = await deriveFindings(pool, {
         topic: opts.topic,
-        proposer: createAnthropicFindingsProposer({ onUsage: usage.onUsage }),
+        proposer: cachedProposer,
         grounding,
+        firstId: quantFindings.length + 1,
       });
-      return { findings, tokens: { ...usage.totals(), cacheHits } };
+      return {
+        findings: [...quantFindings, ...modelFindings],
+        tokens: { ...usage.totals(), cacheHits },
+      };
     },
   };
 }
@@ -295,6 +346,7 @@ export async function runDiscoveryWithSources(
 ): Promise<DiscoveryResult & { fromSamples: boolean; sourceIds: string[] }> {
   const resolved = await resolveDiscoverySources(rootDir, specId, opts.fallback);
   const cacheDir = join(rootDir, "specs", specId, "evidence-cache");
+  const resultCacheDir = resultCacheDirFor(rootDir, specId);
   const makeRunner =
     opts.makeRunner ??
     ((files: string[]) =>
@@ -302,6 +354,7 @@ export async function runDiscoveryWithSources(
         files,
         topic: opts.topic,
         cacheDir,
+        resultCacheDir,
         noCache: opts.noCache,
       }));
 
@@ -327,15 +380,50 @@ export async function runDiscoveryWithSources(
   return { ...result, fromSamples: resolved.fromSamples, sourceIds: resolved.sourceIds };
 }
 
+/** Directorio estándar del cache de resultados de una spec (O2 · P2). */
+export function resultCacheDirFor(rootDir: string, specId: string): string {
+  return join(rootDir, "specs", specId, "result-cache");
+}
+
 export function createDefinitionRunner(opts: {
   topic: string;
+  /** Directorio del cache de resultados (O2 · P2); sin él, siempre llama al modelo. */
+  cacheDir?: string;
+  noCache?: boolean;
 }): DefinitionRunner {
   return {
     async run(current: Spec, findings: Finding[], feedback?: string) {
       const usage = makeUsageSink();
+      const model = resolveModel("PDA_MODEL");
+      const inner = createAnthropicDefiner({ onUsage: usage.onUsage });
+      // El hash cubre lo que entra al prompt de define: topic + title + hallazgos
+      // (id/type/statement/evidencia — los campos de revisión NO entran) + feedback.
+      const definer: Definer = {
+        define: async (input) => {
+          const { payload } = await cachedModelCall<RawDefinition>({
+            cacheDir: opts.cacheDir,
+            noCache: opts.noCache,
+            kind: "define",
+            model,
+            inputs: {
+              topic: input.topic,
+              title: input.title,
+              findings: input.findings.map((f) => ({
+                id: f.id,
+                type: f.type,
+                statement: f.statement,
+                evidence: f.evidence,
+              })),
+              feedback: input.feedback ?? null,
+            },
+            call: () => inner.define(input),
+          });
+          return payload;
+        },
+      };
       const { proposed } = await defineProblem(current, findings, {
         topic: opts.topic,
-        definer: createAnthropicDefiner({ onUsage: usage.onUsage }),
+        definer,
         feedback,
       });
       return { proposed, tokens: usage.totals() };
@@ -354,16 +442,46 @@ export function resolveTopic(spec: Spec): string {
 
 export function createExplorationRunner(opts: {
   topic: string;
+  /** Directorio del cache de resultados (O2 · P2); sin él, siempre llama al modelo. */
+  cacheDir?: string;
+  noCache?: boolean;
 }): ExplorationRunner {
   return {
     async run(current: Spec, runOpts) {
       const usage = makeUsageSink();
+      const model = resolveModel("PDA_MODEL_EXPLORE");
+      const inner = createAnthropicExplorer({ onUsage: usage.onUsage });
+      // El hash cubre lo que entra al prompt de explore: topic + problem statement +
+      // jobs (id/statement) + contexto + feedback de descartados. `firstId` NO entra:
+      // solo afecta los ids asignados después, en el ensamblado determinista.
+      const proposer: ConceptProposer = {
+        propose: async (input) => {
+          const { payload } = await cachedModelCall<RawConcept[]>({
+            cacheDir: opts.cacheDir,
+            noCache: opts.noCache,
+            kind: "explore",
+            model,
+            inputs: {
+              topic: input.topic,
+              problemStatement: input.problemStatement,
+              jobs: input.jobs.map((j) => ({
+                id: j.id,
+                statement: j.statement,
+              })),
+              context: input.context ?? null,
+              discardedFeedback: input.discardedFeedback ?? null,
+            },
+            call: () => inner.propose(input),
+          });
+          return payload;
+        },
+      };
       const { accepted: concepts } = await exploreConceptsFromJobs(
         current.jtbd,
         {
           topic: opts.topic,
           problemStatement: current.problem_statement ?? opts.topic,
-          proposer: createAnthropicExplorer({ onUsage: usage.onUsage }),
+          proposer,
           discardedFeedback: runOpts?.discardedFeedback,
           firstId: runOpts?.firstId,
           context: {

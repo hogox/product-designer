@@ -9,9 +9,61 @@ import {
   ingestCsv,
   ingestXlsx,
   ingestDir,
+  filterSegments,
+  type TextSegment,
   type TextDocument,
   type TabularDocument,
 } from "./index.js";
+
+const seg = (text: string, index = 0): TextSegment => ({
+  index,
+  locator: `párrafo ${index + 1}`,
+  text,
+});
+
+// ---------- filterSegments ----------
+
+test("filterSegments: descarta segmentos trivialmente cortos (< 30 chars)", () => {
+  const segments = [
+    seg("1", 0),
+    seg("Página 2", 1),
+    seg("---", 2),
+    seg("Este es un segmento largo con información útil para el análisis.", 3),
+  ];
+  const result = filterSegments(segments);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]!.index, 3);
+});
+
+test("filterSegments: dedup exacto — mantiene el primero, descarta duplicados", () => {
+  const text = "El usuario no pudo completar el flujo de onboarding correctamente.";
+  const segments = [seg(text, 0), seg(text, 1), seg(text, 2)];
+  const result = filterSegments(segments);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]!.index, 0);
+});
+
+test("filterSegments: dedup normaliza mayúsculas y espacios extra", () => {
+  const a = "El usuario tuvo problemas con el código OTP durante la sesión.";
+  const b = "el   usuario tuvo problemas con el código OTP durante la sesión.";
+  const result = filterSegments([seg(a, 0), seg(b, 1)]);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]!.locator, "párrafo 1"); // preserva locator original
+});
+
+test("filterSegments: segmentos distintos pasan todos", () => {
+  const segments = [
+    seg("El usuario no pudo completar el flujo de registro en la app.", 0),
+    seg("La pantalla de confirmación tardó más de 10 segundos en cargar.", 1),
+    seg("El soporte tardó 3 días en responder la consulta del usuario.", 2),
+  ];
+  const result = filterSegments(segments);
+  assert.equal(result.length, 3);
+});
+
+test("filterSegments: lista vacía → resultado vacío", () => {
+  assert.deepEqual(filterSegments([]), []);
+});
 
 // dist/ingest.test.js → repo root (packages/agent1/dist → ../../..)
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");

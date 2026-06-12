@@ -42,6 +42,32 @@ export type IngestedDocument = TextDocument | TabularDocument;
 
 const TEXT_EXT = new Set([".txt", ".md"]);
 
+// ---------- filtro de ruido (P3 — O2) ----------
+// Filtro ESTRUCTURAL únicamente: dedup exacto por hash normalizado + descarte de segmentos
+// trivialmente cortos (números de página, separadores, encabezados de una sola palabra).
+// NO filtra por relevancia ni semántica — respeta el invariante 3 (extracción sin sesgo).
+// El índice y locator originales se preservan para que las citas sigan siendo válidas.
+
+const MIN_SEGMENT_CHARS = 30;
+
+function normalizeForDedup(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/** Filtra segmentos triviales (muy cortos) y duplicados exactos (por hash normalizado). */
+export function filterSegments(segments: TextSegment[]): TextSegment[] {
+  const seen = new Set<string>();
+  const result: TextSegment[] = [];
+  for (const seg of segments) {
+    if (seg.text.length < MIN_SEGMENT_CHARS) continue;
+    const key = normalizeForDedup(seg.text);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(seg);
+  }
+  return result;
+}
+
 // ---------- texto ----------
 
 function paragraphs(text: string): string[] {
@@ -53,7 +79,7 @@ function paragraphs(text: string): string[] {
 
 export async function ingestText(path: string): Promise<TextDocument> {
   const raw = await readFile(path, "utf8");
-  const segments: TextSegment[] = paragraphs(raw).map((text, i) => ({
+  const allSegments: TextSegment[] = paragraphs(raw).map((text, i) => ({
     index: i,
     locator: `párrafo ${i + 1}`,
     text,
@@ -63,7 +89,7 @@ export async function ingestText(path: string): Promise<TextDocument> {
     source: basename(path),
     path,
     fullText: raw,
-    segments,
+    segments: filterSegments(allSegments),
   };
 }
 
@@ -113,7 +139,7 @@ export async function ingestPdf(path: string): Promise<TextDocument> {
     source: basename(path),
     path,
     fullText: pages.join("\n"),
-    segments,
+    segments: filterSegments(segments),
   };
 }
 

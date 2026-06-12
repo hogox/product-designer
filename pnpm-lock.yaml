@@ -26,6 +26,12 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.102.0
+        version: 0.102.0(zod@3.25.76)
+      '@pda/llm':
+        specifier: workspace:*
+        version: link:../../packages/llm
       '@pda/orchestrator':
         specifier: workspace:*
         version: link:../../packages/orchestrator

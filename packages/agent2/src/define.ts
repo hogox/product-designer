@@ -176,11 +176,19 @@ completo del problema:
   El 'target' es tentativo (lo fija el humano en la compuerta).
 Reglas: no inventes números ni datos fuera de la evidencia; cita findings reales; sé conciso.`;
 
-function formatFindings(findings: Finding[]): string {
+const MAX_QUOTE_CHARS = 120;
+const MAX_ANCHORS_PER_FINDING = 2;
+
+export function truncateQuote(q: string): string {
+  return q.length > MAX_QUOTE_CHARS ? q.slice(0, MAX_QUOTE_CHARS) + "…" : q;
+}
+
+export function formatFindings(findings: Finding[]): string {
   return findings
     .map((f) => {
       const anchors = f.evidence
-        .map((e) => (e.quote ? `"${e.quote}"` : e.computation))
+        .slice(0, MAX_ANCHORS_PER_FINDING)
+        .map((e) => (e.quote ? `"${truncateQuote(e.quote)}"` : e.computation))
         .join(" | ");
       return `[${f.id}] (${f.type}) ${f.statement}  ←  ${anchors}`;
     })

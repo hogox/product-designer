@@ -6,6 +6,8 @@ import { createSpecV0, parseSpec, type Finding } from "@pda/spec";
 import {
   assembleDefinition,
   defineProblem,
+  formatFindings,
+  truncateQuote,
   type Definer,
   type RawDefinition,
 } from "./index.js";
@@ -119,6 +121,44 @@ test("filtra ids de findings inexistentes dentro de un job", () => {
   const { proposed } = assembleDefinition(current(), findings, mixed);
   assert.equal(proposed.jtbd.length, 1);
   assert.deepEqual(proposed.jtbd[0]!.supported_by, ["F-001"]); // F-404 se descarta
+});
+
+test("truncateQuote: preserva citas cortas, trunca largas con ellipsis", () => {
+  const short = "El usuario no pudo completar el flujo.";
+  assert.equal(truncateQuote(short), short);
+  const long = "x".repeat(150);
+  const truncated = truncateQuote(long);
+  assert.equal(truncated.length, 121); // 120 chars + "…"
+  assert.ok(truncated.endsWith("…"));
+});
+
+test("formatFindings: recorta a 2 anclas por hallazgo y trunca quotes largas", () => {
+  const longQuote = "a".repeat(150);
+  const f: Finding = {
+    id: "F-001",
+    statement: "Hallazgo de prueba",
+    type: "qualitative",
+    evidence: [
+      { source: "e1.txt", locator: "párrafo 1", quote: longQuote },
+      { source: "e2.txt", locator: "párrafo 2", quote: "cita corta suficientemente larga para pasar el umbral" },
+      { source: "e3.txt", locator: "párrafo 3", quote: "tercera cita que no debería aparecer" },
+    ],
+    confidence: "high",
+    status: "validated",
+    feeds: "outcomes",
+    reviewed_by: null,
+    review_note: null,
+    review_status: "pendiente",
+    reviewed_at: null,
+  };
+  const result = formatFindings([f]);
+  // solo 2 anclas → no hay " | " después de la 2da cita
+  const anchors = result.split("  ←  ")[1]!;
+  assert.equal(anchors.split(" | ").length, 2);
+  // la primera cita está truncada
+  assert.ok(anchors.includes("…"));
+  // la tercera cita no aparece
+  assert.ok(!anchors.includes("tercera cita"));
 });
 
 test("defineProblem usa el definer (stub) y ensambla", async () => {

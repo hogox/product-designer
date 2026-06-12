@@ -506,6 +506,38 @@ queda visible en el costo. Lock (409), preflight y guarda verificados.
 
 **Tests totales: 150** (llm 9 · spec 60 · agent1 23 · agent2 3 · agent3 9 · orchestrator 42 · dashboard 4).
 
+### Sesión 17 — Sugerir intake con IA + O2 optimización de tokens ✅
+
+**Parte A — Sugerir intake con IA:**  El paso 2 del wizard y la `IntakeEditPage` ofrecen un botón
+"Sugerir con IA": toma nombre/producto/descripción y pre-rellena `researchQuestion`, `hypotheses`,
+`productContext`, `methods`, `instruments`. El usuario acepta, edita, regenera o ignora.
+- `server/suggestIntake.ts` — `callStructured` con `maxTokens: 1024`, modelo `PDA_MODEL_INTAKE`
+  (default **Haiku**; Opus → `PDA_MODEL_INTAKE=claude-opus-4-8`). `expectedSourceKinds` **no** es
+  output del modelo: se computa en el server por `deriveExpectedSourceKinds()` (invariante 4).
+- `POST /api/intake/suggest` — stateless (no persiste, no requiere specId).
+- `IntakeSuggestBanner` — estados idle/loading/done/error, muestra tokens consumidos, botón "Regenerar".
+- `resolveModel` extendido con param `defaultModel` — permite que `suggestIntake` use Haiku como
+  fallback sin romper la cadena `PDA_MODEL_INTAKE → PDA_MODEL`.
+
+**Parte B — O2: optimización de tokens (5 pasos):**
+- **P1 — hallazgos cuantitativos por script:** `buildQuantitativeFindings(metrics)` en `@pda/agent1`
+  emite `Finding[]` directamente desde `ComputedMetric[]`, sin modelo (invariante 4). El modelo solo
+  propone cualitativos (`FINDINGS_SCHEMA` sin campo `type`). Los quant ocupan F-001..F-N; los
+  cualitativos continúan desde F-(N+1) vía `firstId`.
+- **P2 — cache de resultados (derive/define/explore):** `cachedModelCall<T>` en `@pda/orchestrator`
+  extiende el patrón del evidence cache: `kind-<sha256[:16]>.json` en `specs/<id>/result-cache/`.
+  Hash cubre `{kind, model, inputs}` — el ensamblado/validación es determinista y se re-ejecuta.
+  Los runners de CLI y server tienen `cacheDir` wired.
+- **P3 — filtro de ruido en segmentos pre-extract:** `filterSegments(segments)` descarta segmentos
+  `< 30 chars` y deduplicados por hash normalizado (case+whitespace). Aplicado en `ingestText` y
+  `ingestPdf`. Puramente estructural; sin semántica (invariante 3 preservado).
+- **P4 — truncar anclas en formatFindings:** en `@pda/agent2`, las citas se recortan a 120 chars y
+  se limitan a 2 anclas por hallazgo. Las computaciones siempre se incluyen completas. Reduce tokens
+  de entrada al prompt de Definición.
+- **P5 — default Haiku para intake:** `PDA_MODEL_INTAKE` cae a Haiku; Opus exige variable explícita.
+
+**Tests totales: 168** (llm 9 · spec 60 · agent1 32 · agent2 5 · agent3 9 · orchestrator 51 · dashboard 9). Todos pasan. Typecheck limpio.
+
 ## 5. Estado actual del repo
 
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa **`diseno`** (Exploración

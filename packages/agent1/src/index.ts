@@ -8,4 +8,5 @@ export * from "./ingest.js";
 export * from "./compute.js";
 export * from "./extract.js";
 export * from "./derive.js";
+export * from "./quant-findings.js";
 export * from "./evidence-cache.js";

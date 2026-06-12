@@ -7,3 +7,4 @@ export const PACKAGE_NAME = "@pda/orchestrator";
 export * from "./verify.js";
 export * from "./stage.js";
 export * from "./runner.js";
+export * from "./result-cache.js";

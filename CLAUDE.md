@@ -13,7 +13,7 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: F0+F1+F2 · D2 · F3-A Exploración (CERRADA) · corridas desde la UI (HECHO) · F3-B (siguiente)
+## Alcance actual: F0+F1+F2 · D2 · F3-A Exploración (CERRADA) · corridas desde la UI (HECHO) · O2 (HECHO) · F3-B (siguiente)
 
 - HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
   mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
@@ -60,6 +60,12 @@
   tokens real** (threadeada hasta la UI + auditoría). `RunAgentButton` es el patrón reusable. El
   stakeholder opera 100% en la UI (revisar/aprobar); el operador ya no necesita CLI. 150 tests.
   Detalle: ESTADO.md §Sesión 16.
+- HECHO (Sesión 17 — sugerir intake con IA + O2 optimización): wizard y `IntakeEditPage` tienen
+  botón "Sugerir con IA" (haiku, stateless, `POST /api/intake/suggest`). O2 completa: hallazgos
+  cuantitativos por script (`buildQuantitativeFindings`, invariante 4), cache de resultados para
+  derive/define/explore (`cachedModelCall`, `result-cache/`), filtro de ruido en segmentos
+  (`filterSegments`, < 30 chars + dedup), truncar anclas en `formatFindings` (120 chars, max 2),
+  `resolveModel` con `defaultModel` param (Haiku para intake). 168 tests. Detalle: ESTADO.md §Sesión 17.
 - SIGUIENTE (F3-B/C/D/E): **Agente 4 Diseño** (lee `spec.concepts`, produce artefactos de diseño
   anclados a los conceptos; nace con su botón "Correr Diseño" en la UI) → Validación (A5) → gate curar
   → Entrega (A6) → Aprendizaje (A7). También: config real MCP/conectores, RBAC, multi-agente paralelo.

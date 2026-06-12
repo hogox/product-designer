@@ -33,6 +33,7 @@ import {
   runDiscoveryWithSources,
   createDefinitionRunner,
   createExplorationRunner,
+  resultCacheDirFor,
   resolveTopic,
 } from "./runner.js";
 
@@ -169,7 +170,8 @@ async function main() {
 
   if (cmd === "define") {
     const topic = resolveTopic(await readSpec(ROOT, specId));
-    const runner = createDefinitionRunner({ topic });
+    const cacheDir = resultCacheDirFor(ROOT, specId);
+    const runner = createDefinitionRunner({ topic, cacheDir });
     const gate = await runDefinition(ROOT, specId, { runner, author: AUTHOR });
     console.log(
       `\n▸ Definición. BLOQUEADO en compuerta '${gate.gate}' (sin subir versión).`,
@@ -262,7 +264,8 @@ async function main() {
 
   if (cmd === "explore") {
     const topic = resolveTopic(await readSpec(ROOT, specId));
-    const runner = createExplorationRunner({ topic });
+    const cacheDir = resultCacheDirFor(ROOT, specId);
+    const runner = createExplorationRunner({ topic, cacheDir });
     const r = await runExploration(ROOT, specId, { runner, author: AUTHOR });
     console.log(`\n▸ Exploración: ${r.concepts.length} conceptos propuestos.`);
     for (const c of r.concepts) {

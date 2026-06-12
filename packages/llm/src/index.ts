@@ -102,11 +102,13 @@ export async function callStructured<T>(
 export function resolveModel(
   envVar: string,
   override?: string,
+  defaultModel?: string,
 ): string {
   return (
     override ??
     process.env[envVar] ??
     process.env["PDA_MODEL"] ??
+    defaultModel ??
     "claude-opus-4-8"
   );
 }
