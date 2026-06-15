@@ -9,10 +9,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:50:21.394Z
 - id: F-002
   statement: "drop-off otp · segmento=nuevo: 42.9% (n=140)"
   type: quantitative
@@ -24,10 +24,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:50:26.451Z
 - id: F-003
   statement: "drop-off otp · segmento=recurrente: 43.4% (n=175)"
   type: quantitative
@@ -39,10 +39,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
-  review_note: null
-  reviewed_at: null
+  review_status: rechazado
+  reviewed_by: Hugo Muñoz (Lead PM)
+  review_note: no correponde porque era data de prueba
+  reviewed_at: 2026-06-15T19:50:37.532Z
 - id: F-004
   statement: "tiempo_espera_seg promedio (abandonos): 71.9 s (n=136)"
   type: quantitative
@@ -53,10 +53,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
-  review_note: null
-  reviewed_at: null
+  review_status: en_pausa
+  reviewed_by: Hugo Muñoz (Lead PM)
+  review_note: Me falta más data para validar
+  reviewed_at: 2026-06-15T19:50:45.917Z
 - id: F-005
   statement: "La demora en la llegada del código OTP (especialmente vía SMS) es un
     detonante central del abandono: los usuarios se cansan de esperar y cierran
@@ -77,10 +77,10 @@
   confidence: high
   status: proposed
   feeds: hypothesis
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:50:59.517Z
 - id: F-006
   statement: La falta de retroalimentación en pantalla (no saber si el código fue
     enviado, a qué número llega ni cuánto esperar) genera incertidumbre que
@@ -102,10 +102,10 @@
   confidence: high
   status: proposed
   feeds: hypothesis
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:51:00.516Z
 - id: F-007
   statement: El botón de reenviar tarda demasiado en activarse, lo que frustra a
     los usuarios que esperan reintentar y contribuye al abandono.
@@ -118,10 +118,10 @@
   confidence: high
   status: proposed
   feeds: constraints
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:51:01.523Z
 - id: F-008
   statement: Los usuarios desean métodos alternativos de verificación (por
     ejemplo, biometría/huella) como sustituto del OTP por SMS.
@@ -134,10 +134,10 @@
   confidence: medium
   status: proposed
   feeds: scope
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:51:02.295Z
 - id: F-009
   statement: Mostrar el número de destino enmascarado y un contador de tiempo
     reduciría la incertidumbre percibida durante la espera del código.
@@ -150,10 +150,10 @@
   confidence: medium
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:51:03.446Z
 - id: F-010
   statement: Parte de las recuperaciones ocurren solo por necesidad de la cuenta;
     usuarios sin esa necesidad no regresarían tras abandonar el OTP, indicando
@@ -171,10 +171,10 @@
   confidence: medium
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:51:04.264Z
 - id: F-011
   statement: El problema de abandono en OTP afecta de forma similar a usuarios
     nuevos y recurrentes, por lo que no parece concentrarse en un único
@@ -196,7 +196,7 @@
   confidence: medium
   status: proposed
   feeds: scope
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-15T19:51:05.595Z

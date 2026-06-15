@@ -5,7 +5,7 @@ description: null
 archived: false
 version: 3
 status: approved
-current_stage: diseno
+current_stage: exploracion
 problem_statement: El 43.2% de los usuarios que llegan a la verificación OTP del
   onboarding la abandonan sin completarla, sin diferencias por segmento. Las
   causas principales son la demora en la llegada del SMS, la falta de

@@ -1,0 +1,89 @@
+- id: C-001
+  title: Pantalla de espera viva
+  description: "Una pantalla de verificación que muestra en tiempo real el estado
+    del envío del SMS: confirmación de 'código enviado', el número enmascarado
+    al que llega y un contador visible de cuánto falta estimado. Incluye
+    animaciones de progreso y mensajes contextuales que acompañan la espera para
+    que nunca se perciba como pantalla congelada."
+  rationale: Ataca directamente la falta de retroalimentación en pantalla dando
+    certeza sobre el envío, el destino y el tiempo de espera, reduciendo la
+    ansiedad que lleva al abandono durante la espera.
+  addresses_jtbd:
+    - J-001
+    - J-002
+  spec_version: 3
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-002
+  title: Reenvío inteligente y progresivo
+  description: Un botón de reenvío que se activa con una espera mínima razonable
+    y, si el código sigue sin llegar, ofrece reenvíos sucesivos con tiempos
+    visibles y crecientes. Cada intento muestra claramente cuándo estará
+    disponible la siguiente acción para que el usuario sepa qué esperar.
+  rationale: Resuelve el problema del botón de reenvío que tarda en activarse y la
+    frustración de no poder reintentar, dando control y previsibilidad sobre el
+    proceso de reenvío.
+  addresses_jtbd:
+    - J-003
+    - J-001
+  spec_version: 3
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-003
+  title: Reanudación sin pérdida de avance
+  description: Un mecanismo que detecta cuando el usuario abandona la pantalla OTP
+    y le permite retomar exactamente donde quedó, mediante un enlace de retorno,
+    notificación o estado guardado. Al volver, encuentra el contexto intacto sin
+    tener que reiniciar el onboarding.
+  rationale: Aborda el abandono permanente convirtiéndolo en abandono temporal
+    recuperable, permitiendo retomar fácilmente el proceso y recuperar usuarios
+    que se fueron a medias.
+  addresses_jtbd:
+    - J-005
+  spec_version: 3
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-004
+  title: Verificación multicanal con respaldo
+  description: Cuando la entrega del SMS falla o se demora demasiado, el sistema
+    ofrece de forma proactiva canales alternativos de entrega del código como
+    llamada de voz o email, manteniendo el SMS como opción principal. El usuario
+    elige el camino más confiable para él sin quedar bloqueado.
+  rationale: Mitiga la dependencia exclusiva del SMS dando alternativas de
+    verificación ante fallas de entrega, sin comprometer biometría que está
+    fuera de alcance, abordando la necesidad de completar el onboarding por otra
+    vía.
+  addresses_jtbd:
+    - J-004
+    - J-001
+  spec_version: 3
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null
+- id: C-005
+  title: Detección proactiva y guía ante demora
+  description: "Un sistema que monitorea el tiempo transcurrido sin recepción del
+    código y, al superar un umbral, ofrece automáticamente acciones de rescate:
+    reenviar, verificar el número, contactar soporte o probar otro canal.
+    Convierte la espera pasiva en una experiencia asistida que guía al usuario
+    hacia la solución."
+  rationale: Combina certeza de espera, alternativas y reenvío en un flujo guiado
+    que evita que la frustración acumulada termine en abandono, anticipándose al
+    punto de quiebre del usuario.
+  addresses_jtbd:
+    - J-001
+    - J-002
+    - J-003
+    - J-004
+  spec_version: 3
+  review_status: propuesto
+  review_note: null
+  reviewed_by: null
+  reviewed_at: null

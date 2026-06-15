@@ -33,3 +33,16 @@
 {"timestamp":"2026-06-11T18:15:35.543Z","actor":"Hugo Muñoz (Lead PM)","action":"exploration.close","spec_id":"otp-onboarding","target":null,"reason":"3 conceptos promovidos a la spec → etapa diseno"}
 {"timestamp":"2026-06-15T19:49:32.450Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa descubrimiento"}
 {"timestamp":"2026-06-15T19:49:51.883Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"11 hallazgos (descubrimiento); verificación OK; 5922 tokens (in 4690/out 1232)"}
+{"timestamp":"2026-06-15T19:50:21.399Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-001","reason":null}
+{"timestamp":"2026-06-15T19:50:26.454Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-002","reason":null}
+{"timestamp":"2026-06-15T19:50:37.536Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.reject","spec_id":"otp-onboarding","target":"F-003","reason":"no correponde porque era data de prueba"}
+{"timestamp":"2026-06-15T19:50:45.920Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.pause","spec_id":"otp-onboarding","target":"F-004","reason":"Me falta más data para validar"}
+{"timestamp":"2026-06-15T19:50:59.520Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-005","reason":null}
+{"timestamp":"2026-06-15T19:51:00.520Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-006","reason":null}
+{"timestamp":"2026-06-15T19:51:01.527Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-007","reason":null}
+{"timestamp":"2026-06-15T19:51:02.301Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-008","reason":null}
+{"timestamp":"2026-06-15T19:51:03.451Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-009","reason":null}
+{"timestamp":"2026-06-15T19:51:04.268Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-010","reason":null}
+{"timestamp":"2026-06-15T19:51:05.600Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"otp-onboarding","target":"F-011","reason":null}
+{"timestamp":"2026-06-15T19:53:26.498Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa exploracion"}
+{"timestamp":"2026-06-15T19:53:45.989Z","actor":"agent3","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"5 conceptos propuestos (exploracion); 2574 tokens (in 1432/out 1142)"}
