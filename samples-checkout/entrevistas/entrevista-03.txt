@@ -1,0 +1,14 @@
+Entrevista 03 — Compradora ocasional (móvil, iOS)
+Fecha: 2026-06-05 · Moderador: equipo de research
+
+P: ¿Qué te genera dudas a la hora de pagar online?
+R: Los cargos que aparecen al final. En esta app el precio del producto era uno, y en el último paso aparecieron un cargo por servicio y otro por procesamiento que nadie me había mostrado.
+
+P: ¿Y eso qué te hizo hacer?
+R: Cerré la app. Me sentí estafada, aunque capaz eran cargos normales. Si me los mostraban desde el principio, lo pensaba distinto.
+
+P: ¿Qué señales te dan confianza en un checkout?
+R: Ver el desglose completo antes de poner la tarjeta, el candadito, y que la página no parezca armada a las apuradas. Acá el paso del pago tenía otro diseño que el resto de la app, parecía de otra empresa.
+
+P: ¿Completaste la compra finalmente?
+R: En otro lado. Mismo producto, un poco más caro, pero me mostraron el total desde el primer paso.

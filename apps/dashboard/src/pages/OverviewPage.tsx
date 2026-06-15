@@ -55,18 +55,21 @@ export function OverviewPage() {
                   {spec.intake.researchQuestion}
                 </p>
                 {spec.intake.hypotheses.filter((h) => h).length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-3 space-y-1.5">
                     {spec.intake.hypotheses
                       .filter((h) => h)
                       .map((h, i) => (
-                        <Badge
+                        <div
                           key={i}
-                          variant="outline"
-                          className="max-w-xs truncate text-xs"
-                          title={h}
+                          className="flex items-start gap-2.5 rounded-md bg-primary/5 px-2.5 py-2"
                         >
-                          H{i + 1}: {h}
-                        </Badge>
+                          <span className="mt-0.5 shrink-0 rounded bg-primary/20 px-1 py-0.5 text-[10px] font-semibold text-primary tabular-nums">
+                            H{i + 1}
+                          </span>
+                          <p className="text-xs leading-relaxed text-foreground">
+                            {h}
+                          </p>
+                        </div>
                       ))}
                   </div>
                 )}

@@ -1,0 +1,17 @@
+Persona — "Carla, la compradora móvil apurada"
+Documento de research · Producto Pagos · 2026-05
+
+Perfil: 32 años, trabaja tiempo completo, compra desde el teléfono en momentos muertos
+(transporte, filas, pausas). El 85% de sus sesiones de compra duran menos de cinco minutos.
+
+Objetivo principal: completar la compra en una sola sesión corta, sin crear cuentas nuevas
+ni cargar formularios largos desde el teclado del teléfono.
+
+Frustraciones: formularios con muchos campos en pantallas chicas, obligación de registrarse
+para comprar una sola vez, y no ver el costo total con envío hasta el final del flujo.
+
+Comportamiento clave: si el checkout le pide más de dos pantallas de datos, abandona y deja
+el carrito "para después", pero rara vez vuelve. Prefiere autocompletar y pago como invitada.
+
+Cita representativa: "si me hacés crear una cuenta y confirmar el mail para pagar, ya fue,
+lo dejo para después y después no existe".

@@ -1,0 +1,57 @@
+id: caida-en-checkout
+title: Caida en checkout
+product: Pagos
+description: null
+archived: false
+version: 0
+status: draft
+current_stage: descubrimiento
+problem_statement: null
+outcomes: []
+scope:
+  in_scope: []
+  non_goals: []
+constraints:
+  regulatory: []
+  accessibility: ""
+  design_system:
+    name: ""
+    version: ""
+    link: ""
+  technical: []
+decisions: []
+tasks: []
+verification: []
+findings: []
+jtbd: []
+concepts: []
+intake:
+  researchQuestion: ¿Por qué los usuarios abandonan el proceso de checkout antes
+    de completar el pago?
+  hypotheses:
+    - Los usuarios abandonan el checkout porque el proceso tiene demasiados
+      pasos o campos que generan fricción.
+    - Una parte de las caídas se debe a errores técnicos o rechazos durante el
+      procesamiento del pago.
+    - Los usuarios desconfían del checkout por falta de señales de seguridad o
+      claridad sobre los cargos finales.
+    - La ausencia de métodos de pago preferidos por los usuarios provoca el
+      abandono en el momento de pagar.
+  productContext: Pagos es un producto de procesamiento de transacciones donde los
+    usuarios completan compras a través de un flujo de checkout. La conversión
+    en este flujo es crítica para el negocio.
+  discoveryPlan:
+    methods:
+      - analitica
+      - entrevistas
+      - encuestas
+      - soporte
+      - benchmark
+    instruments:
+      - ces
+      - csat
+    expectedSourceKinds:
+      - datos
+      - entrevista
+      - documento
+history: []

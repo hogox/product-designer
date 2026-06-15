@@ -1,0 +1,2 @@
+{"timestamp":"2026-06-12T16:05:04.331Z","actor":"Hugo Muñoz (Lead PM)","action":"spec.create","spec_id":"caida-en-checkout","target":null,"reason":"producto \"Pagos\""}
+{"timestamp":"2026-06-12T16:05:04.380Z","actor":"Hugo Muñoz (Lead PM)","action":"intake.update","spec_id":"caida-en-checkout","target":null,"reason":"¿Por qué los usuarios abandonan el proceso de checkout antes de completar el pago?"}

@@ -4,20 +4,53 @@
 // vea de qué etapa nace cada cosa. Los contenidos repetitivos (outcomes/JTBD/conceptos) pasan
 // de listas planas a sub-cards bordeadas. Sin tocar components/ui/.
 
-import { History, Target } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Circle,
+  Clock,
+  History,
+  Target,
+} from "lucide-react";
 
-import type { Spec } from "@pda/spec";
+import type { Spec, Task } from "@pda/spec";
+
+type TaskStatus = Task["status"];
 
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HeartBadge, RealMockBadge } from "./badges";
 import { SectionIcon, STAGE_ICON, type IconTone } from "./icons";
+import { ScopeViz } from "./viz/ScopeViz";
+import { MetricBar } from "./viz/MetricBar";
+import { CategoryBar } from "./viz/CategoryBar";
+
+// --- task status helpers ---
+const TASK_ICON: Record<TaskStatus, typeof Circle> = {
+  todo: Circle,
+  in_progress: Clock,
+  done: CheckCircle2,
+  blocked: AlertCircle,
+};
+
+const TASK_ICON_CLS: Record<TaskStatus, string> = {
+  todo: "text-muted-foreground/40",
+  in_progress: "text-amber-500",
+  done: "text-emerald-500",
+  blocked: "text-red-500",
+};
+
+const TASK_LABEL: Record<TaskStatus, string> = {
+  todo: "pendiente",
+  in_progress: "en curso",
+  done: "listo",
+  blocked: "bloqueada",
+};
 
 function EmptyNote() {
   return <p className="text-sm text-muted-foreground italic">Vacío.</p>;
@@ -96,6 +129,30 @@ function SubCard({
 export function SpecOverview({ spec }: { spec: Spec }) {
   const conceptDecisions = spec.decisions;
 
+  // Map concept → JTBD for reverse lookup in the JTBD list
+  const conceptsByJtbd = new Map<string, string[]>();
+  for (const c of spec.concepts) {
+    for (const jid of c.addresses_jtbd) {
+      const existing = conceptsByJtbd.get(jid) ?? [];
+      existing.push(c.id);
+      conceptsByJtbd.set(jid, existing);
+    }
+  }
+
+  const maxJtbdSupport =
+    spec.jtbd.length > 0
+      ? Math.max(...spec.jtbd.map((j) => j.supported_by.length))
+      : 0;
+
+  // Task status summary for Tareas SubCard
+  const taskCounts: Record<TaskStatus, number> = {
+    todo: 0,
+    in_progress: 0,
+    done: 0,
+    blocked: 0,
+  };
+  for (const t of spec.tasks) taskCounts[t.status]++;
+
   return (
     <div className="space-y-6">
       {/* Identidad de la spec (header, no es una etapa) */}
@@ -106,19 +163,19 @@ export function SpecOverview({ spec }: { spec: Spec }) {
             Spec viva
             <RealMockBadge real />
           </CardTitle>
-          <CardDescription className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 mt-1">
             <Badge variant="secondary">id: {spec.id}</Badge>
             <Badge variant="secondary">v{spec.version}</Badge>
             <Badge variant="secondary">{spec.status}</Badge>
             <Badge variant="secondary">etapa: {spec.current_stage}</Badge>
-          </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-lg font-semibold">{spec.title}</div>
         </CardContent>
       </Card>
 
-      {/* ① Descubrimiento — nace con la spec */}
+      {/* ① Descubrimiento */}
       {(spec.scope.in_scope.length > 0 ||
         spec.scope.non_goals.length > 0 ||
         spec.tasks.length > 0) && (
@@ -129,44 +186,61 @@ export function SpecOverview({ spec }: { spec: Spec }) {
           tone="emerald"
           diamante="Problema"
         >
-          <SubCard title="Alcance">
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-muted-foreground">In-scope: </span>
-                {spec.scope.in_scope.length
-                  ? spec.scope.in_scope.join("; ")
-                  : "—"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Non-goals: </span>
-                {spec.scope.non_goals.length
-                  ? spec.scope.non_goals.join("; ")
-                  : "—"}
-              </div>
-            </div>
-          </SubCard>
+          {(spec.scope.in_scope.length > 0 || spec.scope.non_goals.length > 0) && (
+            <SubCard title="Alcance">
+              <ScopeViz
+                in_scope={spec.scope.in_scope}
+                non_goals={spec.scope.non_goals}
+              />
+            </SubCard>
+          )}
 
           {spec.tasks.length > 0 && (
             <SubCard title="Tareas (hipótesis)" count={spec.tasks.length}>
+              {/* Mini resumen de estados */}
+              {spec.tasks.length > 1 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {(["done", "in_progress", "todo", "blocked"] as TaskStatus[])
+                    .filter((s) => taskCounts[s] > 0)
+                    .map((s) => {
+                      const Icon = TASK_ICON[s];
+                      return (
+                        <span
+                          key={s}
+                          className="flex items-center gap-1 text-xs text-muted-foreground"
+                        >
+                          <Icon className={`size-3 ${TASK_ICON_CLS[s]}`} />
+                          {taskCounts[s]} {TASK_LABEL[s]}
+                        </span>
+                      );
+                    })}
+                </div>
+              )}
+
               <ul className="space-y-2 text-sm">
-                {spec.tasks.map((t) => (
-                  <li key={t.id} className="flex items-start gap-2">
-                    <Badge variant="outline" className="text-[10px]">
-                      {t.status}
-                    </Badge>
-                    <span>
-                      {t.description}{" "}
-                      <span className="text-muted-foreground">({t.owner})</span>
-                    </span>
-                  </li>
-                ))}
+                {spec.tasks.map((t) => {
+                  const Icon = TASK_ICON[t.status];
+                  return (
+                    <li key={t.id} className="flex items-start gap-2">
+                      <Icon
+                        className={`mt-0.5 size-3.5 shrink-0 ${TASK_ICON_CLS[t.status]}`}
+                      />
+                      <span>
+                        {t.description}{" "}
+                        <span className="text-muted-foreground">
+                          ({t.owner})
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </SubCard>
           )}
         </StageGroup>
       )}
 
-      {/* ② Definición — diamante Problema */}
+      {/* ② Definición */}
       {(spec.problem_statement ||
         spec.outcomes.length > 0 ||
         spec.jtbd.length > 0) && (
@@ -185,54 +259,78 @@ export function SpecOverview({ spec }: { spec: Spec }) {
 
           {spec.jtbd.length > 0 && (
             <SubCard title="JTBD — Jobs To Be Done" count={spec.jtbd.length}>
-              <div className="space-y-2">
-                {spec.jtbd.map((j) => (
-                  <div key={j.id} className="rounded-lg border p-3">
-                    <p className="text-sm">{j.statement}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <IdChip>{j.id}</IdChip>
-                      <span className="text-xs text-muted-foreground">←</span>
-                      {j.supported_by.map((fid) => (
-                        <IdChip key={fid}>{fid}</IdChip>
-                      ))}
+              <div className="space-y-3">
+                {spec.jtbd.map((j) => {
+                  const supportPct =
+                    maxJtbdSupport > 0
+                      ? (j.supported_by.length / maxJtbdSupport) * 100
+                      : 0;
+                  const concepts = conceptsByJtbd.get(j.id) ?? [];
+                  return (
+                    <div key={j.id} className="rounded-lg border p-3 space-y-2">
+                      <p className="text-sm">{j.statement}</p>
+
+                      {/* Cobertura de evidencia */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          Evidencia
+                        </span>
+                        <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="absolute inset-y-0 left-0 rounded-full bg-sky-400"
+                            style={{ width: `${supportPct}%` }}
+                          />
+                        </div>
+                        <span className="w-4 shrink-0 text-right text-xs tabular-nums font-semibold text-sky-600">
+                          {j.supported_by.length}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <IdChip>{j.id}</IdChip>
+                        <span className="text-xs text-muted-foreground">←</span>
+                        {j.supported_by.map((fid) => (
+                          <IdChip key={fid}>{fid}</IdChip>
+                        ))}
+                        {concepts.length > 0 && (
+                          <>
+                            <span className="text-xs text-muted-foreground mx-0.5">·</span>
+                            {concepts.map((cid) => (
+                              <Badge
+                                key={cid}
+                                variant="outline"
+                                className="font-mono text-[10px] border-amber-300 text-amber-700"
+                              >
+                                {cid}
+                              </Badge>
+                            ))}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </SubCard>
           )}
 
           {spec.outcomes.length > 0 && (
             <SubCard title="Outcomes / métricas" count={spec.outcomes.length}>
-              <div className="space-y-2">
+              <div className="space-y-4">
+                {/* Distribución HEART compacta */}
+                <CategoryBar outcomes={spec.outcomes} />
+
+                {spec.outcomes.some((o) => o.heart) && (
+                  <div className="border-t" />
+                )}
+
                 {spec.outcomes.map((o, i) => (
-                  <div key={i} className="rounded-lg border p-3">
+                  <div key={i} className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       {o.heart && <HeartBadge category={o.heart} />}
-                      <strong className="text-sm">{o.metric}</strong>
+                      <span className="text-sm font-medium">{o.metric}</span>
                     </div>
-                    <div className="mt-1.5 flex flex-wrap items-baseline gap-1.5 text-sm">
-                      <span className="text-muted-foreground tabular-nums">
-                        {o.baseline ?? "—"}
-                      </span>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="font-medium tabular-nums">{o.target}</span>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {o.method}
-                    </div>
-                    {o.signals && o.signals.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {o.signals.map((s, k) => (
-                          <span
-                            key={k}
-                            className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <MetricBar baseline={o.baseline} target={o.target} />
                   </div>
                 ))}
               </div>
@@ -241,7 +339,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
         </StageGroup>
       )}
 
-      {/* ③ Exploración — diamante Solución */}
+      {/* ③ Exploración */}
       {(spec.concepts.length > 0 || conceptDecisions.length > 0) && (
         <StageGroup
           n={3}
@@ -295,7 +393,7 @@ export function SpecOverview({ spec }: { spec: Spec }) {
         </StageGroup>
       )}
 
-      {/* Transversal — procedencia (fuera del riel de etapas) */}
+      {/* Transversal */}
       <section className="space-y-3">
         <div className="flex items-center gap-2.5">
           <SectionIcon icon={History} tone="slate" />

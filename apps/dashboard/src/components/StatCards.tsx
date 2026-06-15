@@ -37,6 +37,46 @@ function Stat({
   );
 }
 
+/** Barra apilada proporcional (segmentos con flex: count). */
+function StackedBar({
+  segments,
+}: {
+  segments: Array<{ count: number; cls: string }>;
+}) {
+  const total = segments.reduce((s, seg) => s + seg.count, 0);
+  if (total === 0) return null;
+  return (
+    <div className="flex h-1.5 overflow-hidden rounded-full">
+      {segments
+        .filter((s) => s.count > 0)
+        .map((s, i) => (
+          <div key={i} className={s.cls} style={{ flex: s.count }} />
+        ))}
+    </div>
+  );
+}
+
+/** Barra simple con un solo valor sobre un total. */
+function CoverageBar({
+  covered,
+  total,
+  cls,
+}: {
+  covered: number;
+  total: number;
+  cls: string;
+}) {
+  const pct = total > 0 ? (covered / total) * 100 : 0;
+  return (
+    <div className="relative h-1.5 overflow-hidden rounded-full bg-muted">
+      <div
+        className={`absolute inset-y-0 left-0 ${cls}`}
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
 export function StatCards({
   spec,
   findings,
@@ -46,16 +86,27 @@ export function StatCards({
   findings: Finding[];
   concepts?: Concept[];
 }) {
-  // El working set (findings) trae el estado de revisión vivo; si está vacío (spec ya
-  // aprobada sin propuesta), cae a los hallazgos consolidados en la spec.
   const fs = findings.length > 0 ? findings : spec.findings;
   const by = (s: ReviewStatus) =>
     fs.filter((f) => f.review_status === s).length;
 
-  // Conceptos en triage (concepts.yaml) o ya promovidos a la spec (post-cierre).
   const cs = concepts.length > 0 ? concepts : spec.concepts;
   const selected = cs.filter((c) => c.review_status === "seleccionado").length;
+  const proposed = cs.filter((c) => c.review_status === "propuesto").length;
+  const discarded = cs.filter((c) => c.review_status === "descartado").length;
   const showConcepts = cs.length > 0;
+
+  // JTBD con al menos un hallazgo aprobado
+  const coveredJtbd = spec.jtbd.filter((j) =>
+    j.supported_by.some(
+      (fid) => fs.find((f) => f.id === fid)?.review_status === "aprobado",
+    ),
+  ).length;
+
+  // Dimensiones HEART representadas
+  const heartDims = new Set(
+    spec.outcomes.map((o) => o.heart).filter(Boolean),
+  ).size;
 
   return (
     <div
@@ -68,36 +119,87 @@ export function StatCards({
         label="Versión"
         hint={spec.status}
       />
+
       <Stat
         icon={ListChecks}
         tone="emerald"
         value={fs.length}
         label="Hallazgos"
         hint={
-          fs.length > 0
-            ? `${by("aprobado")} aprob · ${by("pendiente")} pend · ${by("en_pausa")} pausa`
-            : "sin hallazgos"
+          fs.length > 0 ? (
+            <div className="space-y-1">
+              <StackedBar
+                segments={[
+                  { count: by("aprobado"), cls: "bg-emerald-400" },
+                  { count: by("pendiente"), cls: "bg-muted-foreground/20" },
+                  { count: by("en_pausa"), cls: "bg-amber-400" },
+                  { count: by("rechazado"), cls: "bg-red-400" },
+                ]}
+              />
+              <span>
+                {by("aprobado")} aprob · {by("pendiente")} pend
+                {by("en_pausa") > 0 && ` · ${by("en_pausa")} pausa`}
+              </span>
+            </div>
+          ) : (
+            "sin hallazgos"
+          )
         }
       />
+
       <Stat
         icon={Briefcase}
         tone="sky"
         value={spec.jtbd.length}
         label="JTBD"
+        hint={
+          spec.jtbd.length > 0 ? (
+            <div className="space-y-1">
+              <CoverageBar
+                covered={coveredJtbd}
+                total={spec.jtbd.length}
+                cls="bg-sky-400"
+              />
+              <span>
+                {coveredJtbd}/{spec.jtbd.length} con evidencia
+              </span>
+            </div>
+          ) : undefined
+        }
       />
+
       <Stat
         icon={Gauge}
         tone="violet"
         value={spec.outcomes.length}
         label="Métricas"
+        hint={
+          spec.outcomes.length > 0
+            ? `${heartDims}/5 dimensiones HEART`
+            : undefined
+        }
       />
+
       {showConcepts && (
         <Stat
           icon={Lightbulb}
           tone="amber"
           value={cs.length}
           label="Conceptos"
-          hint={`${selected} seleccionado${selected === 1 ? "" : "s"}`}
+          hint={
+            <div className="space-y-1">
+              <StackedBar
+                segments={[
+                  { count: selected, cls: "bg-emerald-400" },
+                  { count: proposed, cls: "bg-muted-foreground/20" },
+                  { count: discarded, cls: "bg-red-400/50" },
+                ]}
+              />
+              <span>
+                {selected} seleccionado{selected !== 1 ? "s" : ""}
+              </span>
+            </div>
+          }
         />
       )}
     </div>

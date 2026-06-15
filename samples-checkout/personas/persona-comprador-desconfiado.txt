@@ -1,0 +1,19 @@
+Persona — "Diego, el comprador desconfiado del pago online"
+Documento de research · Producto Pagos · 2026-05
+
+Perfil: 47 años, compra online hace años pero tuvo una experiencia de doble cobro que lo
+marcó. Revisa cada paso del pago y abandona ante la primera señal confusa.
+
+Objetivo principal: pagar con la certeza de cuánto se le va a cobrar, por qué medio, y tener
+comprobante inmediato de la operación.
+
+Frustraciones: cargos por servicio que aparecen recién en el último paso, mensajes de error
+genéricos que no explican si el cobro se hizo o no, y pantallas de pago con un diseño
+distinto al resto del sitio (le parecen fraudulentas).
+
+Comportamiento clave: ante un error de pago sin explicación, no reintenta: se va a otro
+comercio o paga por transferencia bancaria. Valora el desglose de cargos visible desde el
+primer paso del checkout.
+
+Cita representativa: "cuando el cartel rojo no me dice qué pasó con mi plata, para mí ya es
+un problema del comercio, no mío".

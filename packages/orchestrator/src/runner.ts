@@ -17,7 +17,7 @@ import {
   ingestFile,
   extractTextEvidence,
   createAnthropicProposer,
-  computeFunnelMetrics,
+  computeTabularMetrics,
   metricToEvidence,
   buildEvidencePool,
   buildQuantitativeFindings,
@@ -87,8 +87,8 @@ export function createDiscoveryRunner(
 
       // Métricas tabulares: cómputo determinista (0 tokens), van al pool como evidencia
       // Y a `metrics` para generar sus hallazgos por script (O2 · P1).
-      const addTabular = (doc: Parameters<typeof computeFunnelMetrics>[0]) => {
-        const ms = computeFunnelMetrics(doc).slice(0, 4);
+      const addTabular = (doc: Parameters<typeof computeTabularMetrics>[0]) => {
+        const ms = computeTabularMetrics(doc).slice(0, 6);
         metrics.push(...ms);
         evidence.push(...ms.map(metricToEvidence));
       };

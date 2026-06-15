@@ -1,0 +1,22 @@
+Benchmark de checkouts — comparativa rápida de 4 competidores
+Equipo de producto Pagos · 2026-06 · fuentes: flujos públicos auditados a mano
+
+Competidor A (líder regional): checkout de una sola página con desglose de cargos visible
+desde el primer paso. Permite pago como invitado y guarda los datos recién después de la
+primera compra exitosa. Tres medios de pago: tarjeta, billetera virtual y transferencia.
+
+Competidor B: flujo de tres pasos con barra de progreso. El total con impuestos y envío se
+muestra fijo en un resumen lateral durante todo el flujo. Ante un rechazo de tarjeta muestra
+el motivo informado por el banco y sugiere el siguiente paso ("probá con otra tarjeta o
+pagá con transferencia").
+
+Competidor C: requiere registro previo, similar a nuestro flujo actual. Es el de peor
+conversión declarada del grupo según su propio reporte de resultados del último trimestre.
+
+Competidor D: apuesta todo a billeteras: el 60% de sus transacciones entra por billetera
+virtual según su reporte público. El alta de tarjeta existe pero está relegada a un segundo
+nivel del menú de pago.
+
+Lectura del equipo: los dos patrones que se repiten en los flujos con mejor conversión son
+(1) total final visible desde el primer paso y (2) más de un medio de pago con la billetera
+como primera opción. El registro obligatorio antes de pagar solo aparece en el peor del grupo.

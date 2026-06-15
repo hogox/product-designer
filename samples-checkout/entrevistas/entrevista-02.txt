@@ -1,0 +1,14 @@
+Entrevista 02 — Comprador recurrente (web, escritorio)
+Fecha: 2026-06-03 · Moderador: equipo de research
+
+P: ¿Tuviste problemas pagando en el último mes?
+R: Dos veces. La tarjeta me la rechazó sin decirme por qué. Solo un cartel rojo que decía "no pudimos procesar tu pago, intentá de nuevo".
+
+P: ¿Y qué hiciste?
+R: Lo intenté de nuevo con la misma tarjeta y nada. Después probé con otra y pasó. Pero me quedé con la duda de si me cobraron dos veces.
+
+P: ¿Volviste a comprar después de eso?
+R: Sí, pero ahora pago por transferencia cuando puedo. Le tengo menos confianza al checkout con tarjeta.
+
+P: ¿El error te explicó algo en algún momento?
+R: Nada. Ni el motivo ni qué hacer distinto. Si me hubiera dicho "tu banco rechazó la operación, probá con otra tarjeta", me ahorraba diez minutos.

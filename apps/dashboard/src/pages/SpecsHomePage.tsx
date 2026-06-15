@@ -16,6 +16,13 @@ import { AccountMenu } from "../components/AccountMenu";
 import { SectionIcon, STAGE_ICON } from "../components/icons";
 import { STAGES } from "../stages";
 import { specPath } from "../nav";
+import { cn } from "@/lib/utils";
+
+const DIAMANTE_CLS: Record<string, string> = {
+  Problema: "bg-primary/10 text-primary",
+  Solución: "bg-amber-50 text-amber-700",
+  Entrega: "bg-emerald-50 text-emerald-700",
+};
 
 export function SpecsHomePage() {
   const navigate = useNavigate();
@@ -147,7 +154,7 @@ function StagePipeline({ stageId }: { stageId: string }) {
       {STAGES.map((s, i) => (
         <span
           key={s.id}
-          className={`h-1.5 flex-1 rounded-full ${
+          className={`h-2 flex-1 rounded-full ${
             i < idx
               ? "bg-primary/40"
               : i === idx
@@ -188,18 +195,34 @@ function SpecCard({ entry }: { entry: SpecIndexEntry }) {
         </div>
 
         {/* fila 2: mini-pipeline + etiqueta de etapa */}
-        <div className="mt-4 space-y-1.5">
+        <div className="mt-4 space-y-2">
           <StagePipeline stageId={entry.stage} />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Etapa {stageIdx + 1}/{STAGES.length}
-              {stageDef ? ` · ${stageDef.name}` : ""}
-            </span>
-            {entry.hasProposal && (
-              <Badge variant="enPausa" className="text-[10px]">
-                propuesta pendiente
-              </Badge>
-            )}
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {stageDef && (
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                    DIAMANTE_CLS[stageDef.diamante] ?? "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {stageDef.diamante}
+                </span>
+              )}
+              <span className="truncate text-muted-foreground">
+                {stageIdx + 1}/{STAGES.length} · {stageDef?.name}
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {entry.hasProposal && (
+                <Badge variant="enPausa" className="text-[10px]">
+                  propuesta
+                </Badge>
+              )}
+              <span className="tabular-nums font-semibold text-foreground/50">
+                {Math.round(((stageIdx + 1) / STAGES.length) * 100)}%
+              </span>
+            </div>
           </div>
         </div>
 

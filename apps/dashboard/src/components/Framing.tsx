@@ -6,6 +6,8 @@ import type { Spec } from "@pda/spec";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SectionIcon } from "./icons";
+import { ScopeViz } from "./viz/ScopeViz";
+import { extractFirstNumber } from "./viz/parseMetric";
 
 function NewBadge({
   isProposal,
@@ -28,6 +30,13 @@ export function Framing({
   current: Spec | null;
   isProposal: boolean;
 }) {
+  // Extrae el primer % del problem statement para el callout visual.
+  // Solo se muestra si es un número porcentual — sin inventar contexto (invariante 5).
+  const keyNum = shown.problem_statement
+    ? extractFirstNumber(shown.problem_statement)
+    : null;
+  const showCallout = keyNum?.unit === "%";
+
   return (
     <Card>
       <CardHeader>
@@ -38,7 +47,7 @@ export function Framing({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5 text-sm">
-        <section className="space-y-1.5">
+        <section className="space-y-2">
           <h3 className="flex items-center gap-2 font-medium">
             Problem statement
             <NewBadge
@@ -46,10 +55,27 @@ export function Framing({
               cond={!current?.problem_statement}
             />
           </h3>
-          <p className="leading-relaxed">{shown.problem_statement ?? "—"}</p>
+
+          {shown.problem_statement ? (
+            <>
+              {/* Callout: primer % extraído del texto (literal de la spec) */}
+              {showCallout && (
+                <div className="inline-flex items-baseline gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5">
+                  <span className="text-2xl font-bold tabular-nums text-primary">
+                    {keyNum!.op ?? ""}
+                    {keyNum!.value}%
+                  </span>
+                  <span className="text-xs text-primary/60">— cifra clave</span>
+                </div>
+              )}
+              <p className="leading-relaxed">{shown.problem_statement}</p>
+            </>
+          ) : (
+            <p className="text-muted-foreground italic">—</p>
+          )}
         </section>
 
-        <section className="space-y-1.5">
+        <section className="space-y-2">
           <h3 className="flex items-center gap-2 font-medium">
             Alcance
             <NewBadge
@@ -60,30 +86,15 @@ export function Framing({
               }
             />
           </h3>
-          <div>
-            <em>In-scope:</em>{" "}
-            {shown.scope.in_scope.length ? (
-              <ul className="mt-1 list-disc space-y-1 pl-5">
-                {shown.scope.in_scope.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            ) : (
-              "—"
-            )}
-          </div>
-          <div>
-            <em>Non-goals:</em>{" "}
-            {shown.scope.non_goals.length ? (
-              <ul className="mt-1 list-disc space-y-1 pl-5">
-                {shown.scope.non_goals.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            ) : (
-              "—"
-            )}
-          </div>
+          {shown.scope.in_scope.length === 0 &&
+          shown.scope.non_goals.length === 0 ? (
+            <p className="text-muted-foreground italic">—</p>
+          ) : (
+            <ScopeViz
+              in_scope={shown.scope.in_scope}
+              non_goals={shown.scope.non_goals}
+            />
+          )}
         </section>
       </CardContent>
     </Card>

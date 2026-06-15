@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "node --test \"server/**/*.test.ts\""
+    "test": "node --test \"server/**/*.test.ts\" \"src/components/viz/*.test.ts\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",

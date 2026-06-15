@@ -1,0 +1,121 @@
+respondente_id,fecha,segmento,nps,comentario
+R-001,2026-06-02,recurrente,10,me funcionó perfecto con tarjeta guardada
+R-002,2026-06-03,nuevo,10,"fácil, aunque sumaría más medios de pago"
+R-003,2026-06-04,recurrente,10,"rápido y sin vueltas, repetiría la compra"
+R-004,2026-06-05,nuevo,10,me funcionó perfecto con tarjeta guardada
+R-005,2026-06-06,recurrente,10,"fácil, aunque sumaría más medios de pago"
+R-006,2026-06-07,nuevo,10,"rápido y sin vueltas, repetiría la compra"
+R-007,2026-06-08,recurrente,10,me funcionó perfecto con tarjeta guardada
+R-008,2026-06-09,nuevo,10,"fácil, aunque sumaría más medios de pago"
+R-009,2026-06-10,recurrente,10,"rápido y sin vueltas, repetiría la compra"
+R-010,2026-06-11,nuevo,10,me funcionó perfecto con tarjeta guardada
+R-011,2026-06-12,recurrente,10,"fácil, aunque sumaría más medios de pago"
+R-012,2026-06-13,nuevo,10,"rápido y sin vueltas, repetiría la compra"
+R-013,2026-06-14,recurrente,10,me funcionó perfecto con tarjeta guardada
+R-014,2026-06-15,nuevo,10,"fácil, aunque sumaría más medios de pago"
+R-015,2026-06-16,recurrente,9,"rápido y sin vueltas, repetiría la compra"
+R-016,2026-06-17,nuevo,9,me funcionó perfecto con tarjeta guardada
+R-017,2026-06-18,recurrente,9,"fácil, aunque sumaría más medios de pago"
+R-018,2026-06-19,nuevo,9,"rápido y sin vueltas, repetiría la compra"
+R-019,2026-06-20,recurrente,9,me funcionó perfecto con tarjeta guardada
+R-020,2026-06-21,nuevo,9,"fácil, aunque sumaría más medios de pago"
+R-021,2026-06-22,recurrente,9,"rápido y sin vueltas, repetiría la compra"
+R-022,2026-06-23,nuevo,9,me funcionó perfecto con tarjeta guardada
+R-023,2026-06-24,recurrente,9,"fácil, aunque sumaría más medios de pago"
+R-024,2026-06-25,nuevo,9,"rápido y sin vueltas, repetiría la compra"
+R-025,2026-06-26,recurrente,9,me funcionó perfecto con tarjeta guardada
+R-026,2026-06-27,nuevo,9,"fácil, aunque sumaría más medios de pago"
+R-027,2026-06-28,recurrente,9,"rápido y sin vueltas, repetiría la compra"
+R-028,2026-06-01,nuevo,9,me funcionó perfecto con tarjeta guardada
+R-029,2026-06-02,recurrente,9,"fácil, aunque sumaría más medios de pago"
+R-030,2026-06-03,nuevo,9,"rápido y sin vueltas, repetiría la compra"
+R-031,2026-06-04,recurrente,8,"estuvo bien, me costó encontrar el total final"
+R-032,2026-06-05,nuevo,8,"ok, aunque tuve que reintentar una vez"
+R-033,2026-06-06,recurrente,8,"cumple, pero el formulario de pago es largo"
+R-034,2026-06-07,nuevo,8,"estuvo bien, me costó encontrar el total final"
+R-035,2026-06-08,recurrente,8,"ok, aunque tuve que reintentar una vez"
+R-036,2026-06-09,nuevo,8,"cumple, pero el formulario de pago es largo"
+R-037,2026-06-10,recurrente,8,"estuvo bien, me costó encontrar el total final"
+R-038,2026-06-11,nuevo,8,"ok, aunque tuve que reintentar una vez"
+R-039,2026-06-12,recurrente,8,"cumple, pero el formulario de pago es largo"
+R-040,2026-06-13,nuevo,8,"estuvo bien, me costó encontrar el total final"
+R-041,2026-06-14,recurrente,8,"ok, aunque tuve que reintentar una vez"
+R-042,2026-06-15,nuevo,8,"cumple, pero el formulario de pago es largo"
+R-043,2026-06-16,recurrente,8,"estuvo bien, me costó encontrar el total final"
+R-044,2026-06-17,nuevo,8,"ok, aunque tuve que reintentar una vez"
+R-045,2026-06-18,recurrente,8,"cumple, pero el formulario de pago es largo"
+R-046,2026-06-19,nuevo,8,"estuvo bien, me costó encontrar el total final"
+R-047,2026-06-20,recurrente,8,"ok, aunque tuve que reintentar una vez"
+R-048,2026-06-21,nuevo,8,"cumple, pero el formulario de pago es largo"
+R-049,2026-06-22,recurrente,8,"estuvo bien, me costó encontrar el total final"
+R-050,2026-06-23,nuevo,8,"ok, aunque tuve que reintentar una vez"
+R-051,2026-06-24,recurrente,8,"cumple, pero el formulario de pago es largo"
+R-052,2026-06-25,nuevo,8,"estuvo bien, me costó encontrar el total final"
+R-053,2026-06-26,recurrente,8,"ok, aunque tuve que reintentar una vez"
+R-054,2026-06-27,nuevo,8,"cumple, pero el formulario de pago es largo"
+R-055,2026-06-28,recurrente,8,"estuvo bien, me costó encontrar el total final"
+R-056,2026-06-01,nuevo,8,"ok, aunque tuve que reintentar una vez"
+R-057,2026-06-02,recurrente,7,"cumple, pero el formulario de pago es largo"
+R-058,2026-06-03,nuevo,7,"estuvo bien, me costó encontrar el total final"
+R-059,2026-06-04,recurrente,7,"ok, aunque tuve que reintentar una vez"
+R-060,2026-06-05,nuevo,7,"cumple, pero el formulario de pago es largo"
+R-061,2026-06-06,recurrente,7,"estuvo bien, me costó encontrar el total final"
+R-062,2026-06-07,nuevo,7,"ok, aunque tuve que reintentar una vez"
+R-063,2026-06-08,recurrente,7,"cumple, pero el formulario de pago es largo"
+R-064,2026-06-09,nuevo,7,"estuvo bien, me costó encontrar el total final"
+R-065,2026-06-10,recurrente,7,"ok, aunque tuve que reintentar una vez"
+R-066,2026-06-11,nuevo,7,"cumple, pero el formulario de pago es largo"
+R-067,2026-06-12,recurrente,7,"estuvo bien, me costó encontrar el total final"
+R-068,2026-06-13,nuevo,7,"ok, aunque tuve que reintentar una vez"
+R-069,2026-06-14,recurrente,7,"cumple, pero el formulario de pago es largo"
+R-070,2026-06-15,nuevo,7,"estuvo bien, me costó encontrar el total final"
+R-071,2026-06-16,recurrente,7,"ok, aunque tuve que reintentar una vez"
+R-072,2026-06-17,nuevo,7,"cumple, pero el formulario de pago es largo"
+R-073,2026-06-18,recurrente,7,"estuvo bien, me costó encontrar el total final"
+R-074,2026-06-19,nuevo,7,"ok, aunque tuve que reintentar una vez"
+R-075,2026-06-20,recurrente,7,"cumple, pero el formulario de pago es largo"
+R-076,2026-06-21,nuevo,7,"estuvo bien, me costó encontrar el total final"
+R-077,2026-06-22,recurrente,7,"ok, aunque tuve que reintentar una vez"
+R-078,2026-06-23,nuevo,7,"cumple, pero el formulario de pago es largo"
+R-079,2026-06-24,recurrente,6,demasiados pasos para pagar desde el teléfono
+R-080,2026-06-25,nuevo,6,me rechazó el pago dos veces sin explicación
+R-081,2026-06-26,recurrente,6,aparecieron cargos al final que no esperaba
+R-082,2026-06-27,nuevo,6,"no estaba mi billetera para pagar, casi no compro"
+R-083,2026-06-28,recurrente,6,demasiados pasos para pagar desde el teléfono
+R-084,2026-06-01,nuevo,6,me rechazó el pago dos veces sin explicación
+R-085,2026-06-02,recurrente,6,aparecieron cargos al final que no esperaba
+R-086,2026-06-03,nuevo,6,"no estaba mi billetera para pagar, casi no compro"
+R-087,2026-06-04,recurrente,6,demasiados pasos para pagar desde el teléfono
+R-088,2026-06-05,nuevo,6,me rechazó el pago dos veces sin explicación
+R-089,2026-06-06,recurrente,6,aparecieron cargos al final que no esperaba
+R-090,2026-06-07,nuevo,6,"no estaba mi billetera para pagar, casi no compro"
+R-091,2026-06-08,recurrente,4,demasiados pasos para pagar desde el teléfono
+R-092,2026-06-09,nuevo,4,me rechazó el pago dos veces sin explicación
+R-093,2026-06-10,recurrente,4,aparecieron cargos al final que no esperaba
+R-094,2026-06-11,nuevo,4,"no estaba mi billetera para pagar, casi no compro"
+R-095,2026-06-12,recurrente,4,demasiados pasos para pagar desde el teléfono
+R-096,2026-06-13,nuevo,4,me rechazó el pago dos veces sin explicación
+R-097,2026-06-14,recurrente,4,aparecieron cargos al final que no esperaba
+R-098,2026-06-15,nuevo,4,"no estaba mi billetera para pagar, casi no compro"
+R-099,2026-06-16,recurrente,4,demasiados pasos para pagar desde el teléfono
+R-100,2026-06-17,nuevo,4,me rechazó el pago dos veces sin explicación
+R-101,2026-06-18,recurrente,4,aparecieron cargos al final que no esperaba
+R-102,2026-06-19,nuevo,4,"no estaba mi billetera para pagar, casi no compro"
+R-103,2026-06-20,recurrente,4,demasiados pasos para pagar desde el teléfono
+R-104,2026-06-21,nuevo,4,me rechazó el pago dos veces sin explicación
+R-105,2026-06-22,recurrente,2,aparecieron cargos al final que no esperaba
+R-106,2026-06-23,nuevo,2,"no estaba mi billetera para pagar, casi no compro"
+R-107,2026-06-24,recurrente,2,demasiados pasos para pagar desde el teléfono
+R-108,2026-06-25,nuevo,2,me rechazó el pago dos veces sin explicación
+R-109,2026-06-26,recurrente,2,aparecieron cargos al final que no esperaba
+R-110,2026-06-27,nuevo,2,"no estaba mi billetera para pagar, casi no compro"
+R-111,2026-06-28,recurrente,2,demasiados pasos para pagar desde el teléfono
+R-112,2026-06-01,nuevo,2,me rechazó el pago dos veces sin explicación
+R-113,2026-06-02,recurrente,2,aparecieron cargos al final que no esperaba
+R-114,2026-06-03,nuevo,2,"no estaba mi billetera para pagar, casi no compro"
+R-115,2026-06-04,recurrente,2,demasiados pasos para pagar desde el teléfono
+R-116,2026-06-05,nuevo,2,me rechazó el pago dos veces sin explicación
+R-117,2026-06-06,recurrente,2,aparecieron cargos al final que no esperaba
+R-118,2026-06-07,nuevo,2,"no estaba mi billetera para pagar, casi no compro"
+R-119,2026-06-08,recurrente,2,demasiados pasos para pagar desde el teléfono
+R-120,2026-06-09,nuevo,2,me rechazó el pago dos veces sin explicación

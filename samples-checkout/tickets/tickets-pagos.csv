@@ -1,0 +1,16 @@
+ticket_id,fecha,categoria,prioridad,canal,descripcion
+T-001,2026-06-02,error_pago,alta,android,me rechazó la tarjeta sin decir el motivo
+T-002,2026-06-03,error_pago,alta,web,el pago figura dos veces en mi resumen
+T-003,2026-06-04,error_pago,alta,ios,"error al procesar el pago, reintenté y nada"
+T-004,2026-06-05,error_pago,media,android,la app se colgó en el paso de la tarjeta
+T-005,2026-06-06,error_pago,alta,web,el pago quedó pendiente y no sé si se hizo
+T-006,2026-06-07,error_pago,media,ios,me cobraron y no llegó el comprobante
+T-007,2026-06-08,error_pago,media,android,el botón de pagar no respondía
+T-008,2026-06-09,cargos,alta,web,apareció un cargo por servicio que no vi antes
+T-009,2026-06-10,cargos,alta,ios,el total final no coincide con el del carrito
+T-010,2026-06-11,cargos,baja,android,quiero el desglose de los cargos del pago
+T-011,2026-06-12,metodos,media,web,no puedo pagar con mi billetera virtual
+T-012,2026-06-13,metodos,media,ios,no aceptan transferencia bancaria
+T-013,2026-06-14,metodos,alta,android,mi tarjeta de débito no está soportada
+T-014,2026-06-15,friccion,baja,web,el formulario de pago me pide demasiados datos
+T-015,2026-06-16,friccion,media,ios,tuve que crear una cuenta solo para pagar
