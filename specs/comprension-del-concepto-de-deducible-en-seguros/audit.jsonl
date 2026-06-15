@@ -1,0 +1,4 @@
+{"timestamp":"2026-06-15T19:47:49.638Z","actor":"Hugo Muñoz (Lead PM)","action":"spec.create","spec_id":"comprension-del-concepto-de-deducible-en-seguros","target":null,"reason":"producto \"Reembolso\""}
+{"timestamp":"2026-06-15T19:47:49.704Z","actor":"Hugo Muñoz (Lead PM)","action":"intake.update","spec_id":"comprension-del-concepto-de-deducible-en-seguros","target":null,"reason":"¿Por qué los clientes no comprenden el concepto de deducible al revisar su liquidación de reembolso?"}
+{"timestamp":"2026-06-15T19:48:08.027Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"comprension-del-concepto-de-deducible-en-seguros","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-15T19:48:22.230Z","actor":"agent1","action":"agent.proposed","spec_id":"comprension-del-concepto-de-deducible-en-seguros","target":null,"reason":"4 hallazgos (descubrimiento); verificación OK; 4645 tokens (in 4382/out 263)"}

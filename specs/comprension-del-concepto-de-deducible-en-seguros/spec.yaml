@@ -1,0 +1,59 @@
+id: comprension-del-concepto-de-deducible-en-seguros
+title: Comprensión del concepto de deducible en seguros
+product: Reembolso
+description: Los clientes, al ver su liquidación de reembolso, no entienden que
+  significa el concepto del deducible
+archived: false
+version: 0
+status: draft
+current_stage: descubrimiento
+problem_statement: null
+outcomes: []
+scope:
+  in_scope: []
+  non_goals: []
+constraints:
+  regulatory: []
+  accessibility: ""
+  design_system:
+    name: ""
+    version: ""
+    link: ""
+  technical: []
+decisions: []
+tasks: []
+verification: []
+findings: []
+jtbd: []
+concepts: []
+intake:
+  researchQuestion: ¿Por qué los clientes no comprenden el concepto de deducible
+    al revisar su liquidación de reembolso?
+  hypotheses:
+    - Los clientes desconocen el significado del término 'deducible' porque
+      nunca se les explicó al contratar el seguro.
+    - La liquidación de reembolso presenta el deducible sin contexto ni desglose
+      que muestre cómo afecta el monto final a recibir.
+    - El lenguaje técnico y la falta de ejemplos visuales en la liquidación
+      dificultan que los clientes relacionen el deducible con el descuento
+      aplicado.
+    - Los clientes esperan recibir el monto total facturado y perciben el
+      deducible como un descuento inesperado o injustificado.
+  productContext: Reembolso es un producto de seguros donde los clientes presentan
+    gastos médicos y reciben una liquidación con el monto a reembolsar tras
+    aplicar conceptos como el deducible.
+  discoveryPlan:
+    methods:
+      - entrevistas
+      - encuestas
+      - soporte
+      - analitica
+    instruments:
+      - ces
+      - nps
+      - csat
+    expectedSourceKinds:
+      - entrevista
+      - datos
+      - documento
+history: []

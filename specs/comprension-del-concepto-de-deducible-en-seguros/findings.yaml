@@ -1,0 +1,59 @@
+- id: F-001
+  statement: "drop-off otp: 43.2% (n=315)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas llego_a_otp+completo_otp — abandonan
+        (completo_otp=0) entre los que llegan al paso (llego_a_otp=1) (n=315)
+      computation: drop-off otp = 43.2% (136/315, n=315)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-002
+  statement: "drop-off otp · segmento=nuevo: 42.9% (n=140)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=nuevo (n=140)
+      computation: drop-off otp · segmento=nuevo = 42.9% (60/140, n=140)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-003
+  statement: "drop-off otp · segmento=recurrente: 43.4% (n=175)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=recurrente (n=175)
+      computation: drop-off otp · segmento=recurrente = 43.4% (76/175, n=175)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-004
+  statement: "tiempo_espera_seg promedio (abandonos): 71.9 s (n=136)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
+      computation: tiempo_espera_seg promedio en abandonos = 71.9 s (n=136)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
