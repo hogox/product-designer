@@ -1,0 +1,78 @@
+{
+  "kind": "derive",
+  "hash": "58f124a858ab8a9bb26586adbde72b28131b1dba8e7c52052b8c658b49c2fe9f",
+  "model": "claude-opus-4-8",
+  "createdAt": "2026-06-15T19:49:51.874Z",
+  "payload": [
+    {
+      "statement": "La demora en la llegada del código OTP (especialmente vía SMS) es un detonante central del abandono: los usuarios se cansan de esperar y cierran la app antes de que el código llegue.",
+      "type": "qualitative",
+      "confidence": "high",
+      "feeds": "hypothesis",
+      "evidence_ids": [
+        "E-002",
+        "E-005",
+        "E-014"
+      ]
+    },
+    {
+      "statement": "La falta de retroalimentación en pantalla (no saber si el código fue enviado, a qué número llega ni cuánto esperar) genera incertidumbre que lleva a dudar de la app y abandonar.",
+      "type": "qualitative",
+      "confidence": "high",
+      "feeds": "hypothesis",
+      "evidence_ids": [
+        "E-004",
+        "E-008",
+        "E-009"
+      ]
+    },
+    {
+      "statement": "El botón de reenviar tarda demasiado en activarse, lo que frustra a los usuarios que esperan reintentar y contribuye al abandono.",
+      "type": "qualitative",
+      "confidence": "high",
+      "feeds": "constraints",
+      "evidence_ids": [
+        "E-006"
+      ]
+    },
+    {
+      "statement": "Los usuarios desean métodos alternativos de verificación (por ejemplo, biometría/huella) como sustituto del OTP por SMS.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "scope",
+      "evidence_ids": [
+        "E-007"
+      ]
+    },
+    {
+      "statement": "Mostrar el número de destino enmascarado y un contador de tiempo reduciría la incertidumbre percibida durante la espera del código.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "outcomes",
+      "evidence_ids": [
+        "E-009"
+      ]
+    },
+    {
+      "statement": "Parte de las recuperaciones ocurren solo por necesidad de la cuenta; usuarios sin esa necesidad no regresarían tras abandonar el OTP, indicando riesgo real de pérdida definitiva.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "outcomes",
+      "evidence_ids": [
+        "E-010",
+        "E-007"
+      ]
+    },
+    {
+      "statement": "El problema de abandono en OTP afecta de forma similar a usuarios nuevos y recurrentes, por lo que no parece concentrarse en un único segmento.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "scope",
+      "evidence_ids": [
+        "E-003",
+        "E-012",
+        "E-013"
+      ]
+    }
+  ]
+}

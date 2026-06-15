@@ -1,0 +1,202 @@
+- id: F-001
+  statement: "drop-off otp: 43.2% (n=315)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas llego_a_otp+completo_otp — abandonan
+        (completo_otp=0) entre los que llegan al paso (llego_a_otp=1) (n=315)
+      computation: drop-off otp = 43.2% (136/315, n=315)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-002
+  statement: "drop-off otp · segmento=nuevo: 42.9% (n=140)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=nuevo (n=140)
+      computation: drop-off otp · segmento=nuevo = 42.9% (60/140, n=140)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-003
+  statement: "drop-off otp · segmento=recurrente: 43.4% (n=175)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=recurrente (n=175)
+      computation: drop-off otp · segmento=recurrente = 43.4% (76/175, n=175)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-004
+  statement: "tiempo_espera_seg promedio (abandonos): 71.9 s (n=136)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
+      computation: tiempo_espera_seg promedio en abandonos = 71.9 s (n=136)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-005
+  statement: "La demora en la llegada del código OTP (especialmente vía SMS) es un
+    detonante central del abandono: los usuarios se cansan de esperar y cierran
+    la app antes de que el código llegue."
+  type: qualitative
+  evidence:
+    - source: entrevista-01.txt
+      locator: párrafo 3
+      quote: Me cansé de esperar el código y cerré la app. Llegó como tres minutos
+        después, cuando ya había abandonado.
+    - source: entrevista-02.txt
+      locator: párrafo 2
+      quote: El SMS con el código siempre demora un montón en mi teléfono, a veces no
+        llega.
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
+      computation: tiempo_espera_seg promedio en abandonos = 71.9 s (n=136)
+  confidence: high
+  status: proposed
+  feeds: hypothesis
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-006
+  statement: La falta de retroalimentación en pantalla (no saber si el código fue
+    enviado, a qué número llega ni cuánto esperar) genera incertidumbre que
+    lleva a dudar de la app y abandonar.
+  type: qualitative
+  evidence:
+    - source: entrevista-01.txt
+      locator: párrafo 5
+      quote: No sabía si el código había sido enviado o no. La pantalla no decía nada,
+        solo un campo vacío esperando.
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Confuso. No me quedaba claro a qué número iba a llegar el SMS ni cuánto
+        debía esperar.
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Que me dijeran "te enviamos el código al número terminado en 45" y un
+        contador. Esa incertidumbre me hizo dudar de la app.
+  confidence: high
+  status: proposed
+  feeds: hypothesis
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-007
+  statement: El botón de reenviar tarda demasiado en activarse, lo que frustra a
+    los usuarios que esperan reintentar y contribuye al abandono.
+  type: qualitative
+  evidence:
+    - source: entrevista-02.txt
+      locator: párrafo 3
+      quote: Pido reenviar, pero el botón de reenviar recién se activa después de un
+        rato largo. Eso me desespera.
+  confidence: high
+  status: proposed
+  feeds: constraints
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-008
+  statement: Los usuarios desean métodos alternativos de verificación (por
+    ejemplo, biometría/huella) como sustituto del OTP por SMS.
+  type: qualitative
+  evidence:
+    - source: entrevista-02.txt
+      locator: párrafo 4
+      quote: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir
+        otro método, usaría la huella.
+  confidence: medium
+  status: proposed
+  feeds: scope
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-009
+  statement: Mostrar el número de destino enmascarado y un contador de tiempo
+    reduciría la incertidumbre percibida durante la espera del código.
+  type: qualitative
+  evidence:
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Que me dijeran "te enviamos el código al número terminado en 45" y un
+        contador. Esa incertidumbre me hizo dudar de la app.
+  confidence: medium
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-010
+  statement: Parte de las recuperaciones ocurren solo por necesidad de la cuenta;
+    usuarios sin esa necesidad no regresarían tras abandonar el OTP, indicando
+    riesgo real de pérdida definitiva.
+  type: qualitative
+  evidence:
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la
+        cuenta, pero si no la hubiera necesitado, no vuelvo.
+    - source: entrevista-02.txt
+      locator: párrafo 4
+      quote: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir
+        otro método, usaría la huella.
+  confidence: medium
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-011
+  statement: El problema de abandono en OTP afecta de forma similar a usuarios
+    nuevos y recurrentes, por lo que no parece concentrarse en un único
+    segmento.
+  type: qualitative
+  evidence:
+    - source: entrevista-01.txt
+      locator: párrafo 4
+      quote: Sí, pero a la segunda me pidió el código otra vez y tampoco llegaba
+        rápido. Sentí que perdía el tiempo.
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=nuevo (n=140)
+      computation: drop-off otp · segmento=nuevo = 42.9% (60/140, n=140)
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=recurrente (n=175)
+      computation: drop-off otp · segmento=recurrente = 43.4% (76/175, n=175)
+  confidence: medium
+  status: proposed
+  feeds: scope
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null

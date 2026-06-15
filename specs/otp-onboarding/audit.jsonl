@@ -31,3 +31,5 @@
 {"timestamp":"2026-06-11T18:14:22.400Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.discard","spec_id":"otp-onboarding","target":"C-004","reason":"Verificación multicanal: alcance mayor, lo dejamos para una fase posterior"}
 {"timestamp":"2026-06-11T18:14:22.405Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.discard","spec_id":"otp-onboarding","target":"C-005","reason":"Solapa con C-001 en la experiencia de espera"}
 {"timestamp":"2026-06-11T18:15:35.543Z","actor":"Hugo Muñoz (Lead PM)","action":"exploration.close","spec_id":"otp-onboarding","target":null,"reason":"3 conceptos promovidos a la spec → etapa diseno"}
+{"timestamp":"2026-06-15T19:49:32.450Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"otp-onboarding","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-15T19:49:51.883Z","actor":"agent1","action":"agent.proposed","spec_id":"otp-onboarding","target":null,"reason":"11 hallazgos (descubrimiento); verificación OK; 5922 tokens (in 4690/out 1232)"}
