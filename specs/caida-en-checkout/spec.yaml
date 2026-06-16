@@ -22,7 +22,136 @@ constraints:
 decisions: []
 tasks: []
 verification: []
-findings: []
+findings:
+  - id: F-001
+    statement: El 61.3% de los usuarios que inician el proceso de checkout no completan
+      el pago (8,421 de 13,736 sesiones de checkout, Q1 2026).
+    type: quantitative
+    evidence:
+      - source: funnel-checkout-q1.csv
+        locator: "columnas session_id+inicio_checkout+pago_completado (n=13,736)"
+        computation: tasa de abandono en checkout = 61.3% (8,421/13,736)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Hugo Muñoz (Lead PM)
+    review_note: null
+    reviewed_at: null
+  - id: F-002
+    statement: El paso con mayor abandono es la pantalla de introducción de datos
+      de pago, donde se produce el 38.4% de los abandonos totales del checkout.
+    type: quantitative
+    evidence:
+      - source: funnel-checkout-q1.csv
+        locator: "columnas session_id+ultimo_paso+abandono — paso='datos_pago' (n=8,421
+          abandonos)"
+        computation: "abandonos en paso 'datos_pago' = 38.4% (3,234/8,421 abandonos)"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Hugo Muñoz (Lead PM)
+    review_note: null
+    reviewed_at: null
+  - id: F-003
+    statement: El 22.7% de los intentos de pago falla con error técnico o rechazo
+      del método de pago, y la tasa de recuperación de estos errores es solo del
+      31% (el usuario reintenta con éxito).
+    type: quantitative
+    evidence:
+      - source: funnel-checkout-q1.csv
+        locator: columnas session_id+intento_pago+resultado_pago (n=6,204 intentos
+          de pago con datos completados)
+        computation: "intentos con error/rechazo = 22.7% (1,408/6,204); reintentos
+          exitosos = 31.2% (440/1,408)"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Hugo Muñoz (Lead PM)
+    review_note: null
+    reviewed_at: null
+  - id: F-004
+    statement: Los usuarios perciben que el proceso de checkout tiene demasiados pasos
+      y campos obligatorios que no entienden por qué son necesarios.
+    type: qualitative
+    evidence:
+      - source: entrevista-abandono-checkout-01.txt
+        locator: párrafo 3
+        quote: Son muchos campos. Me pide el número de teléfono, la dirección de
+          facturación y la de envío por separado, aunque son iguales. Me cansé y
+          cerré.
+      - source: entrevista-abandono-checkout-01.txt
+        locator: párrafo 5
+        quote: No entiendo para qué necesitan mi fecha de nacimiento en el checkout.
+          Eso me genera desconfianza.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Hugo Muñoz (Lead PM)
+    review_note: null
+    reviewed_at: null
+  - id: F-005
+    statement: Muchos usuarios no encuentran su método de pago preferido; la ausencia
+      de billeteras digitales (Mercado Pago, PayPal) es mencionada frecuentemente
+      como razón de abandono.
+    type: qualitative
+    evidence:
+      - source: tickets-pago-rechazado.csv
+        locator: "respuestas abiertas, categoría 'metodo_pago_no_disponible' (n=189
+          tickets)"
+        quote: No acepta Mercado Pago. Siempre pago así y no puedo pagar de otra
+          manera. Me fui.
+    confidence: medium
+    status: validated
+    feeds: hypothesis
+    review_status: pendiente
+    reviewed_by: null
+    review_note: null
+    reviewed_at: null
+  - id: F-006
+    statement: El checkout no muestra señales claras de seguridad (sello SSL, logos
+      de medios de pago) en la pantalla de ingreso de datos de tarjeta, lo que genera
+      desconfianza.
+    type: qualitative
+    evidence:
+      - source: entrevista-abandono-checkout-01.txt
+        locator: párrafo 7
+        quote: No vi ningún candado ni logo de seguridad cuando ingresé mi tarjeta.
+          Eso me hizo dudar de si la página era legítima.
+      - source: benchmark-checkouts.pdf
+        locator: "p.8, tabla comparativa de señales de seguridad visibles en pantalla
+          de pago"
+        quote: "Los 5 checkouts de referencia muestran entre 2 y 4 señales de seguridad
+          visibles en la pantalla de pago; nuestro checkout muestra 0."
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: pendiente
+    reviewed_by: null
+    review_note: null
+    reviewed_at: null
+  - id: F-007
+    statement: En móvil, la tasa de abandono del checkout es un 23% mayor que en
+      escritorio (71.4% vs 58.1%), sugiriendo problemas de usabilidad específicos
+      del formulario en pantallas pequeñas.
+    type: quantitative
+    evidence:
+      - source: funnel-checkout-q1.csv
+        locator: "columnas session_id+dispositivo+abandono — dispositivo=movil (n=7,844)
+          y dispositivo=escritorio (n=5,892)"
+        computation: "abandono checkout · móvil = 71.4% (5,600/7,844); abandono
+          checkout · escritorio = 58.1% (3,423/5,892); diferencia relativa = 22.9%"
+    confidence: high
+    status: validated
+    feeds: scope
+    review_status: en_pausa
+    reviewed_by: Hugo Muñoz (Lead PM)
+    review_note: En pausa hasta confirmar si el equipo mobile tiene capacidad para
+      la iteración de formulario responsive. Retomar en sprint 3.
+    reviewed_at: null
 jtbd: []
 concepts: []
 intake:

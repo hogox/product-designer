@@ -1,0 +1,29 @@
+{
+  "sha256": "b31555b6c813acc76b4dcd513eebb33c2a28e1830e2015e3d52c96f6a372d511",
+  "topic": "¿Por qué los usuarios abandonan el proceso de checkout antes de completar el pago?",
+  "evidence": [
+    {
+      "source": "entrevista-01.txt",
+      "locator": "párrafo 2",
+      "quote": "Bajé la app, puse mis datos y todo bien hasta que llegó el paso del código."
+    },
+    {
+      "source": "entrevista-01.txt",
+      "locator": "párrafo 3",
+      "quote": "Me cansé de esperar el código y cerré la app. Llegó como tres minutos después, cuando ya había abandonado."
+    },
+    {
+      "source": "entrevista-01.txt",
+      "locator": "párrafo 4",
+      "quote": "Sí, pero a la segunda me pidió el código otra vez y tampoco llegaba rápido. Sentí que perdía el tiempo."
+    },
+    {
+      "source": "entrevista-01.txt",
+      "locator": "párrafo 5",
+      "quote": "No sabía si el código había sido enviado o no. La pantalla no decía nada, solo un campo vacío esperando."
+    }
+  ],
+  "source": "entrevista-01.txt",
+  "model": "claude-opus-4-8",
+  "extractedAt": "2026-06-16T19:09:17.879Z"
+}

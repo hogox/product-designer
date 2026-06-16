@@ -1,0 +1,177 @@
+- id: F-001
+  statement: "drop-off otp: 43.2% (n=315)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas llego_a_otp+completo_otp — abandonan
+        (completo_otp=0) entre los que llegan al paso (llego_a_otp=1) (n=315)
+      computation: drop-off otp = 43.2% (136/315, n=315)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-002
+  statement: "drop-off otp · segmento=nuevo: 42.9% (n=140)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=nuevo (n=140)
+      computation: drop-off otp · segmento=nuevo = 42.9% (60/140, n=140)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-003
+  statement: "drop-off otp · segmento=recurrente: 43.4% (n=175)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columnas segmento+llego_a_otp+completo_otp — abandonan
+        entre los que llegan al paso con segmento=recurrente (n=175)
+      computation: drop-off otp · segmento=recurrente = 43.4% (76/175, n=175)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-004
+  statement: "tiempo_espera_seg promedio (abandonos): 71.9 s (n=136)"
+  type: quantitative
+  evidence:
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
+      computation: tiempo_espera_seg promedio en abandonos = 71.9 s (n=136)
+  confidence: high
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-005
+  statement: "La demora o no llegada del código OTP por SMS es un detonante
+    directo del abandono: los usuarios se cansan de esperar y cierran la app
+    antes de completar el paso."
+  type: qualitative
+  evidence:
+    - source: entrevista-01.txt
+      locator: párrafo 3
+      quote: Me cansé de esperar el código y cerré la app. Llegó como tres minutos
+        después, cuando ya había abandonado.
+    - source: entrevista-02.txt
+      locator: párrafo 2
+      quote: El SMS con el código siempre demora un montón en mi teléfono, a veces no
+        llega.
+    - source: funnel-otp.csv
+      locator: hoja 'csv', columna tiempo_espera_seg — filas con abandono (n=136)
+      computation: tiempo_espera_seg promedio en abandonos = 71.9 s (n=136)
+  confidence: high
+  status: proposed
+  feeds: hypothesis
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-006
+  statement: La falta de retroalimentación sobre el estado del código (si fue
+    enviado, a qué número y cuánto esperar) genera incertidumbre que lleva a
+    dudar de la app y a abandonar.
+  type: qualitative
+  evidence:
+    - source: entrevista-01.txt
+      locator: párrafo 5
+      quote: No sabía si el código había sido enviado o no. La pantalla no decía nada,
+        solo un campo vacío esperando.
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Confuso. No me quedaba claro a qué número iba a llegar el SMS ni cuánto
+        debía esperar.
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Que me dijeran "te enviamos el código al número terminado en 45" y un
+        contador. Esa incertidumbre me hizo dudar de la app.
+  confidence: high
+  status: proposed
+  feeds: hypothesis
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-007
+  statement: El botón de reenviar el código tarda demasiado en activarse, lo que
+    aumenta la frustración del usuario en el momento de espera.
+  type: qualitative
+  evidence:
+    - source: entrevista-02.txt
+      locator: párrafo 3
+      quote: Pido reenviar, pero el botón de reenviar recién se activa después de un
+        rato largo. Eso me desespera.
+  confidence: medium
+  status: proposed
+  feeds: constraints
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-008
+  statement: Los reintentos del proceso fallan porque el código vuelve a no llegar
+    a tiempo, reforzando la sensación de pérdida de tiempo en los usuarios.
+  type: qualitative
+  evidence:
+    - source: entrevista-01.txt
+      locator: párrafo 4
+      quote: Sí, pero a la segunda me pidió el código otra vez y tampoco llegaba
+        rápido. Sentí que perdía el tiempo.
+  confidence: medium
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-009
+  statement: Existe demanda explícita de métodos de autenticación alternativos al
+    SMS, como la huella, que evitarían la dependencia del código.
+  type: qualitative
+  evidence:
+    - source: entrevista-02.txt
+      locator: párrafo 4
+      quote: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir
+        otro método, usaría la huella.
+  confidence: medium
+  status: proposed
+  feeds: scope
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null
+- id: F-010
+  statement: El abandono tiende a ser permanente cuando el usuario no tiene una
+    necesidad fuerte de volver; solo regresa quien depende de la cuenta o del
+    trámite.
+  type: qualitative
+  evidence:
+    - source: entrevista-03.pdf
+      locator: p.1, bloque 1
+      quote: Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la
+        cuenta, pero si no la hubiera necesitado, no vuelvo.
+    - source: entrevista-02.txt
+      locator: párrafo 4
+      quote: Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir
+        otro método, usaría la huella.
+  confidence: medium
+  status: proposed
+  feeds: outcomes
+  review_status: pendiente
+  reviewed_by: null
+  review_note: null
+  reviewed_at: null

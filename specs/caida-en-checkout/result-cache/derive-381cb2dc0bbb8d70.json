@@ -1,0 +1,67 @@
+{
+  "kind": "derive",
+  "hash": "381cb2dc0bbb8d70df741378524f397437f6c04999a780d88bf9bb2879c7604f",
+  "model": "claude-opus-4-8",
+  "createdAt": "2026-06-16T19:09:43.764Z",
+  "payload": [
+    {
+      "statement": "La demora o no llegada del código OTP por SMS es un detonante directo del abandono: los usuarios se cansan de esperar y cierran la app antes de completar el paso.",
+      "type": "qualitative",
+      "confidence": "high",
+      "feeds": "hypothesis",
+      "evidence_ids": [
+        "E-002",
+        "E-005",
+        "E-014"
+      ]
+    },
+    {
+      "statement": "La falta de retroalimentación sobre el estado del código (si fue enviado, a qué número y cuánto esperar) genera incertidumbre que lleva a dudar de la app y a abandonar.",
+      "type": "qualitative",
+      "confidence": "high",
+      "feeds": "hypothesis",
+      "evidence_ids": [
+        "E-004",
+        "E-008",
+        "E-009"
+      ]
+    },
+    {
+      "statement": "El botón de reenviar el código tarda demasiado en activarse, lo que aumenta la frustración del usuario en el momento de espera.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "constraints",
+      "evidence_ids": [
+        "E-006"
+      ]
+    },
+    {
+      "statement": "Los reintentos del proceso fallan porque el código vuelve a no llegar a tiempo, reforzando la sensación de pérdida de tiempo en los usuarios.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "outcomes",
+      "evidence_ids": [
+        "E-003"
+      ]
+    },
+    {
+      "statement": "Existe demanda explícita de métodos de autenticación alternativos al SMS, como la huella, que evitarían la dependencia del código.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "scope",
+      "evidence_ids": [
+        "E-007"
+      ]
+    },
+    {
+      "statement": "El abandono tiende a ser permanente cuando el usuario no tiene una necesidad fuerte de volver; solo regresa quien depende de la cuenta o del trámite.",
+      "type": "qualitative",
+      "confidence": "medium",
+      "feeds": "outcomes",
+      "evidence_ids": [
+        "E-010",
+        "E-007"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "sha256": "efd724971256209cc5250bb7a39ad1ccaa497b5a468578fc4d057802161f4f98",
+  "topic": "¿Por qué los usuarios abandonan el proceso de checkout antes de completar el pago?",
+  "evidence": [
+    {
+      "source": "entrevista-03.pdf",
+      "locator": "p.1, bloque 1",
+      "quote": "Confuso. No me quedaba claro a qué número iba a llegar el SMS ni cuánto debía esperar."
+    },
+    {
+      "source": "entrevista-03.pdf",
+      "locator": "p.1, bloque 1",
+      "quote": "Que me dijeran \"te enviamos el código al número terminado en 45\" y un contador. Esa incertidumbre me hizo dudar de la app."
+    },
+    {
+      "source": "entrevista-03.pdf",
+      "locator": "p.1, bloque 1",
+      "quote": "Casi. Lo dejé a medias y volví al día siguiente porque necesitaba la cuenta, pero si no la hubiera necesitado, no vuelvo."
+    }
+  ],
+  "source": "entrevista-03.pdf",
+  "model": "claude-opus-4-8",
+  "extractedAt": "2026-06-16T19:09:24.417Z"
+}

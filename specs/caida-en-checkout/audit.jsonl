@@ -1,2 +1,11 @@
 {"timestamp":"2026-06-12T16:05:04.331Z","actor":"Hugo Muñoz (Lead PM)","action":"spec.create","spec_id":"caida-en-checkout","target":null,"reason":"producto \"Pagos\""}
 {"timestamp":"2026-06-12T16:05:04.380Z","actor":"Hugo Muñoz (Lead PM)","action":"intake.update","spec_id":"caida-en-checkout","target":null,"reason":"¿Por qué los usuarios abandonan el proceso de checkout antes de completar el pago?"}
+{"timestamp":"2026-06-13T09:00:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"caida-en-checkout","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-13T09:01:38.000Z","actor":"agent1","action":"agent.proposed","spec_id":"caida-en-checkout","target":null,"reason":"7 hallazgos (descubrimiento); verificación OK; tokens: 3,742 entrada / 988 salida"}
+{"timestamp":"2026-06-15T10:15:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-001","reason":null}
+{"timestamp":"2026-06-15T10:16:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-002","reason":null}
+{"timestamp":"2026-06-15T10:17:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-003","reason":null}
+{"timestamp":"2026-06-15T10:18:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-004","reason":null}
+{"timestamp":"2026-06-15T10:30:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.pause","spec_id":"caida-en-checkout","target":"F-007","reason":"En pausa hasta confirmar capacidad del equipo mobile para el sprint 3"}
+{"timestamp":"2026-06-16T19:09:09.476Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"caida-en-checkout","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-16T19:09:43.778Z","actor":"agent1","action":"agent.proposed","spec_id":"caida-en-checkout","target":null,"reason":"10 hallazgos (descubrimiento); verificación OK; 6842 tokens (in 5030/out 1812)"}

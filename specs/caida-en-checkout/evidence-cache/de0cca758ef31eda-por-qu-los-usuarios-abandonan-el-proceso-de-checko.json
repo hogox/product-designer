@@ -1,0 +1,24 @@
+{
+  "sha256": "de0cca758ef31eda3a4f0162a6695766fe3b225e45bf468acc8fa0526bb14b59",
+  "topic": "¿Por qué los usuarios abandonan el proceso de checkout antes de completar el pago?",
+  "evidence": [
+    {
+      "source": "entrevista-02.txt",
+      "locator": "párrafo 2",
+      "quote": "El SMS con el código siempre demora un montón en mi teléfono, a veces no llega."
+    },
+    {
+      "source": "entrevista-02.txt",
+      "locator": "párrafo 3",
+      "quote": "Pido reenviar, pero el botón de reenviar recién se activa después de un rato largo. Eso me desespera."
+    },
+    {
+      "source": "entrevista-02.txt",
+      "locator": "párrafo 4",
+      "quote": "Esa vez no. Me rendí y entré desde la web más tarde. Si pudiera elegir otro método, usaría la huella."
+    }
+  ],
+  "source": "entrevista-02.txt",
+  "model": "claude-opus-4-8",
+  "extractedAt": "2026-06-16T19:09:21.241Z"
+}
