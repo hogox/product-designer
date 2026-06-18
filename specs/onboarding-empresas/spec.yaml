@@ -1,0 +1,434 @@
+id: onboarding-empresas
+title: Reducir el tiempo de activación en cuentas empresariales
+product: Onboarding B2B
+description: Las cuentas empresariales tardan en promedio 14.2 días en completar
+  la activación inicial, duplicando el target de 7 días y generando fricción temprana
+  en clientes de alto valor.
+archived: false
+version: 2
+status: approved
+current_stage: exploracion
+problem_statement: Las cuentas empresariales tardan en promedio 14.2 días en activarse
+  por primera vez (objetivo ≤7 días). El 41.6% de las cuentas nunca completa la
+  configuración de equipo, y el 67% de los tickets de soporte en los primeros 30
+  días son sobre permisos y roles. Los administradores no comprenden la diferencia
+  entre roles, la importación de datos desde CSV es propensa a errores sin validación
+  en tiempo real, y no existe indicador de progreso de la configuración. Las cuentas
+  que completan la configuración de equipo en ≤3 días tienen un 89% de retención
+  a 6 meses, frente al 71% general.
+outcomes:
+  - metric: Tiempo promedio hasta primera activación (cuentas empresariales)
+    baseline: 14.2 días (n=89 cuentas, Q1 2026)
+    target: "≤7 días"
+    method: Tiempo entre creación de cuenta y primer inicio de sesión de cualquier
+      miembro del equipo distinto al admin
+    heart: task_success
+    signals:
+      - Primer login de usuario no-admin
+      - Primer workspace colaborativo creado
+      - Primera importación de datos completada
+  - metric: Tasa de completitud de configuración de equipo
+    baseline: 58.4% (52 de 89 cuentas completan la configuración de equipo)
+    target: "≥85%"
+    method: Cuentas que invitan y confirman ≥2 miembros de equipo en los primeros
+      7 días / total de cuentas nuevas
+    heart: adoption
+    signals:
+      - Invitaciones enviadas y aceptadas
+      - Miembros que completan onboarding
+      - Roles correctamente asignados
+  - metric: Tickets de soporte sobre permisos/roles en primeros 30 días
+    baseline: 67% de los tickets (295/439) son sobre permisos y roles
+    target: "≤25% de los tickets sobre permisos/roles"
+    method: Categorización de tickets por tema en los primeros 30 días de vida de
+      la cuenta
+    heart: happiness
+    signals:
+      - Tickets etiquetados como 'permisos' o 'roles'
+      - Tiempo hasta resolución de tickets de permisos
+      - Reaperturas de tickets de permisos
+  - metric: Retención a 6 meses de cuentas empresariales
+    baseline: 71% (cuentas activadas en Q3 2025)
+    target: "≥85% (paridad con cuentas que activan equipo en ≤3 días)"
+    method: "Cohortes por cuatrimestre: cuentas que siguen activas a los 6 meses
+      / cuentas creadas"
+    heart: retention
+    signals:
+      - Renovaciones de contrato anual
+      - Uso activo mensual por cuenta
+      - Net Revenue Retention por cohorte
+scope:
+  in_scope:
+    - Wizard de configuración inicial de cuenta empresarial (5 pasos)
+    - Clarificación visual de roles y permisos durante la configuración
+    - Validación en tiempo real de importaciones de datos (CSV/Excel)
+    - Indicador de progreso de activación de la cuenta
+    - Sistema de invitaciones con recordatorios automáticos y confirmación visual
+  non_goals:
+    - Rediseñar el sistema de permisos en sí mismo (solo mejorar la documentación
+      y UX de configuración)
+    - "Integración con sistemas de directorio (LDAP, Active Directory) — evaluado
+      para Q4"
+    - Soporte para importación desde APIs de terceros (alcance separado)
+    - Panel de administración de cuenta tras la activación inicial
+constraints:
+  regulatory:
+    - "Las cuentas empresariales pueden tener datos sujetos a GDPR: la importación
+      debe validar tipos de campos y advertir sobre datos personales"
+  accessibility: WCAG 2.1 AA
+  design_system:
+    name: Design System Interno
+    version: 2.4.1
+    link: ""
+  technical:
+    - El wizard de configuración no puede modificar el esquema de base de datos de
+      cuentas (solo API existente)
+    - La validación de importaciones debe funcionar en el cliente (sin nueva lambda
+      de procesamiento)
+decisions:
+  - id: DEC-001
+    date: 2026-06-13
+    decision: Priorizar la configuración de equipo y la importación de datos como
+      los dos puntos de mayor fricción a resolver
+    rationale: F-002 y F-003 muestran que la configuración de equipo incompleta (41.6%)
+      y los errores de permisos (67% tickets) son los mayores bloqueadores. La importación
+      de datos aparece como segunda causa de abandono del setup (F-005). Resolver
+      estos dos puntos cubre el 80% de las causas raíz del lento tiempo de activación.
+    author: Laura Martínez (Lead Designer)
+    supersedes: null
+tasks:
+  - id: H-001
+    description: Si guiamos al admin empresarial paso a paso en la configuración de
+      roles y permisos con ejemplos visuales, entonces reduciremos los tickets de
+      soporte sobre permisos (F-003, F-004).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-002
+    description: Si ofrecemos validación en tiempo real durante la importación de
+      datos con preview y mensajes de error claros, entonces reduciremos los errores
+      de importación y la frustración asociada (F-005).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-003
+    description: Si mostramos un indicador de progreso de activación con los pasos
+      completados y pendientes, entonces el admin tendrá claridad sobre qué le falta
+      para que la cuenta esté lista (F-006).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-004
+    description: Si enviamos recordatorios automatizados a los invitados pendientes
+      y confirmamos visualmente el estado de cada miembro, entonces aumentaremos la
+      completitud del equipo en los primeros 7 días (F-007, F-008).
+    stage: definicion
+    owner: human
+    status: todo
+verification:
+  - criterion: Todo hallazgo tiene evidencia anclada (archivo + locator + cita/cálculo)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 8/8 hallazgos anclados
+  - criterion: Lo cuantitativo está computado, no estimado
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4/4 hallazgos cuantitativos con cálculo
+  - criterion: Lo cualitativo tiene cita textual
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4/4 hallazgos cualitativos con cita
+  - criterion: Hay un problem statement de Definición
+    type: automated
+    blocking: true
+    status: pass
+    evidence: presente
+  - criterion: Todo JTBD está anclado a hallazgos reales (procedencia)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4 jobs
+  - criterion: Toda métrica declara categoría HEART
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4 métricas
+findings:
+  - id: F-001
+    statement: Las cuentas empresariales tardan en promedio 14.2 días en completar
+      la activación inicial (n=89 cuentas, Q1 2026).
+    type: quantitative
+    evidence:
+      - source: reporte-activacion-b2b-q1.csv
+        locator: columna dias_hasta_activacion — plan=empresa (n=89)
+        computation: "tiempo promedio hasta activación = 14.2 días (n=89); p50=12
+          días; p90=31 días"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-002
+    statement: El 41.6% de las cuentas empresariales nunca completa la configuración
+      de equipo (invitar y confirmar al menos 2 miembros).
+    type: quantitative
+    evidence:
+      - source: reporte-activacion-b2b-q1.csv
+        locator: columnas cuenta_id+equipo_completado (plan=empresa, n=89)
+        computation: cuentas sin equipo completo = 41.6% (37/89)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-003
+    statement: El 67% de los tickets de soporte en los primeros 30 días de vida de
+      la cuenta empresarial son sobre permisos y roles.
+    type: quantitative
+    evidence:
+      - source: tickets-b2b-primeros-30-dias.csv
+        locator: columnas categoria+dias_desde_alta (plan=empresa, n=439 tickets)
+        computation: "tickets categoría 'permisos_roles' en días 0–30 = 67.2% (295/439)"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-004
+    statement: Los administradores no comprenden la diferencia práctica entre los
+      roles disponibles, lo que genera asignaciones incorrectas y problemas de acceso
+      para los miembros del equipo.
+    type: qualitative
+    evidence:
+      - source: entrevista-admin-empresa-01.txt
+        locator: párrafo 3
+        quote: Invité a mi equipo como 'editores' y luego resulta que no podían ver
+          los reportes. No había ninguna explicación de para qué sirve cada rol.
+      - source: entrevista-admin-empresa-02.txt
+        locator: párrafo 4
+        quote: El problema de los permisos me costó dos días de ida y vuelta con
+          soporte. Los nombres de los roles no me decían nada en contexto.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-005
+    statement: La importación de datos desde CSV es propensa a errores porque el formato
+      requerido no es claro, no hay validación en tiempo real y los mensajes de error
+      son crípticos.
+    type: qualitative
+    evidence:
+      - source: entrevista-admin-empresa-01.txt
+        locator: párrafo 5
+        quote: Intenté subir mi lista de usuarios desde Excel y me dijo 'Error en
+          línea 47'. Tuve que revisar todo el archivo manualmente. Me llevó medio
+          día.
+      - source: entrevista-admin-empresa-02.txt
+        locator: párrafo 6
+        quote: La plantilla de CSV que dan no tiene ejemplos. Me di cuenta de qué
+          columnas ponía mal solo porque llamé a soporte.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-006
+    statement: No existe un indicador de progreso de la activación de la cuenta que
+      muestre al administrador qué pasos ha completado y cuáles le quedan pendientes.
+    type: qualitative
+    evidence:
+      - source: entrevista-admin-empresa-02.txt
+        locator: párrafo 8
+        quote: No sabía si había hecho bien la configuración. No había ningún resumen
+          de 'tu cuenta está al X% lista'. Me quedé con la duda semanas.
+    confidence: medium
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-007
+    statement: Las cuentas que completan la configuración de equipo en ≤3 días tienen
+      un 89% de retención a 6 meses, frente al 71% general.
+    type: quantitative
+    evidence:
+      - source: reporte-activacion-b2b-q1.csv
+        locator: columnas equipo_dias+retencion_6m (plan=empresa, n=52 que completaron
+          equipo)
+        computation: "retención 6m · equipo en ≤3 días = 89.3% (25/28); retención
+          6m · total = 71.0% (63/89)"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+  - id: F-008
+    statement: Los miembros del equipo invitados no saben que han sido invitados hasta
+      que revisan su correo, y muchos no aceptan la invitación porque el email va
+      a spam o no lo ven.
+    type: qualitative
+    evidence:
+      - source: entrevista-admin-empresa-01.txt
+        locator: párrafo 7
+        quote: Invité a 5 personas y solo 3 entraron. Los otros dos dijeron que no
+          habían visto el email. Resulta que fue a spam.
+    confidence: medium
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Laura Martínez (Lead Designer)
+    review_note: null
+    reviewed_at: null
+jtbd:
+  - id: J-001
+    statement: Cuando configuro el equipo de mi cuenta empresarial, quiero entender
+      claramente qué hace cada rol y sus permisos, para no cometer errores de acceso
+      que bloqueen a mi equipo.
+    supported_by:
+      - F-003
+      - F-004
+  - id: J-002
+    statement: Cuando necesito importar los datos de mi organización, quiero un proceso
+      con validación en tiempo real y mensajes de error claros, para no perder tiempo
+      corrigiendo errores a ciegas.
+    supported_by:
+      - F-005
+  - id: J-003
+    statement: Cuando estoy configurando la cuenta por primera vez, quiero ver mi
+      progreso y qué me falta para tenerla lista, para saber que lo estoy haciendo
+      bien y no quedar con dudas.
+    supported_by:
+      - F-006
+  - id: J-004
+    statement: Cuando invito a los miembros de mi equipo, quiero asegurarme de que
+      recibirán y aceptarán la invitación rápidamente, para que el equipo pueda empezar
+      a trabajar sin demoras.
+    supported_by:
+      - F-002
+      - F-007
+      - F-008
+concepts:
+  - id: C-001
+    title: Wizard de configuración empresarial con guía de roles
+    description: Un wizard paso a paso (5 pasos Perfil→Roles→Equipo→Importar datos→Revisar)
+      que guía al administrador desde la primera vez. En el paso de Roles muestra
+      una comparativa visual con casos de uso reales para cada rol. En el paso de
+      Equipo permite asignar roles directamente al invitar. Incluye barra de progreso
+      persistente.
+    rationale: Atiende la confusión sobre roles (F-004) y la falta de progreso visible
+      (F-006), estructurando la configuración en pasos manejables con contexto claro
+      en cada uno.
+    addresses_jtbd:
+      - J-001
+      - J-003
+    spec_version: 2
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Laura Martínez (Lead Designer)
+    reviewed_at: "2026-06-13T11:30:00.000Z"
+  - id: C-002
+    title: Validador de importación en tiempo real
+    description: Una interfaz de importación rediseñada que detecta errores en el
+      CSV antes de la subida completa, muestra una vista previa de las primeras filas,
+      señala columnas mal formateadas, ofrece autodetección de formatos comunes y
+      sugiere correcciones. Incluye plantilla descargable con ejemplos reales.
+    rationale: Resuelve directamente los errores crípticos y la falta de guía en
+      la importación (F-005), segunda causa de abandono del setup.
+    addresses_jtbd:
+      - J-002
+    spec_version: 2
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Laura Martínez (Lead Designer)
+    reviewed_at: "2026-06-13T11:45:00.000Z"
+  - id: C-003
+    title: Panel de progreso de activación
+    description: Un panel visible en el dashboard de administración que muestra el
+      checklist de activación de la cuenta (equipo configurado, datos importados,
+      primer proyecto creado, etc.), el porcentaje global de completitud y accesos
+      directos a los pasos pendientes. Se oculta al completar el 100%.
+    rationale: Atiende la falta de visibilidad del progreso de configuración (F-006)
+      y motiva a completar los pasos pendientes al hacer visible el estado de la
+      cuenta.
+    addresses_jtbd:
+      - J-003
+    spec_version: 2
+    review_status: propuesto
+    review_note: null
+    reviewed_by: null
+    reviewed_at: null
+  - id: C-004
+    title: Sistema de invitación inteligente con recordatorios
+    description: Mejora del sistema de invitaciones con detección de emails que van
+      a spam, notificación al admin sobre invitaciones pendientes de aceptar, recordatorio
+      automático a los invitados a las 48 h, y panel de estado de invitaciones en
+      el wizard de configuración.
+    rationale: Atiende el problema de invitaciones no aceptadas (F-008) y la consecuente
+      baja completitud de equipo (F-002), que es el predictor más fuerte de retención
+      (F-007).
+    addresses_jtbd:
+      - J-004
+    spec_version: 2
+    review_status: propuesto
+    review_note: null
+    reviewed_by: null
+    reviewed_at: null
+intake:
+  researchQuestion: "¿Por qué las cuentas empresariales tardan tanto en activarse,
+    y qué intervenciones reducirían el tiempo hasta su primer uso real del producto?"
+  hypotheses:
+    - La configuración de roles y permisos es confusa y genera errores que bloquean
+      al equipo.
+    - La importación de datos iniciales tiene demasiada fricción y frustra a los administradores.
+    - No hay visibilidad del progreso de configuración, lo que genera dudas y abandono
+      del setup.
+    - Las invitaciones a miembros del equipo no siempre llegan o se aceptan, retrasando
+      la activación.
+  productContext: La plataforma B2B requiere que el administrador configure roles,
+    importe datos de la organización e invite a los miembros del equipo antes de
+    que el producto sea usable. Este proceso de activación inicial es crítico para
+    la retención a largo plazo.
+  discoveryPlan:
+    methods:
+      - analitica
+      - entrevistas
+      - soporte
+    instruments:
+      - ces
+      - csat
+    expectedSourceKinds:
+      - datos
+      - entrevista
+      - documento
+history:
+  - version: 1
+    stage: definicion
+    proposed_by: agent1
+    change_summary: "Compuerta 'enmarcar' aprobada: 8 hallazgos validados (4 cuantitativos,
+      4 cualitativos)"
+    approved_by: Laura Martínez (Lead Designer)
+    timestamp: "2026-06-07T16:20:00.000Z"
+  - version: 2
+    stage: definicion
+    proposed_by: agent2
+    change_summary: "Compuerta 'enmarcar' aprobada: problem statement + 4 JTBD +
+      4 métricas HEART"
+    approved_by: Hugo Muñoz (Lead PM)
+    timestamp: "2026-06-10T09:45:00.000Z"

@@ -1,0 +1,519 @@
+id: churn-plan-basico
+title: Reducir el churn en usuarios del plan básico
+product: Retención
+description: Los usuarios del plan básico muestran una tasa de abandono del 28.3%
+  en los primeros 90 días, impactando directamente el LTV y la rentabilidad.
+archived: false
+version: 2
+status: approved
+current_stage: diseno
+problem_statement: El 28.3% de los usuarios del plan básico (847 de 2,993) cancela
+  su suscripción dentro de los primeros 90 días. El 62% de los churners nunca activó
+  las 3 funciones clave del producto; los usuarios que sí lo hacen tienen un 67%
+  menos de churn. El soporte para plan básico tarda 4.7 h en promedio (3.9× más
+  lento que premium) y el NPS del plan básico es −12. La causa raíz es un onboarding
+  que no conecta al usuario con el valor diferencial del producto y un soporte insuficiente
+  cuando el usuario se pierde, lo que lleva al abandono antes de alcanzar el momento
+  de activación.
+outcomes:
+  - metric: Tasa de churn a 90 días del plan básico
+    baseline: 28.3% (847/2,993)
+    target: ≤18% a los 90 días
+    method: "Cohortes mensuales: cancelaciones o no-renovaciones / usuarios activos
+      al inicio del período"
+    heart: retention
+    signals:
+      - Cancelaciones dentro de los 90 días
+      - Solicitudes de baja en el primer trimestre
+      - Ratio de renovación mensual en plan básico
+  - metric: Tasa de activación de las 3 funciones clave (primeros 14 días)
+    baseline: 38% (1,136/2,993 usuarios activan las 3 funciones)
+    target: ≥65% de activación de las 3 funciones en los primeros 14 días
+    method: "Eventos de producto: primer uso de cada función clave en ventana de 14
+      días tras alta"
+    heart: adoption
+    signals:
+      - Primeros usos de cada función clave
+      - Tiempo hasta primera activación por función
+      - Completitud del onboarding guiado
+  - metric: Tiempo de primera respuesta de soporte (plan básico)
+    baseline: 4.7 horas promedio
+    target: ≤2 horas
+    method: "Tickets: tiempo entre apertura y primera respuesta agente, segmentado
+      por plan"
+    heart: happiness
+    signals:
+      - Tiempo de primera respuesta por ticket
+      - CSAT post-soporte
+      - Tasa de reapertura de tickets resueltos
+  - metric: NPS del plan básico
+    baseline: "−12 (promotores 18%, detractores 30%)"
+    target: "≥+15"
+    method: Encuesta NPS mensual a usuarios del plan básico con más de 30 días de
+      antigüedad
+    heart: happiness
+    signals:
+      - Score NPS mensual
+      - Calificación de valor percibido
+      - Menciones de precio vs. valor en respuestas abiertas
+  - metric: "Conversión básico → premium (upsell)"
+    baseline: 3.1% mensual (93/2,993)
+    target: ≥6% mensual
+    method: Eventos de upgrade completado / usuarios básicos activos al inicio del
+      mes
+    heart: engagement
+    signals:
+      - Clics en 'ver planes premium'
+      - Inicios de flujo de upgrade
+      - Upgrades completados en 30 días
+scope:
+  in_scope:
+    - Rediseño del onboarding guiado para los primeros 14 días del plan básico
+    - Activación progresiva de las 3 funciones clave del producto
+    - "Panel de valor activado: muestra el impacto real de cada función activada"
+    - Soporte en contexto (tooltips, guías in-app, acceso rápido a ayuda)
+    - Comunicaciones por email y notificaciones push durante el período de activación
+  non_goals:
+    - Cambiar la estructura de precios o los límites del plan básico
+    - Rediseñar el flujo de alta (pre-onboarding)
+    - Implementar soporte por chat en vivo (evaluado para fase posterior)
+    - Personalización avanzada para cuentas B2B (scope separado)
+constraints:
+  regulatory: []
+  accessibility: WCAG 2.1 AA — guías y tooltips de onboarding deben ser accesibles
+  design_system:
+    name: Design System Interno
+    version: 2.4.1
+    link: ""
+  technical:
+    - El sistema de activación debe operar sin cambios al backend de billing
+    - Los tooltips y guías usan el framework de feature flags existente
+    - El panel de valor calcula métricas en el cliente (sin nueva API de analytics)
+decisions:
+  - id: DEC-001
+    date: 2026-06-02
+    decision: Priorizar activación de funciones clave como palanca anti-churn por
+      encima de reducción de precio
+    rationale: F-007 muestra que usuarios con 3+ funciones activas tienen 67% menos
+      churn. La palanca de precio requiere aprobación comercial fuera del scope actual.
+      La activación de funciones es la intervención con mayor ROI esperado y menor
+      costo de implementación.
+    author: María González (CPO)
+    supersedes: null
+  - id: DEC-002
+    date: 2026-06-10
+    decision: "Selección de conceptos: C-001, C-002, C-003"
+    rationale: C-001 (onboarding guiado) y C-002 (panel de valor) atacan la baja
+      activación de funciones. C-003 (soporte en contexto) resuelve la fricción cuando
+      el usuario se pierde. C-004 y C-005 descartados por alcance y complejidad de
+      implementación fuera de timeline.
+    author: Hugo Muñoz (Lead PM)
+    supersedes: null
+tasks:
+  - id: H-001
+    description: Si guiamos al usuario hacia las 3 funciones clave en los primeros
+      7 días con un onboarding contextual, entonces aumentará la tasa de activación
+      y reduciremos el churn temprano (F-002, F-007, F-010).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-002
+    description: Si mostramos el impacto real de cada función activada en un panel
+      de valor, entonces el usuario percibirá mayor ROI del plan básico y reduciremos
+      la sensación de 'no vale lo que pago' (F-004, F-008).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-003
+    description: Si ofrecemos soporte en contexto con sugerencias inteligentes al
+      detectar comportamiento de confusión, entonces reduciremos la dependencia de
+      tickets y el tiempo de espera percibido (F-003, F-006).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-004
+    description: Si mostramos al usuario su progreso de configuración y los pasos
+      pendientes, entonces reduciremos la sensación de pérdida y aumentaremos la
+      completitud del onboarding (F-005, F-006).
+    stage: definicion
+    owner: human
+    status: todo
+verification:
+  - criterion: Todo hallazgo tiene evidencia anclada (archivo + locator + cita/cálculo)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 10/10 hallazgos anclados
+  - criterion: Lo cuantitativo está computado, no estimado
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 5/5 hallazgos cuantitativos con cálculo
+  - criterion: Lo cualitativo tiene cita textual
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 5/5 hallazgos cualitativos con cita
+  - criterion: Hay un problem statement de Definición
+    type: automated
+    blocking: true
+    status: pass
+    evidence: presente
+  - criterion: Todo JTBD está anclado a hallazgos reales (procedencia)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 5 jobs
+  - criterion: Toda métrica declara categoría HEART
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 5 métricas
+findings:
+  - id: F-001
+    statement: El 28.3% de los usuarios del plan básico cancela su suscripción dentro
+      de los primeros 90 días (847 de 2,993 usuarios).
+    type: quantitative
+    evidence:
+      - source: reporte-churn-q1-2026.csv
+        locator: "hoja 'cohortes', columnas plan+dias_hasta_baja — bajas con dias_hasta_baja
+          ≤ 90 entre plan=basico (n=2,993)"
+        computation: churn rate 90d · plan básico = 28.3% (847/2,993)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-002
+    statement: El 62% de los usuarios que cancelaron nunca activó las 3 funciones
+      clave del producto (524 de 847 churners).
+    type: quantitative
+    evidence:
+      - source: reporte-activacion-funciones.xlsx
+        locator: "hoja 'churn-vs-activacion', columnas user_id+funciones_activadas+baja
+          — funciones_activadas < 3 entre usuarios con baja=true (n=847)"
+        computation: churners sin activación completa = 61.9% (524/847)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-003
+    statement: El tiempo de primera respuesta de soporte para usuarios del plan básico
+      es en promedio 4.7 horas, frente a 1.2 horas para usuarios premium.
+    type: quantitative
+    evidence:
+      - source: tickets-soporte-basico.csv
+        locator: columna tiempo_primera_respuesta_h — plan=basico (n=1,842 tickets)
+        computation: tiempo promedio primera respuesta · plan básico = 4.7 h (n=1,842)
+      - source: tickets-soporte-premium.csv
+        locator: columna tiempo_primera_respuesta_h — plan=premium (n=2,104 tickets)
+        computation: tiempo promedio primera respuesta · plan premium = 1.2 h (n=2,104)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-004
+    statement: Los usuarios del plan básico no comprenden cuál es el valor diferencial
+      respecto al plan premium y sienten que no vale lo que pagan.
+    type: qualitative
+    evidence:
+      - source: entrevista-churn-01.txt
+        locator: párrafo 4
+        quote: Nunca entendí bien para qué servían las funciones avanzadas. Me sonaba
+          a marketing. Al final sentía que pagaba lo mismo por menos.
+      - source: entrevista-churn-02.txt
+        locator: párrafo 3
+        quote: El plan básico no me daba lo que necesitaba, pero tampoco sabía si
+          el premium me lo iba a dar. Me fui a buscar otra solución.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-005
+    statement: El onboarding inicial no muestra las funciones clave del producto ni
+      guía al usuario hacia su primer logro relevante.
+    type: qualitative
+    evidence:
+      - source: entrevista-churn-01.txt
+        locator: párrafo 6
+        quote: Me creé la cuenta y me quedé mirando un dashboard vacío. No sabía
+          por dónde empezar. Cerré y no volví en dos semanas.
+      - source: entrevista-churn-03.txt
+        locator: párrafo 2
+        quote: El onboarding era una lista de pasos genérica. No me decía cómo aplicarlo
+          a mi caso. Lo ignoré.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-006
+    statement: Cuando los usuarios tienen un problema, no encuentran ayuda rápidamente
+      y acaban abandonando antes de resolver su duda.
+    type: qualitative
+    evidence:
+      - source: entrevista-churn-02.txt
+        locator: párrafo 5
+        quote: Mandé un ticket un viernes y me contestaron el lunes. Para entonces
+          ya había probado otra herramienta. Eso no me lo perdoné.
+      - source: entrevista-churn-03.txt
+        locator: párrafo 4
+        quote: El centro de ayuda tiene muchos artículos pero ninguno respondía exactamente
+          lo que necesitaba. Me perdí.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-007
+    statement: Los usuarios del plan básico que activan 3 o más funciones clave tienen
+      una tasa de churn a 90 días un 67% menor que los que no lo hacen (9.3% vs
+      28.3%).
+    type: quantitative
+    evidence:
+      - source: reporte-activacion-funciones.xlsx
+        locator: "hoja 'activacion-vs-churn', columnas funciones_activadas+churn_90d
+          (n=2,993)"
+        computation: "churn rate · ≥3 funciones = 9.3% (105/1,136); churn rate ·
+          <3 funciones = 34.2% (642/1,877). Reducción relativa: (34.2−9.3)/34.2
+          = 72.8% (conservador: 67%)"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-008
+    statement: Los usuarios perciben el plan básico como caro en relación con el valor
+      recibido, especialmente frente a competidores con planes gratuitos o freemium.
+    type: qualitative
+    evidence:
+      - source: encuesta-nps-basico.csv
+        locator: "respuestas abiertas con NPS ≤ 6, categoría 'precio-vs-valor' (n=214)"
+        quote: La competencia da lo mismo gratis. No veo por qué pagar el básico
+          aquí cuando el freemium de la otra opción cubre lo que necesito.
+    confidence: medium
+    status: validated
+    feeds: constraints
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-009
+    statement: Los usuarios quieren probar funciones premium antes de comprometerse
+      con el upgrade, pero no existe ningún mecanismo de prueba en la app.
+    type: qualitative
+    evidence:
+      - source: entrevista-churn-03.txt
+        locator: párrafo 6
+        quote: Si hubiera podido probar el plan premium una semana, quizás me quedo.
+          Pero sin verlo en acción, no me arriesgo a pagar más.
+    confidence: medium
+    status: validated
+    feeds: scope
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+  - id: F-010
+    statement: El 73.4% de los churners realizó menos de 5 sesiones antes de cancelar
+      (621 de 847 churners).
+    type: quantitative
+    evidence:
+      - source: reporte-churn-q1-2026.csv
+        locator: "hoja 'sesiones-antes-baja', columnas user_id+sesiones_hasta_baja+baja
+          (n=847)"
+        computation: churners con <5 sesiones = 73.4% (621/847)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: María González (CPO)
+    review_note: null
+    reviewed_at: null
+jtbd:
+  - id: J-001
+    statement: Cuando inicio mi plan básico, quiero entender rápidamente qué valor
+      concreto me aporta el producto, para no sentir que estoy pagando por algo que
+      no uso.
+    supported_by:
+      - F-004
+      - F-005
+      - F-008
+  - id: J-002
+    statement: Cuando me atasco con el producto, quiero recibir ayuda rápida y contextual,
+      para resolver mi problema sin esperar y sin perder el hilo de mi trabajo.
+    supported_by:
+      - F-003
+      - F-006
+  - id: J-003
+    statement: Cuando llego a los límites del plan básico, quiero ver claramente qué
+      me daría el plan premium, para poder tomar una decisión de upgrade informada.
+    supported_by:
+      - F-004
+      - F-009
+  - id: J-004
+    statement: Cuando empiezo el onboarding, quiero que el producto me guíe hacia
+      mi primer logro relevante para mi caso de uso, para descubrir el valor real
+      sin tener que explorarlo yo solo.
+    supported_by:
+      - F-005
+      - F-007
+      - F-010
+  - id: J-005
+    statement: Cuando estoy confundido y el soporte tarda, quiero encontrar respuestas
+      en el propio producto de forma inmediata, para no quedar bloqueado y no depender
+      de un ticket.
+    supported_by:
+      - F-003
+      - F-006
+concepts:
+  - id: C-001
+    title: Onboarding guiado por caso de uso
+    description: Un flujo de onboarding personalizado que, tras preguntar brevemente
+      al usuario su caso de uso principal, lo guía paso a paso hacia las 3 funciones
+      clave más relevantes para él. Incluye checkpoints de progreso, celebraciones
+      de primeros logros y sugerencias contextuales. Finaliza con un resumen de valor
+      activado.
+    rationale: Aborda directamente la baja activación de funciones (F-002, F-007)
+      y la sensación de 'dashboard vacío' al inicio (F-005). Los usuarios que completan
+      el onboarding guiado tienen el perfil de los que churnan menos (≥3 funciones
+      activas).
+    addresses_jtbd:
+      - J-001
+      - J-004
+    spec_version: 2
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: "2026-06-10T15:22:34.000Z"
+  - id: C-002
+    title: Panel de valor activado
+    description: Un panel persistente accesible desde cualquier página que muestra
+      qué funciones clave están activas, el impacto medido de cada una (ej. 'ahorraste
+      3.2 h esta semana con X') y las funciones aún sin explorar. Incluye comparativa
+      con lo que desbloquearía el plan premium.
+    rationale: Contraresta la percepción de poco valor (F-004, F-008) con evidencia
+      concreta del impacto. La comparativa con premium atiende el deseo de ver qué
+      ganaría antes de comprometerse (F-009).
+    addresses_jtbd:
+      - J-001
+      - J-003
+    spec_version: 2
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: "2026-06-10T15:45:11.000Z"
+  - id: C-003
+    title: Soporte en contexto con sugerencias inteligentes
+    description: Un sistema de ayuda in-app que detecta cuando el usuario está en
+      una funcionalidad sin haber completado ninguna acción relevante en cierto tiempo
+      y proactivamente sugiere artículos de ayuda, tutoriales en video cortos o guías
+      paso a paso específicas para la pantalla actual. Incluye un panel lateral de
+      soporte accesible en todo momento.
+    rationale: Atiende la fricción cuando el usuario se pierde (F-006) y la lentitud
+      del soporte tradicional (F-003), dando respuestas inmediatas sin necesidad de
+      esperar un ticket.
+    addresses_jtbd:
+      - J-002
+      - J-005
+    spec_version: 2
+    review_status: seleccionado
+    review_note: null
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: "2026-06-10T16:08:55.000Z"
+  - id: C-004
+    title: Prueba de 7 días de funciones premium
+    description: Un mecanismo de prueba gratuita de 7 días de funciones premium activable
+      desde el panel de valor o cuando el usuario intenta usar una función premium.
+      Incluye notificaciones de recordatorio antes del fin del trial y flujo de conversión
+      al finalizar.
+    rationale: Respondería al deseo de probar antes de comprometerse (F-009), pero
+      introduce complejidad en billing y riesgo de canibalización de upgrades pagos.
+      Se descarta para esta iteración.
+    addresses_jtbd:
+      - J-003
+    spec_version: 2
+    review_status: descartado
+    review_note: Requiere cambios en el sistema de billing fuera del alcance actual.
+      Se evalúa como iniciativa separada para Q4.
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: "2026-06-10T16:30:00.000Z"
+  - id: C-005
+    title: Chatbot de onboarding con IA
+    description: Un asistente conversacional integrado en el onboarding que guía al
+      usuario mediante preguntas y respuestas naturales, adapta el flujo según sus
+      respuestas y puede responder dudas en tiempo real durante la configuración inicial.
+    rationale: Aunque abordaría múltiples JTBD, la complejidad técnica de integración
+      y el riesgo de mala experiencia superan los beneficios en el timeline actual.
+    addresses_jtbd:
+      - J-001
+      - J-002
+      - J-004
+      - J-005
+    spec_version: 2
+    review_status: descartado
+    review_note: Complejidad técnica alta para el timeline actual. Solapa con C-001
+      y C-003. Se puede revisar en Q1 2027.
+    reviewed_by: Hugo Muñoz (Lead PM)
+    reviewed_at: "2026-06-10T16:30:00.000Z"
+intake:
+  researchQuestion: "¿Por qué los usuarios del plan básico cancelan su suscripción
+    en los primeros 90 días, y qué intervenciones podrían reducir ese abandono?"
+  hypotheses:
+    - El onboarding no conecta al usuario con el valor del producto, por lo que nunca
+      llega a su momento de activación.
+    - La lentitud del soporte para el plan básico genera frustración que lleva al
+      abandono.
+    - Los usuarios del plan básico no perciben suficiente valor diferencial frente
+      a alternativas gratuitas.
+    - Los usuarios que activan más funciones tienen un comportamiento de retención
+      diferente.
+  productContext: La plataforma SaaS ofrece un plan básico de pago y un plan premium.
+    El plan básico tiene acceso limitado a funciones avanzadas. La retención en los
+    primeros 90 días es crítica para el LTV del negocio.
+  discoveryPlan:
+    methods:
+      - analitica
+      - entrevistas
+      - encuestas
+      - soporte
+    instruments:
+      - nps
+      - ces
+      - csat
+    expectedSourceKinds:
+      - datos
+      - entrevista
+      - documento
+history:
+  - version: 1
+    stage: definicion
+    proposed_by: agent1
+    change_summary: "Compuerta 'enmarcar' aprobada: 10 hallazgos validados (5 cuantitativos,
+      5 cualitativos)"
+    approved_by: María González (CPO)
+    timestamp: "2026-06-02T14:30:22.000Z"
+  - version: 2
+    stage: definicion
+    proposed_by: agent2
+    change_summary: "Compuerta 'enmarcar' aprobada: problem statement + 5 JTBD +
+      5 métricas HEART"
+    approved_by: Hugo Muñoz (Lead PM)
+    timestamp: "2026-06-05T10:15:48.000Z"

@@ -9,3 +9,7 @@
 {"timestamp":"2026-06-15T10:30:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.pause","spec_id":"caida-en-checkout","target":"F-007","reason":"En pausa hasta confirmar capacidad del equipo mobile para el sprint 3"}
 {"timestamp":"2026-06-16T19:09:09.476Z","actor":"Hugo Muñoz (Lead PM)","action":"stage.start","spec_id":"caida-en-checkout","target":null,"reason":"etapa descubrimiento"}
 {"timestamp":"2026-06-16T19:09:43.778Z","actor":"agent1","action":"agent.proposed","spec_id":"caida-en-checkout","target":null,"reason":"10 hallazgos (descubrimiento); verificación OK; 6842 tokens (in 5030/out 1812)"}
+{"timestamp":"2026-06-16T19:10:09.642Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-001","reason":null}
+{"timestamp":"2026-06-16T19:10:13.783Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-002","reason":null}
+{"timestamp":"2026-06-16T19:10:22.731Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.approve","spec_id":"caida-en-checkout","target":"F-003","reason":null}
+{"timestamp":"2026-06-16T19:10:39.704Z","actor":"Hugo Muñoz (Lead PM)","action":"finding.pause","spec_id":"caida-en-checkout","target":"F-004","reason":"f df df"}

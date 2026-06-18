@@ -1,0 +1,20 @@
+{"timestamp":"2026-05-27T10:00:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"spec.create","spec_id":"onboarding-empresas","target":null,"reason":"producto \"Onboarding B2B\""}
+{"timestamp":"2026-05-27T10:09:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"intake.update","spec_id":"onboarding-empresas","target":null,"reason":"¿Por qué las cuentas empresariales tardan tanto en activarse?"}
+{"timestamp":"2026-05-28T09:00:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"onboarding-empresas","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-05-28T09:01:52.000Z","actor":"agent1","action":"agent.proposed","spec_id":"onboarding-empresas","target":null,"reason":"8 hallazgos (descubrimiento); verificación OK; tokens: 3,918 entrada / 1,044 salida"}
+{"timestamp":"2026-06-07T15:28:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-001","reason":null}
+{"timestamp":"2026-06-07T15:29:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-002","reason":null}
+{"timestamp":"2026-06-07T15:30:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-003","reason":null}
+{"timestamp":"2026-06-07T15:31:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-004","reason":null}
+{"timestamp":"2026-06-07T15:32:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-005","reason":null}
+{"timestamp":"2026-06-07T15:33:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-006","reason":null}
+{"timestamp":"2026-06-07T15:34:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-007","reason":null}
+{"timestamp":"2026-06-07T15:35:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"finding.approve","spec_id":"onboarding-empresas","target":"F-008","reason":null}
+{"timestamp":"2026-06-07T16:20:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"gate.approve","spec_id":"onboarding-empresas","target":null,"reason":"compuerta 'enmarcar' → v1"}
+{"timestamp":"2026-06-07T16:21:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"onboarding-empresas","target":null,"reason":"etapa definicion"}
+{"timestamp":"2026-06-07T16:23:08.000Z","actor":"agent2","action":"agent.proposed","spec_id":"onboarding-empresas","target":null,"reason":"definición: 4 JTBD, 4 métricas HEART; verificación OK; tokens: 5,633 entrada / 1,512 salida"}
+{"timestamp":"2026-06-10T09:45:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"gate.approve","spec_id":"onboarding-empresas","target":null,"reason":"compuerta 'enmarcar' → v2"}
+{"timestamp":"2026-06-10T09:46:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"onboarding-empresas","target":null,"reason":"etapa exploracion"}
+{"timestamp":"2026-06-10T09:48:02.000Z","actor":"agent3","action":"agent.proposed","spec_id":"onboarding-empresas","target":null,"reason":"4 conceptos propuestos (exploracion); tokens: 6,880 entrada / 1,995 salida"}
+{"timestamp":"2026-06-13T11:30:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"concept.select","spec_id":"onboarding-empresas","target":"C-001","reason":null}
+{"timestamp":"2026-06-13T11:45:00.000Z","actor":"Laura Martínez (Lead Designer)","action":"concept.select","spec_id":"onboarding-empresas","target":"C-002","reason":null}

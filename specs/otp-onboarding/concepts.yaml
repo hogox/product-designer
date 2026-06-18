@@ -12,10 +12,10 @@
     - J-001
     - J-002
   spec_version: 3
-  review_status: propuesto
-  review_note: null
-  reviewed_by: null
-  reviewed_at: null
+  review_status: descartado
+  review_note: No está en el scope del equipo
+  reviewed_by: Hugo Muñoz (Lead PM)
+  reviewed_at: 2026-06-15T19:54:13.266Z
 - id: C-002
   title: Reenvío inteligente y progresivo
   description: Un botón de reenvío que se activa con una espera mínima razonable

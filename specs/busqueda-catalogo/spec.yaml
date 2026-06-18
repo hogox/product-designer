@@ -1,0 +1,340 @@
+id: busqueda-catalogo
+title: Mejorar la experiencia de búsqueda en el catálogo de productos
+product: Catálogo
+description: El 34.7% de las búsquedas en el catálogo terminan sin resultados relevantes,
+  causando abandono y pérdida directa de conversión.
+archived: false
+version: 2
+status: approved
+current_stage: exploracion
+problem_statement: El 34.7% de las sesiones de búsqueda en el catálogo terminan
+  con el usuario abandonando la página sin encontrar lo que buscaba (12,847 de 37,030
+  sesiones, Q1 2026). Las causas principales son el mismatch terminológico (usuarios
+  buscan 'gaseosa', el catálogo tiene 'refresco') que genera el 28.4% de los fallos,
+  la ausencia de corrección ortográfica ante errores tipográficos (19.7% de fallos)
+  y filtros genéricos que no se adaptan a la categoría buscada. El 41.2% de los
+  usuarios que no encuentra resultados abandona el sitio completamente, representando
+  una pérdida directa de conversión. La tasa de conversión desde búsqueda es de
+  4.1% frente al potencial estimado de ≥6.5%.
+outcomes:
+  - metric: Tasa de búsquedas sin resultados relevantes
+    baseline: 34.7% (12,847/37,030 sesiones de búsqueda)
+    target: "≤15% de búsquedas sin resultados relevantes"
+    method: "Analítica de búsqueda: sesiones con bounce desde SERP o clic en 'sin
+      resultados' / total de búsquedas"
+    heart: task_success
+    signals:
+      - Bounce rate desde la página de resultados
+      - Tasa de 'cero resultados' devueltos
+      - Consultas que no generan ningún clic
+  - metric: Tasa de abandono del sitio desde búsqueda sin resultado
+    baseline: 41.2% de usuarios que no encuentran resultados abandona el sitio
+    target: "≤20% de abandono del sitio desde SERP vacía"
+    method: "Embudo: usuarios que llegan a SERP sin resultados → abandonan el sitio
+      (sin navegar a otra página)"
+    heart: task_success
+    signals:
+      - Sesiones con salida desde SERP de cero resultados
+      - Clics en 'ver categorías relacionadas'
+      - Navegación alternativa tras búsqueda fallida
+  - metric: Tasa de conversión desde búsqueda
+    baseline: 4.1% de las sesiones con búsqueda terminan en compra
+    target: "≥6.5% de conversión desde búsqueda"
+    method: Conversiones con búsqueda como primer touchpoint / sesiones con búsqueda
+      (atribución de sesión)
+    heart: engagement
+    signals:
+      - Clics en producto desde SERP
+      - Añadidos al carrito desde SERP
+      - Compras completadas con búsqueda como primer touchpoint
+  - metric: Satisfacción con la búsqueda (CES post-búsqueda)
+    baseline: CES promedio 2.8/5 (esfuerzo percibido alto)
+    target: "CES ≥ 4.0/5"
+    method: Encuesta CES de 1 pregunta al usuario 30 segundos después de una búsqueda
+      sin clic
+    heart: happiness
+    signals:
+      - Score CES post-búsqueda
+      - Comentarios de 'no encontré lo que buscaba'
+      - Rating de relevancia de resultados
+scope:
+  in_scope:
+    - Motor de sinónimos y términos regionales para el índice de búsqueda (Elasticsearch)
+    - Corrección ortográfica y sugerencias de búsqueda ('¿quisiste decir…?')
+    - Filtros adaptativos por categoría de producto
+    - Página de 'sin resultados' con sugerencias alternativas y búsquedas relacionadas
+    - Autocompletado mejorado con resultados de productos en tiempo real
+  non_goals:
+    - Búsqueda por imagen o por voz (evaluado para H2 2026)
+    - Personalización de resultados por historial de compras (requiere datos ML)
+    - Rediseño del catálogo de productos o su taxonomía
+    - Integración con catálogo de terceros o marketplaces
+constraints:
+  regulatory: []
+  accessibility: "WCAG 2.1 AA — resultados y sugerencias deben ser accesibles por
+    teclado y lector de pantalla"
+  design_system:
+    name: Design System Interno
+    version: 2.4.1
+    link: ""
+  technical:
+    - "El motor de búsqueda actual es Elasticsearch 8.x; los sinónimos se implementan
+      vía diccionario de sinónimos en el índice"
+    - El autocompletado no puede superar 150 ms de latencia (p95)
+    - Las sugerencias de corrección se generan en el cliente con el índice existente
+      (sin nuevo servicio ML)
+decisions: []
+tasks:
+  - id: H-001
+    description: Si agregamos un diccionario de sinónimos y términos regionales al
+      índice de Elasticsearch, entonces reduciremos las búsquedas con cero resultados
+      por mismatch terminológico (F-001, F-002).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-002
+    description: Si implementamos corrección ortográfica y sugerencias '¿quisiste
+      decir…?' en la SERP, entonces recuperaremos las búsquedas fallidas por errores
+      tipográficos (F-003).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-003
+    description: Si rediseñamos la página de 'sin resultados' con sugerencias alternativas
+      y categorías relacionadas, entonces reduciremos el abandono del sitio desde
+      esa página (F-004, F-006).
+    stage: definicion
+    owner: human
+    status: todo
+  - id: H-004
+    description: Si los filtros se adaptan a la categoría del término buscado, entonces
+      el usuario podrá refinar su búsqueda de forma relevante sin tener que cambiarlos
+      manualmente (F-005).
+    stage: definicion
+    owner: human
+    status: todo
+verification:
+  - criterion: Todo hallazgo tiene evidencia anclada (archivo + locator + cita/cálculo)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 7/7 hallazgos anclados
+  - criterion: Lo cuantitativo está computado, no estimado
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4/4 hallazgos cuantitativos con cálculo
+  - criterion: Lo cualitativo tiene cita textual
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 3/3 hallazgos cualitativos con cita
+  - criterion: Hay un problem statement de Definición
+    type: automated
+    blocking: true
+    status: pass
+    evidence: presente
+  - criterion: Todo JTBD está anclado a hallazgos reales (procedencia)
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4 jobs
+  - criterion: Toda métrica declara categoría HEART
+    type: automated
+    blocking: true
+    status: pass
+    evidence: 4 métricas
+findings:
+  - id: F-001
+    statement: El 34.7% de las sesiones de búsqueda terminan sin que el usuario encuentre
+      resultados relevantes (12,847 de 37,030 sesiones, Q1 2026).
+    type: quantitative
+    evidence:
+      - source: analitica-busqueda-q1.csv
+        locator: columnas session_id+resultados_relevantes+bounce (n=37,030)
+        computation: búsquedas sin resultado relevante (bounce desde SERP o cero
+          clics) = 34.7% (12,847/37,030)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+  - id: F-002
+    statement: El 28.4% de las búsquedas sin resultado se debe a mismatch terminológico;
+      el usuario usa términos sinónimos o regionalismos que no están en el catálogo.
+    type: quantitative
+    evidence:
+      - source: analitica-busqueda-q1.csv
+        locator: "columna query+resultados_devueltos+categoria_fallo (n=12,847 búsquedas
+          sin resultado)"
+        computation: "fallos por mismatch terminológico = 28.4% (3,649/12,847);
+          top términos: 'gaseosa' (→ refresco), 'bol' (→ cuenco), 'celular' (→ móvil)"
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+  - id: F-003
+    statement: El 19.7% de las búsquedas sin resultado contienen errores ortográficos
+      que el motor no corrige ni sugiere alternativas.
+    type: quantitative
+    evidence:
+      - source: analitica-busqueda-q1.csv
+        locator: columna query+typo_detectado+resultados_devueltos (n=12,847)
+        computation: fallos con error tipográfico detectado = 19.7% (2,531/12,847);
+          tasa de corrección actual = 0%
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+  - id: F-004
+    statement: El 41.2% de los usuarios que no encuentran resultados abandona el sitio
+      completamente desde la página de resultados vacía.
+    type: quantitative
+    evidence:
+      - source: analitica-busqueda-q1.csv
+        locator: columnas session_id+resultados_relevantes+accion_siguiente (n=12,847
+          búsquedas sin resultado)
+        computation: abandono del sitio desde SERP vacía = 41.2% (5,293/12,847)
+    confidence: high
+    status: validated
+    feeds: outcomes
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+  - id: F-005
+    statement: Los filtros de búsqueda son genéricos y no se adaptan a la categoría
+      buscada, lo que hace que refinar la búsqueda sea confuso y poco útil.
+    type: qualitative
+    evidence:
+      - source: entrevista-usuario-catalogo-01.txt
+        locator: párrafo 4
+        quote: "Busqué 'auriculares bluetooth' y los filtros que me aparecieron eran
+          'color', 'talla', 'material'. No pude filtrar por rango de frecuencia ni
+          compatibilidad. No tiene sentido."
+      - source: sesion-heatmap-busqueda.pdf
+        locator: "p.3, mapa de calor de interacción con filtros en búsquedas de electrónica"
+        quote: Solo el 8.2% de los usuarios que llegan a SERP de electrónica interactúa
+          con los filtros, frente al 31.4% en búsquedas de ropa.
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+  - id: F-006
+    statement: La página de 'sin resultados' no ofrece alternativas útiles; no sugiere
+      categorías relacionadas, no propone reformulaciones de búsqueda ni muestra
+      productos populares de esa categoría.
+    type: qualitative
+    evidence:
+      - source: entrevista-usuario-catalogo-01.txt
+        locator: párrafo 6
+        quote: Busqué 'termo' y me puso 'No hay resultados'. Solo eso. Sin sugerencias,
+          sin categorías. Me fui a Google a buscar.
+      - source: tickets-busqueda-no-encontrada.csv
+        locator: "respuestas abiertas, categoría 'pagina-sin-resultados' (n=312 tickets)"
+        quote: "Cuando no encuentro lo que busco, la página no me dice qué hacer.
+          Abandono."
+    confidence: high
+    status: validated
+    feeds: hypothesis
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+  - id: F-007
+    statement: El autocompletado actual no muestra resultados de productos en tiempo
+      real, lo que obliga al usuario a ejecutar la búsqueda completa antes de saber
+      si encontrará algo.
+    type: qualitative
+    evidence:
+      - source: entrevista-usuario-catalogo-01.txt
+        locator: párrafo 8
+        quote: En otros sitios, cuando escribo en el buscador ya me van apareciendo
+          los productos. Aquí nada. Tengo que adivinar si lo que escribo va a dar
+          resultado o no.
+    confidence: medium
+    status: validated
+    feeds: scope
+    review_status: aprobado
+    reviewed_by: Carlos Díaz (Lead PM Catálogo)
+    review_note: null
+    reviewed_at: null
+jtbd:
+  - id: J-001
+    statement: Cuando busco un producto con el término que yo conozco (aunque no sea
+      el nombre oficial del catálogo), quiero encontrar resultados relevantes de todas
+      formas, para no tener que adivinar cómo lo llama el catálogo.
+    supported_by:
+      - F-001
+      - F-002
+  - id: J-002
+    statement: Cuando cometo un error tipográfico en mi búsqueda, quiero que el sistema
+      lo detecte y me sugiera la corrección, para no perder tiempo y no pensar que
+      el producto no existe.
+    supported_by:
+      - F-003
+  - id: J-003
+    statement: Cuando no encuentro resultados para mi búsqueda, quiero recibir sugerencias
+      alternativas útiles, para poder seguir explorando sin tener que abandonar el
+      sitio.
+    supported_by:
+      - F-004
+      - F-006
+  - id: J-004
+    statement: Cuando busco en una categoría específica, quiero filtros relevantes
+      para esa categoría, para poder refinar los resultados sin perderme entre opciones
+      que no aplican.
+    supported_by:
+      - F-005
+concepts: []
+intake:
+  researchQuestion: "¿Por qué los usuarios no encuentran lo que buscan en el catálogo,
+    y qué mejoras al motor y a la UX de búsqueda reducirían el abandono?"
+  hypotheses:
+    - El mismatch terminológico (sinónimos, regionalismos) es la principal causa de
+      búsquedas sin resultado.
+    - La falta de corrección ortográfica y sugerencias hace que los errores tipográficos
+      sean fatales.
+    - La página de 'sin resultados' no retiene al usuario; debería sugerir alternativas.
+    - Los filtros genéricos no ayudan a refinar búsquedas en categorías específicas.
+  productContext: El catálogo de productos es el principal canal de descubrimiento
+    de la plataforma. La búsqueda es el punto de entrada del 62% de las sesiones
+    con conversión. Mejorar la búsqueda impacta directamente en el revenue.
+  discoveryPlan:
+    methods:
+      - analitica
+      - entrevistas
+      - soporte
+      - benchmark
+    instruments:
+      - ces
+    expectedSourceKinds:
+      - datos
+      - entrevista
+      - documento
+history:
+  - version: 1
+    stage: definicion
+    proposed_by: agent1
+    change_summary: "Compuerta 'enmarcar' aprobada: 7 hallazgos validados (4 cuantitativos,
+      3 cualitativos)"
+    approved_by: Carlos Díaz (Lead PM Catálogo)
+    timestamp: "2026-06-09T16:40:00.000Z"
+  - version: 2
+    stage: definicion
+    proposed_by: agent2
+    change_summary: "Compuerta 'enmarcar' aprobada: problem statement + 4 JTBD +
+      4 métricas HEART"
+    approved_by: Hugo Muñoz (Lead PM)
+    timestamp: "2026-06-14T11:20:00.000Z"

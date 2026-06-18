@@ -9,10 +9,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-16T19:10:09.637Z
 - id: F-002
   statement: "drop-off otp · segmento=nuevo: 42.9% (n=140)"
   type: quantitative
@@ -24,10 +24,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-16T19:10:13.778Z
 - id: F-003
   statement: "drop-off otp · segmento=recurrente: 43.4% (n=175)"
   type: quantitative
@@ -39,10 +39,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
+  review_status: aprobado
+  reviewed_by: Hugo Muñoz (Lead PM)
   review_note: null
-  reviewed_at: null
+  reviewed_at: 2026-06-16T19:10:22.727Z
 - id: F-004
   statement: "tiempo_espera_seg promedio (abandonos): 71.9 s (n=136)"
   type: quantitative
@@ -53,10 +53,10 @@
   confidence: high
   status: proposed
   feeds: outcomes
-  review_status: pendiente
-  reviewed_by: null
-  review_note: null
-  reviewed_at: null
+  review_status: en_pausa
+  reviewed_by: Hugo Muñoz (Lead PM)
+  review_note: f df df
+  reviewed_at: 2026-06-16T19:10:39.701Z
 - id: F-005
   statement: "La demora o no llegada del código OTP por SMS es un detonante
     directo del abandono: los usuarios se cansan de esperar y cierran la app

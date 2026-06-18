@@ -1,0 +1,27 @@
+{"timestamp":"2026-05-19T09:00:00.000Z","actor":"María González (CPO)","action":"spec.create","spec_id":"churn-plan-basico","target":null,"reason":"producto \"Retención\""}
+{"timestamp":"2026-05-19T09:08:00.000Z","actor":"María González (CPO)","action":"intake.update","spec_id":"churn-plan-basico","target":null,"reason":"¿Por qué los usuarios del plan básico cancelan su suscripción en los primeros 90 días?"}
+{"timestamp":"2026-05-20T08:30:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"churn-plan-basico","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-05-20T08:32:14.000Z","actor":"agent1","action":"agent.proposed","spec_id":"churn-plan-basico","target":null,"reason":"11 hallazgos (descubrimiento); verificación OK; tokens: 4,821 entrada / 1,203 salida"}
+{"timestamp":"2026-06-02T14:08:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-001","reason":null}
+{"timestamp":"2026-06-02T14:09:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-002","reason":null}
+{"timestamp":"2026-06-02T14:10:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-003","reason":null}
+{"timestamp":"2026-06-02T14:11:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-004","reason":null}
+{"timestamp":"2026-06-02T14:12:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-005","reason":null}
+{"timestamp":"2026-06-02T14:13:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-006","reason":null}
+{"timestamp":"2026-06-02T14:14:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-007","reason":null}
+{"timestamp":"2026-06-02T14:15:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-008","reason":null}
+{"timestamp":"2026-06-02T14:16:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-009","reason":null}
+{"timestamp":"2026-06-02T14:17:00.000Z","actor":"María González (CPO)","action":"finding.approve","spec_id":"churn-plan-basico","target":"F-010","reason":null}
+{"timestamp":"2026-06-02T14:22:00.000Z","actor":"María González (CPO)","action":"finding.reject","spec_id":"churn-plan-basico","target":"F-011","reason":"inferencia no respaldada por datos propios; referencia a benchmark externo sin fuente primaria del proyecto"}
+{"timestamp":"2026-06-02T14:30:22.000Z","actor":"María González (CPO)","action":"gate.approve","spec_id":"churn-plan-basico","target":null,"reason":"compuerta 'enmarcar' → v1"}
+{"timestamp":"2026-06-02T14:31:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"churn-plan-basico","target":null,"reason":"etapa definicion"}
+{"timestamp":"2026-06-02T14:33:05.000Z","actor":"agent2","action":"agent.proposed","spec_id":"churn-plan-basico","target":null,"reason":"definición: 5 JTBD, 5 métricas HEART; verificación OK; tokens: 6,244 entrada / 1,876 salida"}
+{"timestamp":"2026-06-05T10:15:48.000Z","actor":"Hugo Muñoz (Lead PM)","action":"gate.approve","spec_id":"churn-plan-basico","target":null,"reason":"compuerta 'enmarcar' → v2"}
+{"timestamp":"2026-06-05T10:16:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"churn-plan-basico","target":null,"reason":"etapa exploracion"}
+{"timestamp":"2026-06-05T10:17:44.000Z","actor":"agent3","action":"agent.proposed","spec_id":"churn-plan-basico","target":null,"reason":"5 conceptos propuestos (exploracion); tokens: 7,102 entrada / 2,341 salida"}
+{"timestamp":"2026-06-10T15:22:34.000Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"churn-plan-basico","target":"C-001","reason":null}
+{"timestamp":"2026-06-10T15:45:11.000Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"churn-plan-basico","target":"C-002","reason":null}
+{"timestamp":"2026-06-10T16:08:55.000Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.select","spec_id":"churn-plan-basico","target":"C-003","reason":null}
+{"timestamp":"2026-06-10T16:30:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.discard","spec_id":"churn-plan-basico","target":"C-004","reason":"Requiere cambios en billing fuera del alcance actual. Se evalúa para Q4."}
+{"timestamp":"2026-06-10T16:30:45.000Z","actor":"Hugo Muñoz (Lead PM)","action":"concept.discard","spec_id":"churn-plan-basico","target":"C-005","reason":"Complejidad técnica alta para el timeline. Solapa con C-001 y C-003."}
+{"timestamp":"2026-06-10T16:35:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"exploration.close","spec_id":"churn-plan-basico","target":null,"reason":"3 conceptos promovidos a la spec → etapa diseno"}

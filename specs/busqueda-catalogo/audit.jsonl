@@ -1,0 +1,17 @@
+{"timestamp":"2026-06-02T14:00:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"spec.create","spec_id":"busqueda-catalogo","target":null,"reason":"producto \"Catálogo\""}
+{"timestamp":"2026-06-02T14:14:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"intake.update","spec_id":"busqueda-catalogo","target":null,"reason":"¿Por qué los usuarios no encuentran lo que buscan en el catálogo?"}
+{"timestamp":"2026-06-03T08:00:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"busqueda-catalogo","target":null,"reason":"etapa descubrimiento"}
+{"timestamp":"2026-06-03T08:01:48.000Z","actor":"agent1","action":"agent.proposed","spec_id":"busqueda-catalogo","target":null,"reason":"8 hallazgos (descubrimiento); verificación OK; tokens: 4,215 entrada / 1,102 salida"}
+{"timestamp":"2026-06-09T16:08:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-001","reason":null}
+{"timestamp":"2026-06-09T16:09:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-002","reason":null}
+{"timestamp":"2026-06-09T16:10:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-003","reason":null}
+{"timestamp":"2026-06-09T16:11:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-004","reason":null}
+{"timestamp":"2026-06-09T16:12:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-005","reason":null}
+{"timestamp":"2026-06-09T16:13:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-006","reason":null}
+{"timestamp":"2026-06-09T16:14:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.approve","spec_id":"busqueda-catalogo","target":"F-007","reason":null}
+{"timestamp":"2026-06-09T16:18:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"finding.reject","spec_id":"busqueda-catalogo","target":"F-008","reason":"hallazgo mezcla dos causas distintas sin evidencia separada para cada una; no cumple el invariante de anti-alucinación (derivar hallazgo antes de evidencia)"}
+{"timestamp":"2026-06-09T16:40:00.000Z","actor":"Carlos Díaz (Lead PM Catálogo)","action":"gate.approve","spec_id":"busqueda-catalogo","target":null,"reason":"compuerta 'enmarcar' → v1"}
+{"timestamp":"2026-06-09T16:41:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"busqueda-catalogo","target":null,"reason":"etapa definicion"}
+{"timestamp":"2026-06-09T16:42:31.000Z","actor":"agent2","action":"agent.proposed","spec_id":"busqueda-catalogo","target":null,"reason":"definición: 4 JTBD, 4 métricas HEART; verificación OK; tokens: 5,188 entrada / 1,367 salida"}
+{"timestamp":"2026-06-14T11:20:00.000Z","actor":"Hugo Muñoz (Lead PM)","action":"gate.approve","spec_id":"busqueda-catalogo","target":null,"reason":"compuerta 'enmarcar' → v2"}
+{"timestamp":"2026-06-14T11:21:00.000Z","actor":"orchestrator","action":"stage.start","spec_id":"busqueda-catalogo","target":null,"reason":"etapa exploracion"}
