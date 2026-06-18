@@ -42,7 +42,7 @@ import {
 } from "../components/IntakeFormSteps";
 import { IntakeSuggestBanner } from "../components/IntakeSuggestBanner";
 
-const STEP_LABELS = ["Identidad", "Enmarcado", "Plan", "Fuentes", "Crear"];
+const STEP_LABELS = ["Identidad", "Input", "Plan", "Fuentes", "Crear"];
 
 function WizardStepper({ current }: { current: number }) {
   return (
@@ -357,7 +357,7 @@ function Step1Identidad({
           rows={3}
           value={state.description}
           onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="Describí el problema, el contexto y lo que ya sabés. Se usará para sugerir el enmarcado en el siguiente paso."
+          placeholder="Describí el problema, el contexto y lo que ya sabés. Se usará para sugerir el input en el siguiente paso."
         />
       </div>
     </div>
@@ -467,7 +467,7 @@ function Step5Resumen({
       <div className="border-t pt-4">
         <SummaryRow
           label="Pregunta"
-          value={intake.researchQuestion || "— (sin enmarcado)"}
+          value={intake.researchQuestion || "— (sin input)"}
         />
         {hypotheses.length > 0 && (
           <div className="mt-2">

@@ -2,7 +2,7 @@
 // auditoría reciente. Misma estructura de información que antes — solo cambia la piel.
 
 import { Link } from "react-router-dom";
-import { HelpCircle, Workflow } from "lucide-react";
+import { ArrowDown, ClipboardList, HelpCircle, Workflow } from "lucide-react";
 
 import {
   Card,
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useShell } from "../App";
 import { SpecOverview } from "../components/SpecOverview";
+import { FlowBand } from "../components/FlowBand";
 import { AuditPanel } from "../components/AuditPanel";
 import { StatCards } from "../components/StatCards";
 import { RealMockBadge } from "../components/badges";
@@ -40,16 +41,19 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-4">
+      <FlowBand specId={specId} spec={spec} />
+
       <StatCards spec={spec} findings={findings} concepts={concepts} />
 
-      {/* W6.3: encabezado de contexto — pregunta de investigación o CTA para definirla */}
+      {/* Input: lo que el humano le dio al sistema (pregunta + hipótesis), o CTA para definirlo */}
       {spec.intake?.researchQuestion ? (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-medium tracking-wide text-primary uppercase">
-                  Pregunta de investigación
+                <div className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-primary uppercase">
+                  <ClipboardList className="size-3.5" />
+                  Input · lo que le diste al sistema
                 </div>
                 <p className="mt-0.5 text-sm font-medium text-foreground">
                   {spec.intake.researchQuestion}
@@ -76,7 +80,7 @@ export function OverviewPage() {
               </div>
               <Link to={specPath(specId, "/intake")}>
                 <Button variant="outline" size="sm">
-                  Editar enmarcado
+                  Editar input
                 </Button>
               </Link>
             </div>
@@ -89,20 +93,26 @@ export function OverviewPage() {
               <div className="flex items-start gap-3">
                 <HelpCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Sin enmarcado definido</p>
+                  <p className="text-sm font-medium">Sin input definido</p>
                   <p className="text-xs text-muted-foreground">
-                    La pregunta de investigación ayuda al Agente 1 a priorizar
-                    hallazgos.
+                    El input (pregunta de investigación + hipótesis) es lo que
+                    le das al sistema para que construya la spec.
                   </p>
                 </div>
               </div>
               <Link to={specPath(specId, "/intake")}>
-                <Button size="sm">Definir enmarcado</Button>
+                <Button size="sm">Definir input</Button>
               </Link>
             </div>
           </CardContent>
         </Card>
       )}
+
+      <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+        <ArrowDown className="size-3.5 shrink-0" />
+        A partir de esto, el sistema construye la spec
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <SpecOverview spec={spec} />

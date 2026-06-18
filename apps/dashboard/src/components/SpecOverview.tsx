@@ -10,6 +10,7 @@ import {
   Circle,
   Clock,
   History,
+  Sparkles,
   Target,
 } from "lucide-react";
 
@@ -24,6 +25,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { specPath } from "../nav";
 import { HeartBadge, RealMockBadge } from "./badges";
 import { SectionIcon, STAGE_ICON, type IconTone } from "./icons";
 import { ScopeViz } from "./viz/ScopeViz";
@@ -129,6 +133,18 @@ function SubCard({
 export function SpecOverview({ spec }: { spec: Spec }) {
   const conceptDecisions = spec.decisions;
 
+  // Spec "vacía" (recién creada, v0): nada acumulado por el pipeline todavía. Estado
+  // explícito para no leerla como si fuera el input (invariante 1: la spec es el output).
+  const isEmpty =
+    !spec.problem_statement &&
+    spec.findings.length === 0 &&
+    spec.outcomes.length === 0 &&
+    spec.jtbd.length === 0 &&
+    spec.concepts.length === 0 &&
+    spec.tasks.length === 0 &&
+    spec.scope.in_scope.length === 0 &&
+    spec.scope.non_goals.length === 0;
+
   // Map concept → JTBD for reverse lookup in the JTBD list
   const conceptsByJtbd = new Map<string, string[]>();
   for (const c of spec.concepts) {
@@ -174,6 +190,30 @@ export function SpecOverview({ spec }: { spec: Spec }) {
           <div className="text-lg font-semibold">{spec.title}</div>
         </CardContent>
       </Card>
+
+      {/* Estado vacío: la spec todavía no fue poblada por ningún agente */}
+      {isEmpty && (
+        <Card className="border-dashed">
+          <CardContent className="space-y-3 py-8 text-center">
+            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-muted">
+              <Sparkles className="size-5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">
+                Todavía no hay spec construida
+              </p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                La spec es lo que el sistema construye a partir de tu Input y
+                tus Fuentes. Corré el Agente 1 (Descubrimiento) para empezar a
+                poblarla con hallazgos anclados a evidencia.
+              </p>
+            </div>
+            <Link to={specPath(spec.id, "/etapa/descubrimiento")}>
+              <Button size="sm">Ir a Descubrimiento</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ① Descubrimiento */}
       {(spec.scope.in_scope.length > 0 ||

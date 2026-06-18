@@ -13,7 +13,7 @@
 6. El esquema de la spec es v0 desechable; se revisa tras el Agente 1.
 7. Todo queda en el log de auditoría (quién/qué/cuándo, y por qué se rechazó un hallazgo).
 
-## Alcance actual: F0+F1+F2 · D2 · F3-A Exploración (CERRADA) · corridas desde la UI (HECHO) · O2 (HECHO) · F3-B (siguiente)
+## Alcance actual: F0+F1+F2 · D2 · F3-A Exploración (CERRADA) · corridas desde la UI (HECHO) · O2 (HECHO) · claridad Input↔Spec en UI (HECHO) · F3-B (siguiente)
 
 - HECHO (F0+F1): esquema/almacén de spec en git, dashboard centrado en la spec, orquestador
   mínimo, Agente 1 (Descubrimiento) sobre archivos locales (txt/pdf/xlsx/csv), compuerta enmarcar.
@@ -66,6 +66,15 @@
   derive/define/explore (`cachedModelCall`, `result-cache/`), filtro de ruido en segmentos
   (`filterSegments`, < 30 chars + dedup), truncar anclas en `formatFindings` (120 chars, max 2),
   `resolveModel` con `defaultModel` param (Haiku para intake). 168 tests. Detalle: ESTADO.md §Sesión 17.
+- HECHO (Sesión 18 — visualizaciones del overview): módulo `viz/` (CategoryBar HEART, MetricBar
+  baseline→target, ScopeViz in/non-goals; helpers parseMetric/colors), determinista (lee valores
+  literales de la spec, sin modelo). Commit `67d8d54`.
+- HECHO (Sesión 19 — claridad Input↔Spec en la UI): el dashboard distingue de forma explícita el
+  **Input** (lo que el humano da: pregunta + hipótesis + plan, antes "Enmarcado") de la **spec** (lo
+  que el sistema construye). "Enmarcado/enmarcar" queda solo para el output de Definición + su
+  compuerta. Sidebar reagrupado (Entrada/Spec/Trazabilidad), `FlowBand` ("Vos das → proceso → el
+  sistema construye"), panel de Input rotulado + divisor en el Overview, y estado vacío para specs v0.
+  Cambio presentacional (sin tests nuevos; typecheck limpio + verificación en vivo). Detalle: ESTADO.md §Sesión 19.
 - SIGUIENTE (F3-B/C/D/E): **Agente 4 Diseño** (lee `spec.concepts`, produce artefactos de diseño
   anclados a los conceptos; nace con su botón "Correr Diseño" en la UI) → Validación (A5) → gate curar
   → Entrega (A6) → Aprendizaje (A7). También: config real MCP/conectores, RBAC, multi-agente paralelo.

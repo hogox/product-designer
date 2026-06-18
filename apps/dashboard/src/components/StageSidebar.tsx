@@ -3,7 +3,7 @@
 // como variantes de Badge, iconos de etapa lucide. Cero CSS legado.
 
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { FileStack, ScrollText, Workflow } from "lucide-react";
+import { ClipboardList, FileStack, FolderOpen, ScrollText, Workflow } from "lucide-react";
 import type { Spec } from "@pda/spec";
 
 import { Badge } from "@/components/ui/badge";
@@ -92,17 +92,29 @@ export function StageSidebar({
       )}
 
       <nav className="flex flex-col gap-0.5">
+        {/* ENTRADA: lo que el humano le da al sistema */}
+        <div className="px-2.5 pt-1 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Entrada
+        </div>
+        <NavLink to={specPath(specId, "/intake")} className={navCls}>
+          <ClipboardList className="size-4 text-muted-foreground" />
+          Input
+        </NavLink>
+        <NavLink to={specPath(specId, "/fuentes")} className={navCls}>
+          <FolderOpen className="size-4 text-muted-foreground" />
+          Fuentes
+        </NavLink>
+
+        {/* SPEC: lo que el sistema construye */}
+        <div className="px-2.5 pt-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Spec
+        </div>
         <NavLink to={specPath(specId)} end className={navCls}>
           <FileStack className="size-4 text-muted-foreground" />
           Spec viva
         </NavLink>
-        <NavLink to={specPath(specId, "/fuentes")} className={navCls}>
-          <Workflow className="size-4 text-muted-foreground" />
-          Fuentes
-        </NavLink>
-
-        <div className="px-2.5 pt-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Pipeline (7 etapas)
+        <div className="px-2.5 pt-2 pb-1 pl-4 text-[10px] font-medium tracking-wide text-muted-foreground/80 uppercase">
+          Pipeline · 7 etapas
         </div>
         {STAGES.map((s) => {
           const Icon = STAGE_ICON[s.id] ?? Workflow;

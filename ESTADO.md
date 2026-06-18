@@ -538,6 +538,37 @@ queda visible en el costo. Lock (409), preflight y guarda verificados.
 
 **Tests totales: 168** (llm 9 · spec 60 · agent1 32 · agent2 5 · agent3 9 · orchestrator 51 · dashboard 9). Todos pasan. Typecheck limpio.
 
+### Sesión 18 — visualizaciones del overview (`viz/` module) ✅
+
+Componentes deterministas de visualización para el overview de la spec (commit `67d8d54`):
+`CategoryBar` (distribución HEART), `MetricBar` (baseline→target), `ScopeViz` (in-scope/non-goals),
+con helpers `parseMetric`/`colors`. Leen valores literales de la spec — sin semántica del modelo.
+
+### Sesión 19 — claridad Input ↔ Spec en la UI ✅
+
+Problema detectado al mostrar el demo: el dashboard mezclaba el **input** (lo que el humano le da) con
+la **spec** (lo que el sistema construye), y "Enmarcado" se usaba para tres cosas a la vez (el intake,
+el output de Definición y su compuerta). Un stakeholder leyó una spec v0 como si fuera "el problema".
+
+- **F1 — vocabulario:** el intake pasa a llamarse **"Input"** en la UI (`IntakeEditPage`, paso 2 del
+  wizard, botones del overview). "Enmarcado/enmarcar" queda **reservado** para el output de Definición
+  y su compuerta (`Framing`, `stages.ts`, `GatePanel`, `StagePage` sin tocar). Se rompe el triple sentido.
+- **F2 — arquitectura de información:** `StageSidebar` reagrupado en **ENTRADA** (Input · Fuentes) /
+  **SPEC** (Spec viva · Pipeline) / **TRAZABILIDAD**. En el overview, el panel de Input queda rotulado
+  ("INPUT · lo que le diste al sistema") y separado del cuerpo de la spec por un divisor ("A partir de
+  esto, el sistema construye la spec").
+- **F3 — modelo mental:** nuevo `FlowBand` — banda `Vos das: Input · Fuentes → [etapa] → Spec vN: el
+  sistema construye`. Cada zona navega; marca **"Input vacío"** en specs sin intake (delata
+  `otp-onboarding`, que carga con `intake: null`).
+- **F4 — estado vacío:** una spec v0 (cuerpo sin poblar) muestra en `SpecOverview` "Todavía no hay spec
+  construida — la spec es lo que el sistema construye a partir de tu Input y tus Fuentes" + CTA a
+  Descubrimiento, en vez de parecer "solo el problema".
+
+Cambio presentacional: **sin tests nuevos** (la suite cubre server + `viz/`, no estos componentes);
+**typecheck limpio** y **verificado en vivo** sobre `otp-onboarding` (v3) y la spec del deducible (v0),
+sin errores de consola. `.claude/launch.json` suma una config `dashboard-preview` (aditiva) para
+levantar preview en paralelo sin matar `pnpm dev`.
+
 ## 5. Estado actual del repo
 
 - Spec `otp-onboarding`: **v3 approved**, producto **Onboarding**, etapa **`diseno`** (Exploración
@@ -573,7 +604,7 @@ queda visible en el costo. Lock (409), preflight y guarda verificados.
   derivación) y el hub de Fuentes muestra la completitud (esperado-vs-subido). El **wizard de
   creación** (`/nueva`, 5 pasos) permite crear spec + intake + fuentes en un solo flujo; el
   **retrofit** (`/spec/:id/intake`) edita el intake de specs existentes. `otp-onboarding` sigue
-  **sin intake** (carga con `intake: null`); se puede definir desde Overview → "Definir enmarcado".
+  **sin intake** (carga con `intake: null`); se puede definir desde Overview → "Definir input".
 - **D2 COMPLETA (sesión 12):** todas las wonders W0–W6 están cerradas. La Fase 3 está desbloqueada.
 - **O1 COMPLETA (sesiones 13–15b):** P0 logging, P1 schema trim + PDF por bloques + PDA_MODEL_EXTRACT,
   P3 cache por sha256, P4 feedback de iterate, P5 A/B corrido → **Opus se mantiene** (solapamiento Haiku

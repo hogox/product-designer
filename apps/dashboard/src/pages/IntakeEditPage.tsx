@@ -96,16 +96,18 @@ export function IntakeEditPage() {
         Volver al overview
       </Link>
 
-      <h1 className="text-xl font-semibold">Enmarcado del discovery</h1>
+      <h1 className="text-xl font-semibold">Input</h1>
       <p className="text-sm text-muted-foreground">
-        La pregunta y el plan guían al Agente 1 al priorizar hallazgos (solo en
-        la derivación, nunca en la extracción — invariante 3).
+        Lo que le das al sistema para arrancar el discovery. La pregunta y el
+        plan guían al Agente 1 al priorizar hallazgos (solo en la derivación,
+        nunca en la extracción — invariante 3). La spec es lo que el sistema
+        construye a partir de esto.
       </p>
 
       <form onSubmit={save} className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Enmarcado</CardTitle>
+            <CardTitle className="text-base">Pregunta e hipótesis</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <IntakeSuggestBanner
@@ -134,7 +136,7 @@ export function IntakeEditPage() {
             type="submit"
             disabled={saving || !draft.researchQuestion.trim()}
           >
-            {saving ? "Guardando…" : "Guardar enmarcado"}
+            {saving ? "Guardando…" : "Guardar input"}
           </Button>
           {saved && (
             <span className="text-sm text-emerald-700">Guardado ✓</span>
